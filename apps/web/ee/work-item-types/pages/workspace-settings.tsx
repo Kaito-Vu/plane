@@ -36,7 +36,8 @@ function WorkspaceWorkItemTypesPage() {
 
   if (workspaceUserInfo && !isAdmin) return <NotAuthorizedView section="settings" className="h-auto" />;
 
-  const sorted = [...(types ?? [])].toSorted((a, b) => b.level - a.level || a.name.localeCompare(b.name));
+  // oxlint-disable-next-line unicorn/no-array-sort -- copy; TS lib lacks toSorted
+  const sorted = [...(types ?? [])].sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
 
   return (
     <SettingsContentWrapper>

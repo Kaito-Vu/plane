@@ -50,3 +50,5 @@ apps/web/app/routes/extended.ts
 packages/types/src/settings.ts
 packages/constants/src/settings/workspace.ts
 apps/web/components/settings/workspace/sidebar/item-icon.tsx
+packages/constants/src/settings/project.ts
+apps/web/components/settings/project/sidebar/item-icon.tsx
