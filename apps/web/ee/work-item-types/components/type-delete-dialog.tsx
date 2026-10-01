@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@makeplane/propel/components/button";
 import {
   Dialog,
@@ -39,11 +39,15 @@ export function TypeDeleteDialog({ type, candidates, onClose, onDelete, fetchUsa
   const [migrateTo, setMigrateTo] = useState("");
   const [busy, setBusy] = useState(false);
   const typeId = type?.id;
+  const activeId = useRef<string | undefined>(undefined); // ignore usage responses for a type the dialog has left
 
   const loadUsage = useCallback(() => {
     if (!typeId) return;
     setUsageFailed(false);
-    fetchUsage(typeId).then(setUsage, () => setUsageFailed(true));
+    fetchUsage(typeId).then(
+      (u) => activeId.current === typeId && setUsage(u),
+      () => activeId.current === typeId && setUsageFailed(true)
+    );
     // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
   }, [typeId]);
 
@@ -51,8 +55,12 @@ export function TypeDeleteDialog({ type, candidates, onClose, onDelete, fetchUsa
   useEffect(() => {
     setUsage(null);
     setMigrateTo("");
+    activeId.current = typeId;
     loadUsage();
-  }, [loadUsage]);
+    return () => {
+      activeId.current = undefined;
+    };
+  }, [loadUsage, typeId]);
 
   const needsMigration = (usage?.count ?? 0) > 0;
   const noCandidates = needsMigration && candidates.length === 0;

@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.app.views.base import BaseAPIView
-from plane.db.models import Issue, IssueType, Project, Workspace
+from plane.db.models import IssueType, Project, Workspace, WorkspaceMember
 from plane.db.models.issue_type import ProjectIssueType
 from plane.ee.work_item_types.serializers import IssueTypeSerializer
 from plane.ee.work_item_types.presets import EXCLUSIVE, PROCESSES, SOURCE
@@ -81,13 +81,16 @@ class WorkItemTypeUsageEndpoint(_WorkspaceTypeBase):
         issues, drafts = type_usage(obj.pk)
         projects = set(issues.values_list("project_id", flat=True)) | set(drafts.values_list("project_id", flat=True))
         projects.discard(None)
+        is_admin = WorkspaceMember.objects.filter(
+            workspace__slug=slug, member=request.user, role=20, is_active=True
+        ).exists()
         n_issues, n_drafts = issues.count(), drafts.count()
         return Response(
             {
                 "issues": n_issues,
                 "drafts": n_drafts,
                 "count": n_issues + n_drafts,
-                "projects": sorted(str(p) for p in projects),
+                "projects": sorted(str(p) for p in projects) if is_admin else [],
             }
         )
 
@@ -110,7 +113,7 @@ class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
             return Response({"error": "Invalid level"}, status=status.HTTP_400_BAD_REQUEST)
         epic_changed = "is_epic" in data and _as_bool(data["is_epic"]) is not obj.is_epic
         if (level_changed or epic_changed) and (
-            IssueTypeSerializer().get_is_preset(obj) or Issue.objects.filter(type=obj).exists()
+            IssueTypeSerializer().get_is_preset(obj) or any(q.exists() for q in type_usage(obj.pk))
         ):
             return Response(
                 {"error": "level and epic flag cannot change for preset types or types in use"},

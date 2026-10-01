@@ -66,14 +66,14 @@ def apply_process(project, process: str, migrate: bool = False) -> None:
     current = project_process(project)
     if current and current != process:
         old = types[EXCLUSIVE[current]]
-        count = Issue.objects.filter(project=project, type=old).count()
-        count += DraftIssue.objects.filter(project=project, type=old).count()
+        issues, drafts = type_usage(old.pk, project)
+        count = issues.count() + drafts.count()
         if count and not migrate:
             raise ProcessChangeBlocked(f"{old.name} is still used by work items in this project", count)
         if count:
             new = types[EXCLUSIVE[process]]  # same level (2) as the old exclusive type
-            Issue.all_objects.filter(project=project, type=old).update(type=new)
-            DraftIssue.all_objects.filter(project=project, type=old).update(type=new)
+            issues.update(type=new)
+            drafts.update(type=new)
         ProjectIssueType.objects.filter(project=project, issue_type=old).delete()
     wanted = [*SHARED, EXCLUSIVE[process]]
     ProjectIssueType.objects.filter(project=project, is_default=True).update(is_default=False)

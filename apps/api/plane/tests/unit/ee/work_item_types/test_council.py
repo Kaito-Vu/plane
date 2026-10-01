@@ -273,3 +273,46 @@ def test_contract_type_id_and_no_is_epic(session_client, workspace, project, env
     assert flat and all("type_id" in i and "is_epic" not in i for i in flat)
     subs = session_client.get(issues_url(workspace, project, f"{parent.id}/sub-issues/")).json()
     assert subs["sub_issues"] and all("type_id" in i and "is_epic" not in i for i in subs["sub_issues"])
+
+
+@pytest.mark.unit
+def test_switch_counts_and_migrates_soft_deleted_old_exclusive(env, project, workspace):
+    from plane.ee.work_item_types.seed import ProcessChangeBlocked
+
+    make, t = env
+    i = make("i")
+    Issue.all_objects.filter(pk=i.pk).update(type=t["product_backlog_item"], deleted_at="2026-01-01T00:00:00Z")
+    with pytest.raises(ProcessChangeBlocked) as e:
+        apply_process(project, "agile")
+    assert e.value.count == 1
+    apply_process(project, "agile", migrate=True)
+    assert Issue.all_objects.get(pk=i.pk).type.external_id == "user_story"
+
+
+@pytest.mark.contract
+def test_patch_level_refused_for_draft_only_and_soft_deleted_only(
+    session_client, workspace, project, env, create_user
+):
+    make, t = env
+    d_type = IssueType.objects.create(workspace=workspace, name="DraftOnly", level=1)
+    s_type = IssueType.objects.create(workspace=workspace, name="SoftOnly", level=1)
+    draft(workspace, project, create_user, d_type)
+    i = make("s")
+    Issue.all_objects.filter(pk=i.pk).update(type=s_type, deleted_at="2026-01-01T00:00:00Z")
+    for ty in (d_type, s_type):
+        r = session_client.patch(ws_url(workspace, f"{ty.id}/"), {"level": 0}, format="json")
+        assert r.status_code == 409
+
+
+@pytest.mark.contract
+def test_usage_projects_only_for_admins(session_client, api_client, workspace, project, env, create_user):
+    make, t = env
+    custom = IssueType.objects.create(workspace=workspace, name="Spike2", level=1)
+    draft(workspace, project, create_user, custom)
+    url = ws_url(workspace, f"{custom.id}/usage/")
+    assert session_client.get(url).json()["projects"] == [str(project.id)]
+    member = User.objects.create(email="m3@plane.so", username="m3")
+    WorkspaceMember.objects.create(workspace=workspace, member=member, role=15)
+    api_client.force_authenticate(user=member)
+    body = api_client.get(url).json()
+    assert body["projects"] == [] and body["count"] == 1
