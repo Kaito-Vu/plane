@@ -21,6 +21,7 @@ export const IssueTypeChange = observer(function IssueTypeChange({ issueId, disa
   const {
     issue: { getIssueById },
     updateIssue,
+    rootIssueStore,
   } = useIssueDetail();
   const issue = getIssueById(issueId);
   const parent = issue?.parent_id ? getIssueById(issue.parent_id) : undefined;
@@ -39,9 +40,13 @@ export const IssueTypeChange = observer(function IssueTypeChange({ issueId, disa
       disabled={disabled}
       onChange={async (typeId) => {
         if (typeId === issue.type_id) return;
+        const previous = issue.type_id;
         try {
           await updateIssue(workspaceSlug.toString(), projectId, issueId, { type_id: typeId });
+          setToast({ type: "success", title: t("work_item_types.ee.change_success") });
         } catch (error) {
+          // core rolls back optimistically, but do not depend on it: restore the previous type explicitly
+          rootIssueStore.issues.updateIssue(issueId, { type_id: previous });
           setToast({
             type: "error",
             title: t("work_item_types.update.toast.error.title"),

@@ -23,7 +23,7 @@ import { EmojiPicker, Logo } from "@plane/blocks/emoji-icon-picker";
 import { setToast } from "@plane/blocks/toast";
 import { useTranslation } from "@plane/i18n";
 import type { TIssueType } from "@plane/types";
-import { firstErrorMessage } from "../rules";
+import { firstErrorMessage, isLowContrast } from "../rules";
 
 type TFormValues = Pick<TIssueType, "name" | "description" | "level" | "is_epic" | "logo_props">;
 
@@ -54,6 +54,7 @@ export function TypeFormDialog({ isOpen, type, onClose, onSubmit }: Props) {
     formState: { isSubmitting, errors },
   } = useForm<TFormValues>({ values: type ? { ...NEW_TYPE, ...type } : NEW_TYPE });
   const logo = watch("logo_props");
+  const liveLowContrast = isLowContrast(logo.icon?.color, logo.icon?.background_color);
   const isPreset = !!type?.is_preset; // presets keep their level and epic flag (server enforces too)
 
   const submit = async (values: TFormValues) => {
@@ -96,11 +97,12 @@ export function TypeFormDialog({ isOpen, type, onClose, onSubmit }: Props) {
                     defaultIconColor={logo.icon?.color ?? "#6d7b8a"}
                     label={
                       <span
-                        aria-label={t("work_item_types.ee.workspace.icon")}
                         className="flex size-9 items-center justify-center rounded-md border border-subtle"
                         style={{ backgroundColor: logo.icon?.background_color }}
                       >
                         <Logo logo={logo} size={18} type="lucide" />
+                        {/* the trigger is a real <button>; this gives it its accessible name */}
+                        <span className="sr-only">{t("work_item_types.ee.workspace.icon")}</span>
                       </span>
                     }
                     onChange={(value) => {
@@ -126,6 +128,11 @@ export function TypeFormDialog({ isOpen, type, onClose, onSubmit }: Props) {
                     />
                   </label>
                 </div>
+                {liveLowContrast && (
+                  <p role="status" className="text-body-xs-regular text-danger-primary">
+                    {t("work_item_types.ee.workspace.low_contrast")}
+                  </p>
+                )}
                 <Controller
                   control={control}
                   name="name"
@@ -140,11 +147,15 @@ export function TypeFormDialog({ isOpen, type, onClose, onSubmit }: Props) {
                       size="2xl"
                       orientation="vertical"
                       placeholder={t("work_item_types.create_update.form.name.placeholder")}
-                      error={errors.name ? t("work_item_types.create_update.form.name.placeholder") : undefined}
+                      error={errors.name ? t("work_item_types.ee.workspace.name_required") : undefined}
                     />
                   )}
                 />
+                <label htmlFor="wit-description" className="-mb-2 text-body-xs-medium text-secondary">
+                  {t("work_item_types.ee.workspace.description_label")}
+                </label>
                 <textarea
+                  id="wit-description"
                   {...register("description")}
                   rows={3}
                   className="w-full rounded-md border border-subtle bg-transparent px-3 py-2 text-body-xs-regular"

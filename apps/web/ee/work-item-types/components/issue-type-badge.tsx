@@ -23,8 +23,8 @@ export const IssueTypeBadge = observer(function IssueTypeBadge({ projectId, type
   const label = typeName(type);
   return (
     <Tooltip label={label}>
-      {/* the name is in aria-label + tooltip, never colour alone */}
-      <span role="img" aria-label={label} className="inline-flex shrink-0 items-center">
+      {/* the name is in aria-label + tooltip (focusable so keyboard users get the tooltip), never colour alone */}
+      <span role="img" tabIndex={0} aria-label={label} className="inline-flex shrink-0 items-center">
         <Logo logo={type.logo_props} size={size} type="lucide" />
       </span>
     </Tooltip>

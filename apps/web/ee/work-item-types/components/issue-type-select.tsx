@@ -50,7 +50,7 @@ export const IssueTypeSelect = observer(function IssueTypeSelect(props: TIssueTy
     const id = initialTypeId(types, projectId);
     if (id) onChange(id, { auto: true });
     // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
-  }, [mode, projectId, types]);
+  }, [mode, projectId, types, value]);
 
   // create: quick sub-issue → level right below the parent, until the user picks something
   useEffect(() => {
@@ -74,7 +74,9 @@ export const IssueTypeSelect = observer(function IssueTypeSelect(props: TIssueTy
         render={
           <PillChrome size="sm" variant="outline">
             {current && <Logo logo={current.logo_props} size={14} type="lucide" />}
-            <span>{current ? typeName(current) : t("work_item_types.ee.placeholder")}</span>
+            <span className="max-w-40 truncate">
+              {current ? typeName(current) : t("work_item_types.ee.placeholder")}
+            </span>
           </PillChrome>
         }
       />
