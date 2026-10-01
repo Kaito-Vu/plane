@@ -35,3 +35,5 @@ apps/api/plane/utils/grouper.py
 apps/api/plane/utils/filters/filterset.py
 apps/web/package.json
 pnpm-lock.yaml
+packages/types/src/work-item-types.ts
+packages/types/src/index.ts
