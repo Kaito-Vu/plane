@@ -227,3 +227,12 @@ def test_assertion_replay_rejected(saml, keys):
     with pytest.raises(AuthenticationException) as exc:
         _authenticate(keys, assertion_id="_same")
     assert exc.value.error_code == 6001
+
+
+@pytest.mark.unit
+def test_sso_link_with_saml_subject_makes_the_nameid_log_in_as_that_user(saml, keys):
+    from django.core.management import call_command
+
+    existing = User.objects.create(email="real@corp.com", username="real")
+    call_command("sso_link", provider="saml", email="real@corp.com", subject=f"{IDP}|persistent-id-1")
+    assert _authenticate(keys).id == existing.id
