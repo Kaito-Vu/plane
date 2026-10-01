@@ -22,6 +22,7 @@ from plane.db.models import (
     DraftIssueModule,
     ProjectMember,
     EstimatePoint,
+    IssueType,
 )
 from plane.utils.content_validator import (
     validate_html_content,
@@ -37,6 +38,9 @@ class DraftIssueCreateSerializer(BaseSerializer):
     )
     parent_id = serializers.PrimaryKeyRelatedField(
         source="parent", queryset=Issue.objects.all(), required=False, allow_null=True
+    )
+    type_id = serializers.PrimaryKeyRelatedField(
+        source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
     label_ids = serializers.ListField(
         child=serializers.PrimaryKeyRelatedField(queryset=Label.objects.all()),

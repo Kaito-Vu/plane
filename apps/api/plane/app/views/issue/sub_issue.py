@@ -17,6 +17,7 @@ from django.db.models.functions import Coalesce
 # Third Party imports
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 
 # Module imports
 from .. import BaseAPIView
@@ -28,6 +29,11 @@ from plane.utils.timezone_converter import user_timezone_converter
 from collections import defaultdict
 from plane.utils.host import base_host
 from plane.utils.order_queryset import order_issue_queryset
+
+try:
+    from plane.ee.work_item_types.validation import validate_issue_write
+except ImportError:  # plugin not installed
+    validate_issue_write = None
 
 
 class SubIssuesEndpoint(BaseAPIView):
@@ -157,6 +163,7 @@ class SubIssuesEndpoint(BaseAPIView):
                 "sequence_id",
                 "project_id",
                 "parent_id",
+                "type_id",
                 "cycle_id",
                 "module_ids",
                 "label_ids",
@@ -234,6 +241,11 @@ class SubIssuesEndpoint(BaseAPIView):
 
         for sub_issue in sub_issues:
             sub_issue.parent = parent_issue
+            if validate_issue_write:
+                try:
+                    validate_issue_write(sub_issue)
+                except ValidationError as e:
+                    return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
 
         _ = Issue.objects.bulk_update(sub_issues, ["parent"], batch_size=10)
 

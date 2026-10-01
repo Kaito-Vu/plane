@@ -27,6 +27,7 @@ from plane.db.models import (
     User,
     EstimatePoint,
 )
+from plane.db.models.issue_type import ProjectIssueType
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
@@ -102,6 +103,11 @@ class IssueSerializer(BaseSerializer):
             is_valid, error_msg = validate_binary_data(data["description_binary"])
             if not is_valid:
                 raise serializers.ValidationError({"description_binary": "Invalid binary data"})
+
+        if data.get("type") and not ProjectIssueType.objects.filter(
+            project_id=self.context.get("project_id"), issue_type=data["type"], issue_type__is_active=True
+        ).exists():
+            raise serializers.ValidationError("Invalid work item type")
 
         # Validate assignees are from project
         if data.get("assignees", []):
