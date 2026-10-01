@@ -37,6 +37,7 @@ apps/api/plane/ee/sso/errors.py               # error codes
 apps/api/plane/ee/sso/config.py               # keys, seeding, get_sso_config, list_enabled_providers
 apps/api/plane/ee/sso/oidc.py                 # discovery + id_token verification
 apps/api/plane/ee/sso/adapter.py              # SsoOauthProvider
+apps/api/plane/ee/sso/flow.py                 # shared helpers: redirect_error, provider_error, complete_login
 apps/api/plane/ee/sso/views.py                # providers list, initiate, callback
 apps/api/plane/ee/sso/urls.py
 apps/api/plane/tests/unit/ee/__init__.py
@@ -201,7 +202,7 @@ git commit -m "feat(ee): add EE plugin skeleton and settings"
 **Interfaces:**
 
 - Produces:
-  - `PROVIDER_IDS: tuple[str, ...] = ("oidc", "azure_ad", "oauth2")`
+  - `PROVIDERS: dict[str, {"label","protocol","fields","required"}]` and `PROVIDER_IDS: tuple[str, ...] = ("oidc", "azure_ad", "oauth2")` (Phase 2 appends `saml`)
   - `config_key(provider_id: str, field: str) -> str`
   - `seed_config() -> None` (idempotent get_or_create of all keys)
   - `get_sso_config(provider_id: str) -> dict | None` — dict keyed by field name (`CLIENT_ID`, `CLIENT_SECRET`, `LABEL`, plus provider specific fields, `SCOPE` defaulted); `None` if unknown id, not `ENABLED == "1"`, or any required field empty.
@@ -217,6 +218,7 @@ git commit -m "feat(ee): add EE plugin skeleton and settings"
 import pytest
 
 from plane.ee.sso.config import (
+    PROVIDERS,
     config_key,
     get_sso_config,
     list_enabled_providers,
@@ -237,7 +239,8 @@ def _set(provider, field, value, encrypted=False):
 def test_seed_is_idempotent_and_marks_secret_encrypted():
     seed_config()
     seed_config()
-    assert InstanceConfiguration.objects.filter(key__startswith="EE_SSO_").count() == 20
+    expected = sum(2 + len(p["fields"]) for p in PROVIDERS.values())  # ENABLED + LABEL + extras
+    assert InstanceConfiguration.objects.filter(key__startswith="EE_SSO_").count() == expected
     assert InstanceConfiguration.objects.get(key="EE_SSO_OIDC_CLIENT_SECRET").is_encrypted is True
     assert InstanceConfiguration.objects.get(key="EE_SSO_OIDC_CLIENT_ID").is_encrypted is False
 
@@ -293,21 +296,33 @@ from plane.license.models import InstanceConfiguration
 from plane.license.utils.instance_value import get_configuration_value
 
 DEFAULT_SCOPE = "openid email profile"
+OAUTH_FIELDS = ["CLIENT_ID", "CLIENT_SECRET", "SCOPE"]
+ENCRYPTED_FIELDS = {"CLIENT_SECRET"}
 
-# provider id -> (default label, protocol, extra fields, extra fields that are required)
+# Every provider also has ENABLED and LABEL (see BASE_FIELDS). `fields` are the provider-specific
+# extras; `required` must all be non-empty for the provider to count as configured. Phase 2 adds "saml".
 PROVIDERS = {
-    "oidc": ("OpenID Connect", "oidc", ["ISSUER"], ["ISSUER"]),
-    "azure_ad": ("Microsoft", "oidc", ["TENANT_ID"], ["TENANT_ID"]),
-    "oauth2": (
-        "OAuth2",
-        "oauth2",
-        ["AUTH_URL", "TOKEN_URL", "USERINFO_URL"],
-        ["AUTH_URL", "TOKEN_URL", "USERINFO_URL"],
-    ),
+    "oidc": {
+        "label": "OpenID Connect",
+        "protocol": "oidc",
+        "fields": [*OAUTH_FIELDS, "ISSUER"],
+        "required": ["CLIENT_ID", "CLIENT_SECRET", "ISSUER"],
+    },
+    "azure_ad": {
+        "label": "Microsoft",
+        "protocol": "oidc",
+        "fields": [*OAUTH_FIELDS, "TENANT_ID"],
+        "required": ["CLIENT_ID", "CLIENT_SECRET", "TENANT_ID"],
+    },
+    "oauth2": {
+        "label": "OAuth2",
+        "protocol": "oauth2",
+        "fields": [*OAUTH_FIELDS, "AUTH_URL", "TOKEN_URL", "USERINFO_URL"],
+        "required": ["CLIENT_ID", "CLIENT_SECRET", "AUTH_URL", "TOKEN_URL", "USERINFO_URL"],
+    },
 }
 PROVIDER_IDS = tuple(PROVIDERS)
-COMMON_FIELDS = ["ENABLED", "LABEL", "CLIENT_ID", "CLIENT_SECRET", "SCOPE"]
-REQUIRED_COMMON = ["CLIENT_ID", "CLIENT_SECRET"]
+BASE_FIELDS = ["ENABLED", "LABEL"]
 
 
 def config_key(provider_id, field):
@@ -315,7 +330,7 @@ def config_key(provider_id, field):
 
 
 def _fields(provider_id):
-    return COMMON_FIELDS + PROVIDERS[provider_id][2]
+    return BASE_FIELDS + PROVIDERS[provider_id]["fields"]
 
 
 def seed_config(**_kwargs):
@@ -326,7 +341,7 @@ def seed_config(**_kwargs):
                 defaults={
                     "value": "0" if field == "ENABLED" else "",
                     "category": f"EE_SSO_{provider_id.upper()}",
-                    "is_encrypted": field == "CLIENT_SECRET",
+                    "is_encrypted": field in ENCRYPTED_FIELDS,
                 },
             )
 
@@ -339,10 +354,11 @@ def get_sso_config(provider_id):
     cfg = dict(zip(fields, values))
     if cfg["ENABLED"] != "1":
         return None
-    if not all(cfg.get(f) for f in REQUIRED_COMMON + PROVIDERS[provider_id][3]):
+    if not all(cfg.get(f) for f in PROVIDERS[provider_id]["required"]):
         return None
-    cfg["SCOPE"] = cfg["SCOPE"] or DEFAULT_SCOPE
-    cfg["LABEL"] = cfg["LABEL"] or PROVIDERS[provider_id][0]
+    if "SCOPE" in cfg:
+        cfg["SCOPE"] = cfg["SCOPE"] or DEFAULT_SCOPE
+    cfg["LABEL"] = cfg["LABEL"] or PROVIDERS[provider_id]["label"]
     return cfg
 
 
@@ -351,7 +367,7 @@ def list_enabled_providers():
     for provider_id in PROVIDER_IDS:
         cfg = get_sso_config(provider_id)
         if cfg:
-            out.append({"id": provider_id, "label": cfg["LABEL"], "protocol": PROVIDERS[provider_id][1]})
+            out.append({"id": provider_id, "label": cfg["LABEL"], "protocol": PROVIDERS[provider_id]["protocol"]})
     return out
 ```
 
@@ -950,13 +966,14 @@ git commit -m "feat(ee): SSO OAuth adapter for OIDC, Azure AD and OAuth2"
 
 **Files:**
 
-- Create: `apps/api/plane/ee/sso/views.py`, `apps/api/plane/ee/sso/urls.py`
+- Create: `apps/api/plane/ee/sso/flow.py`, `apps/api/plane/ee/sso/views.py`, `apps/api/plane/ee/sso/urls.py`
 - Modify: `apps/api/plane/ee/urls.py`
 - Test: `apps/api/plane/tests/unit/ee/sso/test_views.py`
 
 **Interfaces:**
 
 - Consumes: `SsoOauthProvider` (Task 4), `list_enabled_providers` (Task 2).
+- Produces `flow.redirect_error(host, exc, next_path=None) -> HttpResponseRedirect`, `flow.provider_error(message="SSO_PROVIDER_ERROR") -> AuthenticationException`, `flow.complete_login(request, user, host, next_path) -> HttpResponseRedirect` (reused by Phase 2/3).
 - Produces routes: `GET /auth/sso/providers/` → `200 [{"id","label","protocol"}]`; `GET /auth/sso/<provider_id>/` → 302 to IdP (or to app root with error params); `GET /auth/sso/<provider_id>/callback/` → 302 to app (success path or error params).
 - Session keys (popped on callback): `sso_state`, `sso_nonce`, `sso_verifier`.
 
@@ -1066,6 +1083,42 @@ def test_callback_success_logs_user_in(setup, mocker, make_id_token):
 
 - [ ] **Step 3: Implement**
 
+`flow.py`:
+
+```python
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+from urllib.parse import urlencode, urljoin
+
+from django.http import HttpResponseRedirect
+
+from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
+from plane.authentication.utils.login import user_login
+from plane.authentication.utils.redirection_path import get_redirection_path
+from plane.ee.sso import errors  # noqa: F401
+from plane.utils.path_validator import validate_next_path
+
+
+def redirect_error(host, exc, next_path=None):
+    params = exc.get_error_dict()
+    if next_path:
+        params["next_path"] = str(validate_next_path(next_path))
+    return HttpResponseRedirect(urljoin(host, "?" + urlencode(params)))
+
+
+def provider_error(message="SSO_PROVIDER_ERROR"):
+    return AuthenticationException(error_code=AUTHENTICATION_ERROR_CODES["SSO_PROVIDER_ERROR"], error_message=message)
+
+
+def complete_login(request, user, host, next_path):
+    """Log the user in and redirect into the app (Phase 3 adds the space target here)."""
+    user_login(request=request, user=user, is_app=True)
+    path = str(validate_next_path(next_path)) if next_path else get_redirection_path(user=user)
+    return HttpResponseRedirect(urljoin(host, path))
+```
+
 `views.py`:
 
 ```python
@@ -1077,34 +1130,18 @@ import base64
 import hashlib
 import secrets
 import uuid
-from urllib.parse import urlencode, urljoin
 
 from django.http import HttpResponseRedirect, JsonResponse
 from django.views import View
 
 from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
 from plane.authentication.utils.host import base_host
-from plane.authentication.utils.login import user_login
-from plane.authentication.utils.redirection_path import get_redirection_path
 from plane.authentication.utils.user_auth_workflow import post_user_auth_workflow
-from plane.ee.sso import errors  # noqa: F401
 from plane.ee.sso.adapter import SsoOauthProvider
 from plane.ee.sso.config import list_enabled_providers
+from plane.ee.sso.flow import complete_login, provider_error, redirect_error
 from plane.license.models import Instance
 from plane.utils.path_validator import validate_next_path
-
-
-def _redirect_error(host, exc, next_path=None):
-    params = exc.get_error_dict()
-    if next_path:
-        params["next_path"] = str(validate_next_path(next_path))
-    return HttpResponseRedirect(urljoin(host, "?" + urlencode(params)))
-
-
-def _provider_error():
-    return AuthenticationException(
-        error_code=AUTHENTICATION_ERROR_CODES["SSO_PROVIDER_ERROR"], error_message="SSO_PROVIDER_ERROR"
-    )
 
 
 class SsoProvidersEndpoint(View):
@@ -1122,7 +1159,7 @@ class SsoInitiateEndpoint(View):
 
         instance = Instance.objects.first()
         if instance is None or not instance.is_setup_done:
-            return _redirect_error(
+            return redirect_error(
                 host,
                 AuthenticationException(
                     error_code=AUTHENTICATION_ERROR_CODES["INSTANCE_NOT_CONFIGURED"],
@@ -1134,15 +1171,13 @@ class SsoInitiateEndpoint(View):
             state, nonce = uuid.uuid4().hex, secrets.token_urlsafe(24)
             verifier = secrets.token_urlsafe(48)
             challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
-            provider = SsoOauthProvider(
-                request, provider_id, state=state, nonce=nonce, code_challenge=challenge
-            )
+            provider = SsoOauthProvider(request, provider_id, state=state, nonce=nonce, code_challenge=challenge)
             request.session["sso_state"] = state
             request.session["sso_nonce"] = nonce
             request.session["sso_verifier"] = verifier
             return HttpResponseRedirect(provider.get_auth_url())
         except AuthenticationException as e:
-            return _redirect_error(host, e, next_path)
+            return redirect_error(host, e, next_path)
 
 
 class SsoCallbackEndpoint(View):
@@ -1156,7 +1191,7 @@ class SsoCallbackEndpoint(View):
         code, state = request.GET.get("code"), request.GET.get("state")
 
         if not code or not expected_state or state != expected_state:
-            return _redirect_error(host, _provider_error(), next_path)
+            return redirect_error(host, provider_error(), next_path)
         try:
             provider = SsoOauthProvider(
                 request,
@@ -1167,11 +1202,9 @@ class SsoCallbackEndpoint(View):
                 callback=post_user_auth_workflow,
             )
             user = provider.authenticate()
-            user_login(request=request, user=user, is_app=True)
-            path = str(validate_next_path(next_path)) if next_path else get_redirection_path(user=user)
-            return HttpResponseRedirect(urljoin(host, path))
+            return complete_login(request, user, host, next_path)
         except AuthenticationException as e:
-            return _redirect_error(host, e, next_path)
+            return redirect_error(host, e, next_path)
 ```
 
 `sso/urls.py`:
