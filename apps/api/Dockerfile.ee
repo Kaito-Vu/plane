@@ -1,0 +1,20 @@
+# EE layer: adds SAML (xmlsec) and switches the plugin on. Build the core image first:
+#   docker build -f apps/api/Dockerfile.api -t plane-api-core apps/api
+# (dev: docker build -f apps/api/Dockerfile.dev -t plane-api-core-dev apps/api)
+# The base must be in the local image store: with a docker-container buildx builder use `--load`, otherwise
+# FROM tries to pull `plane-api-core` from Docker Hub.
+ARG BASE_IMAGE=plane-api-core
+FROM ${BASE_IMAGE}
+
+WORKDIR /code
+# Dockerfile.api only copies requirements/ in its builder stage; the pip constraints below need them here.
+COPY requirements ./requirements
+# Runtime libs stay; build deps are removed in the same layer.
+RUN apk add --no-cache xmlsec libxml2 libxslt \
+    && apk add --no-cache --virtual .ee-build gcc g++ musl-dev libffi-dev pkgconf xmlsec-dev libxml2-dev libxslt-dev \
+    && pip install --no-cache-dir --force-reinstall --no-deps --no-binary lxml,xmlsec \
+        -c requirements/base.txt -c requirements/ee.txt lxml xmlsec \
+    && pip install --no-cache-dir -c requirements/base.txt -r requirements/ee.txt \
+    && apk del .ee-build
+
+ENV DJANGO_SETTINGS_MODULE=plane.settings.ee

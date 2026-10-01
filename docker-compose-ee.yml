@@ -1,0 +1,18 @@
+# Usage (from repo root, after deployments/ee/build.sh has built plane-api-core):
+#   docker compose -f docker-compose.yml -f docker-compose-ee.yml build api
+#   docker compose -f docker-compose.yml -f docker-compose-ee.yml up -d
+x-ee-api: &ee-api
+  build:
+    context: ./apps/api
+    dockerfile: Dockerfile.ee
+    args:
+      BASE_IMAGE: plane-api-core
+  image: plane-api-ee # all four services share one image: build `api` once, the others reuse the tag
+  environment:
+    DJANGO_SETTINGS_MODULE: plane.settings.ee
+
+services:
+  api: *ee-api
+  worker: *ee-api
+  beat-worker: *ee-api
+  migrator: *ee-api

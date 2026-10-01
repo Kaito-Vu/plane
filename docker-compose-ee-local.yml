@@ -1,0 +1,26 @@
+# Usage:
+#   docker build -f apps/api/Dockerfile.dev -t plane-api-core-dev apps/api
+#   docker compose -f docker-compose-local.yml -f docker-compose-ee-local.yml up --build
+x-ee-local: &ee-local
+  build:
+    context: ./apps/api
+    dockerfile: Dockerfile.ee
+    args:
+      BASE_IMAGE: plane-api-core-dev
+  environment:
+    DJANGO_SETTINGS_MODULE: plane.settings.ee_local
+
+services:
+  api:
+    <<: *ee-local
+    command:
+      [
+        "bash",
+        "-c",
+        "sed 's#plane.settings.local#plane.settings.ee_local#g' ./bin/docker-entrypoint-api-local.sh > /tmp/api-ee.sh && exec bash /tmp/api-ee.sh",
+      ]
+  worker: *ee-local
+  beat-worker: *ee-local
+  migrator:
+    <<: *ee-local
+    command: ./bin/docker-entrypoint-migrator.sh --settings=plane.settings.ee_local
