@@ -36,10 +36,26 @@
         "low_contrast": "アイコンの色が背景に対してコントラストが低くなっています。",
         "delete_title": "{name} を削除",
         "delete_description": "この操作は元に戻せません。",
-        "delete_in_use": "{count, plural, one {# 件の作業項目がこのタイプを使用しています。} other {# 件の作業項目がこのタイプを使用しています。}}次のタイプに移動してください：",
         "migrate_placeholder": "タイプを選択",
         "delete_failed": "作業項目タイプを削除できませんでした。",
-        "save_failed": "作業項目タイプを保存できませんでした。"
+        "save_failed": "作業項目タイプを保存できませんでした。",
+        "name_required": "名前は必須です。",
+        "description_label": "説明",
+        "seed_presets": "Scrum/Agileのプリセットを追加",
+        "seed_failed": "プリセットタイプを追加できませんでした。",
+        "level_meaning": {
+          "0": "サブタスク",
+          "1": "タスク",
+          "2": "ユーザーストーリー / バグ",
+          "3": "フィーチャー",
+          "4": "エピック",
+          "other": "カスタムレベル"
+        },
+        "delete_usage": "使用中 - 作業項目：{issues}、下書き：{drafts}。",
+        "delete_no_usage": "このタイプを使用している作業項目はありません。",
+        "delete_no_candidates": "これらの作業項目の移動先となる、同じレベルかつ同じエピック設定の有効なタイプが他にありません。先に作成または有効化してください。",
+        "delete_usage_failed": "このタイプの使用状況を確認できませんでした。",
+        "delete_migrate_to": "移動先："
       },
       "project": {
         "description": "プロセスと、このプロジェクトの作業項目で使用できるタイプを選択してください。",
@@ -53,8 +69,23 @@
         "assign": "追加",
         "unassign": "削除",
         "default_badge": "デフォルト",
-        "action_failed": "プロジェクトの作業項目タイプを更新できませんでした。"
-      }
+        "action_failed": "プロジェクトの作業項目タイプを更新できませんでした。",
+        "confirm_process_title": "{process}に切り替えますか？",
+        "confirm_process_description": "もう一方のプロセスのタイプがこのプロジェクトから削除され、デフォルトタイプが変わります。既存の作業項目は、変換しない限りタイプが維持されます。",
+        "confirm_process_button": "プロセスを切り替える",
+        "migrate_label": "既存の作業項目を対応するタイプに変換する",
+        "process_blocked": "削除されるタイプを使用している作業項目：{count}件。切り替えるには変換してください。",
+        "process_conflict": "そのタイプはもう一方のプロセスに属しています。先にプロジェクトのプロセスを切り替えてください。",
+        "disable_title": "作業項目タイプの使用を停止しますか？",
+        "disable_description": "このプロジェクトでは、タイプのフィールドとバッジが非表示になります。既存の作業項目はタイプが維持されます。",
+        "unassign_title": "{name}をこのプロジェクトから削除しますか？",
+        "unassign_description": "タイプはワークスペースでは引き続き利用できます。このプロジェクトの作業項目が使用している間は削除できません。",
+        "default_hint": "デフォルトタイプは削除できません。先に別のタイプをデフォルトに設定してください。"
+      },
+      "change_success": "作業項目タイプを変更しました。",
+      "load_failed": "作業項目タイプを読み込めませんでした。",
+      "retry": "再試行",
+      "confirm": "確認"
     },
     "settings": {
       "description": "チームのニーズに合わせて独自のプロパティをカスタマイズして追加できます。",

@@ -36,10 +36,26 @@
         "low_contrast": "Culoarea pictogramei are un contrast scăzut față de fundal.",
         "delete_title": "Ștergeți {name}",
         "delete_description": "Această acțiune nu poate fi anulată.",
-        "delete_in_use": "{count, plural, one {# element de lucru folosește} few {# elemente de lucru folosesc} other {# de elemente de lucru folosesc}} acest tip. Mutați-le în:",
         "migrate_placeholder": "Alegeți un tip",
         "delete_failed": "Tipul elementului de lucru nu a putut fi șters.",
-        "save_failed": "Tipul elementului de lucru nu a putut fi salvat."
+        "save_failed": "Tipul elementului de lucru nu a putut fi salvat.",
+        "name_required": "Numele este obligatoriu.",
+        "description_label": "Descriere",
+        "seed_presets": "Adaugă presetările Scrum/Agile",
+        "seed_failed": "Nu s-au putut adăuga tipurile presetate.",
+        "level_meaning": {
+          "0": "Subsarcină",
+          "1": "Sarcină",
+          "2": "User Story / Bug",
+          "3": "Funcționalitate",
+          "4": "Epic",
+          "other": "nivel personalizat"
+        },
+        "delete_usage": "Utilizat de - elemente de lucru: {issues}, ciorne: {drafts}.",
+        "delete_no_usage": "Niciun element de lucru nu folosește acest tip.",
+        "delete_no_candidates": "Nu există un alt tip activ cu același nivel și aceeași setare Epic în care să fie mutate aceste elemente de lucru. Creați sau activați mai întâi unul.",
+        "delete_usage_failed": "Nu s-a putut verifica unde este folosit acest tip.",
+        "delete_migrate_to": "Mutați-le în:"
       },
       "project": {
         "description": "Alegeți un proces și tipurile pe care le pot folosi elementele de lucru din acest proiect.",
@@ -53,8 +69,23 @@
         "assign": "Adăugați",
         "unassign": "Eliminați",
         "default_badge": "Implicit",
-        "action_failed": "Tipurile de elemente de lucru ale proiectului nu au putut fi actualizate."
-      }
+        "action_failed": "Tipurile de elemente de lucru ale proiectului nu au putut fi actualizate.",
+        "confirm_process_title": "Treceți la {process}?",
+        "confirm_process_description": "Tipurile celuilalt proces sunt eliminate din acest proiect, iar tipul implicit se schimbă. Elementele de lucru existente își păstrează tipul, cu excepția cazului în care le convertiți.",
+        "confirm_process_button": "Schimbă procesul",
+        "migrate_label": "Convertește elementele de lucru existente la tipul corespunzător",
+        "process_blocked": "Elemente de lucru care folosesc tipuri ce ar fi eliminate: {count}. Convertiți-le pentru a schimba.",
+        "process_conflict": "Acest tip aparține celuilalt proces. Schimbați mai întâi procesul proiectului.",
+        "disable_title": "Încetați să folosiți tipurile de elemente de lucru?",
+        "disable_description": "Câmpul de tip și insignele sunt ascunse în acest proiect. Elementele de lucru existente își păstrează tipul.",
+        "unassign_title": "Eliminați {name} din acest proiect?",
+        "unassign_description": "Tipul rămâne disponibil în spațiul de lucru. Nu poate fi eliminat cât timp elemente de lucru din acest proiect îl folosesc.",
+        "default_hint": "Tipul implicit nu poate fi eliminat. Setați mai întâi alt tip ca implicit."
+      },
+      "change_success": "Tipul elementului de lucru a fost schimbat.",
+      "load_failed": "Nu s-au putut încărca tipurile de elemente de lucru.",
+      "retry": "Reîncearcă",
+      "confirm": "Confirmă"
     },
     "settings": {
       "description": "Personalizează și adaugă propriile proprietăți pentru a le adapta nevoilor echipei tale.",

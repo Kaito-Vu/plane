@@ -36,10 +36,26 @@
         "low_contrast": "圖示顏色與背景的對比度偏低。",
         "delete_title": "刪除 {name}",
         "delete_description": "此操作無法復原。",
-        "delete_in_use": "{count, plural, other {# 個工作項目正在使用此類型。}}請將它們移至：",
         "migrate_placeholder": "選擇類型",
         "delete_failed": "無法刪除工作項目類型。",
-        "save_failed": "無法儲存工作項目類型。"
+        "save_failed": "無法儲存工作項目類型。",
+        "name_required": "名稱為必填。",
+        "description_label": "描述",
+        "seed_presets": "新增 Scrum/Agile 預設",
+        "seed_failed": "無法新增預設類型。",
+        "level_meaning": {
+          "0": "子任務",
+          "1": "任務",
+          "2": "使用者故事 / 缺陷",
+          "3": "功能",
+          "4": "史詩",
+          "other": "自訂層級"
+        },
+        "delete_usage": "使用中 - 工作項目：{issues}，草稿：{drafts}。",
+        "delete_no_usage": "沒有工作項目使用此類型。",
+        "delete_no_candidates": "沒有其他層級與史詩設定相同的啟用類型可供移轉這些工作項目。請先建立或啟用一個。",
+        "delete_usage_failed": "無法檢查此類型的使用情況。",
+        "delete_migrate_to": "將它們移至："
       },
       "project": {
         "description": "選擇流程以及此專案中的工作項目可使用的類型。",
@@ -53,8 +69,23 @@
         "assign": "新增",
         "unassign": "移除",
         "default_badge": "預設",
-        "action_failed": "無法更新專案的工作項目類型。"
-      }
+        "action_failed": "無法更新專案的工作項目類型。",
+        "confirm_process_title": "切換到 {process}？",
+        "confirm_process_description": "另一流程的類型將從此專案移除，預設類型也會改變。現有工作項目會保留其類型，除非您轉換它們。",
+        "confirm_process_button": "切換流程",
+        "migrate_label": "將現有工作項目轉換為對應類型",
+        "process_blocked": "使用將被移除類型的工作項目：{count} 個。請先轉換它們才能切換。",
+        "process_conflict": "該類型屬於另一流程。請先切換專案的流程。",
+        "disable_title": "停止使用工作項目類型？",
+        "disable_description": "此專案中將隱藏類型欄位和徽章。現有工作項目會保留其類型。",
+        "unassign_title": "從此專案移除 {name}？",
+        "unassign_description": "該類型在工作區中仍可使用。只要此專案中的工作項目在使用它，就無法移除。",
+        "default_hint": "無法移除預設類型。請先將其他類型設為預設。"
+      },
+      "change_success": "工作項目類型已變更。",
+      "load_failed": "無法載入工作項目類型。",
+      "retry": "重試",
+      "confirm": "確認"
     },
     "settings": {
       "description": "自訂並新增您自己的屬性，以符合您團隊的需求。",

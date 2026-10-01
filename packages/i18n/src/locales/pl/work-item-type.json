@@ -36,10 +36,26 @@
         "low_contrast": "Kolor ikony ma niski kontrast względem tła.",
         "delete_title": "Usuń {name}",
         "delete_description": "Tej akcji nie można cofnąć.",
-        "delete_in_use": "{count, plural, one {# element pracy używa} few {# elementy pracy używają} many {# elementów pracy używa} other {# elementu pracy używa}} tego typu. Przenieś je do:",
         "migrate_placeholder": "Wybierz typ",
         "delete_failed": "Nie udało się usunąć typu elementu pracy.",
-        "save_failed": "Nie udało się zapisać typu elementu pracy."
+        "save_failed": "Nie udało się zapisać typu elementu pracy.",
+        "name_required": "Nazwa jest wymagana.",
+        "description_label": "Opis",
+        "seed_presets": "Dodaj gotowe zestawy Scrum/Agile",
+        "seed_failed": "Nie udało się dodać typów predefiniowanych.",
+        "level_meaning": {
+          "0": "Podzadanie",
+          "1": "Zadanie",
+          "2": "Historyjka użytkownika / Błąd",
+          "3": "Funkcja",
+          "4": "Epik",
+          "other": "poziom niestandardowy"
+        },
+        "delete_usage": "Używany przez - elementy pracy: {issues}, wersje robocze: {drafts}.",
+        "delete_no_usage": "Żaden element pracy nie używa tego typu.",
+        "delete_no_candidates": "Nie ma innego aktywnego typu o tym samym poziomie i ustawieniu Epik, do którego można przenieść te elementy pracy. Najpierw utwórz lub aktywuj taki typ.",
+        "delete_usage_failed": "Nie udało się sprawdzić, gdzie używany jest ten typ.",
+        "delete_migrate_to": "Przenieś je do:"
       },
       "project": {
         "description": "Wybierz proces oraz typy, z których mogą korzystać elementy pracy w tym projekcie.",
@@ -53,8 +69,23 @@
         "assign": "Dodaj",
         "unassign": "Usuń",
         "default_badge": "Domyślny",
-        "action_failed": "Nie udało się zaktualizować typów elementów pracy projektu."
-      }
+        "action_failed": "Nie udało się zaktualizować typów elementów pracy projektu.",
+        "confirm_process_title": "Przełączyć na {process}?",
+        "confirm_process_description": "Typy drugiego procesu zostaną usunięte z tego projektu, a typ domyślny się zmieni. Istniejące elementy pracy zachowają swój typ, chyba że je skonwertujesz.",
+        "confirm_process_button": "Zmień proces",
+        "migrate_label": "Skonwertuj istniejące elementy pracy na odpowiedni typ",
+        "process_blocked": "Elementy pracy używające typów, które zostałyby usunięte: {count}. Skonwertuj je, aby przełączyć.",
+        "process_conflict": "Ten typ należy do drugiego procesu. Najpierw zmień proces projektu.",
+        "disable_title": "Przestać używać typów elementów pracy?",
+        "disable_description": "Pole typu i oznaczenia zostaną ukryte w tym projekcie. Istniejące elementy pracy zachowają swój typ.",
+        "unassign_title": "Usunąć {name} z tego projektu?",
+        "unassign_description": "Typ pozostaje dostępny w przestrzeni roboczej. Nie można go usunąć, dopóki używają go elementy pracy z tego projektu.",
+        "default_hint": "Nie można usunąć typu domyślnego. Najpierw ustaw inny typ jako domyślny."
+      },
+      "change_success": "Zmieniono typ elementu pracy.",
+      "load_failed": "Nie udało się wczytać typów elementów pracy.",
+      "retry": "Spróbuj ponownie",
+      "confirm": "Potwierdź"
     },
     "settings": {
       "description": "Dostosuj i dodaj własne właściwości, aby dopasować do potrzeb zespołu.",

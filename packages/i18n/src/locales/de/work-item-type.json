@@ -36,10 +36,26 @@
         "low_contrast": "Die Symbolfarbe hat einen geringen Kontrast zum Hintergrund.",
         "delete_title": "{name} löschen",
         "delete_description": "Diese Aktion kann nicht rückgängig gemacht werden.",
-        "delete_in_use": "{count, plural, one {# Arbeitselement verwendet} other {# Arbeitselemente verwenden}} diesen Typ. Verschieben Sie sie nach:",
         "migrate_placeholder": "Typ auswählen",
         "delete_failed": "Der Arbeitselementtyp konnte nicht gelöscht werden.",
-        "save_failed": "Der Arbeitselementtyp konnte nicht gespeichert werden."
+        "save_failed": "Der Arbeitselementtyp konnte nicht gespeichert werden.",
+        "name_required": "Name ist erforderlich.",
+        "description_label": "Beschreibung",
+        "seed_presets": "Scrum-/Agile-Vorlagen hinzufügen",
+        "seed_failed": "Die Vorlagentypen konnten nicht hinzugefügt werden.",
+        "level_meaning": {
+          "0": "Unteraufgabe",
+          "1": "Aufgabe",
+          "2": "User Story / Fehler",
+          "3": "Feature",
+          "4": "Epic",
+          "other": "benutzerdefinierte Ebene"
+        },
+        "delete_usage": "Verwendet von - Arbeitselemente: {issues}, Entwürfe: {drafts}.",
+        "delete_no_usage": "Kein Arbeitselement verwendet diesen Typ.",
+        "delete_no_candidates": "Es gibt keinen anderen aktiven Typ mit derselben Ebene und derselben Epic-Einstellung, in den diese Arbeitselemente verschoben werden können. Erstellen oder aktivieren Sie zuerst einen.",
+        "delete_usage_failed": "Die Verwendung dieses Typs konnte nicht geprüft werden.",
+        "delete_migrate_to": "Verschieben nach:"
       },
       "project": {
         "description": "Wählen Sie einen Prozess und die Typen, die Arbeitselemente in diesem Projekt verwenden können.",
@@ -53,8 +69,23 @@
         "assign": "Hinzufügen",
         "unassign": "Entfernen",
         "default_badge": "Standard",
-        "action_failed": "Die Arbeitselementtypen des Projekts konnten nicht aktualisiert werden."
-      }
+        "action_failed": "Die Arbeitselementtypen des Projekts konnten nicht aktualisiert werden.",
+        "confirm_process_title": "Zu {process} wechseln?",
+        "confirm_process_description": "Die Typen des anderen Prozesses werden aus diesem Projekt entfernt und der Standardtyp ändert sich. Vorhandene Arbeitselemente behalten ihren Typ, sofern Sie sie nicht konvertieren.",
+        "confirm_process_button": "Prozess wechseln",
+        "migrate_label": "Vorhandene Arbeitselemente in den passenden Typ konvertieren",
+        "process_blocked": "Arbeitselemente mit Typen, die entfernt würden: {count}. Konvertieren Sie sie, um zu wechseln.",
+        "process_conflict": "Dieser Typ gehört zum anderen Prozess. Wechseln Sie zuerst den Prozess des Projekts.",
+        "disable_title": "Arbeitselementtypen nicht mehr verwenden?",
+        "disable_description": "Das Typfeld und die Badges werden in diesem Projekt ausgeblendet. Vorhandene Arbeitselemente behalten ihren Typ.",
+        "unassign_title": "{name} aus diesem Projekt entfernen?",
+        "unassign_description": "Der Typ bleibt im Workspace verfügbar. Er kann nicht entfernt werden, solange Arbeitselemente dieses Projekts ihn verwenden.",
+        "default_hint": "Der Standardtyp kann nicht entfernt werden. Legen Sie zuerst einen anderen Typ als Standard fest."
+      },
+      "change_success": "Arbeitselementtyp geändert.",
+      "load_failed": "Arbeitselementtypen konnten nicht geladen werden.",
+      "retry": "Erneut versuchen",
+      "confirm": "Bestätigen"
     },
     "settings": {
       "description": "Passen Sie eigene Eigenschaften an und fügen Sie sie hinzu, um sie an die Bedürfnisse Ihres Teams anzupassen.",

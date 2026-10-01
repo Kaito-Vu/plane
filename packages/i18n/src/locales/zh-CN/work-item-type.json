@@ -36,10 +36,26 @@
         "low_contrast": "图标颜色与背景的对比度较低。",
         "delete_title": "删除 {name}",
         "delete_description": "此操作无法撤销。",
-        "delete_in_use": "{count, plural, other {# 个工作项正在使用此类型。}}请将它们移至：",
         "migrate_placeholder": "选择类型",
         "delete_failed": "无法删除工作项类型。",
-        "save_failed": "无法保存工作项类型。"
+        "save_failed": "无法保存工作项类型。",
+        "name_required": "名称为必填项。",
+        "description_label": "描述",
+        "seed_presets": "添加 Scrum/Agile 预设",
+        "seed_failed": "无法添加预设类型。",
+        "level_meaning": {
+          "0": "子任务",
+          "1": "任务",
+          "2": "用户故事 / 缺陷",
+          "3": "功能",
+          "4": "史诗",
+          "other": "自定义级别"
+        },
+        "delete_usage": "使用中 - 工作项：{issues}，草稿：{drafts}。",
+        "delete_no_usage": "没有工作项使用此类型。",
+        "delete_no_candidates": "没有其他级别和史诗设置相同的活动类型可供迁移这些工作项。请先创建或启用一个。",
+        "delete_usage_failed": "无法检查此类型的使用情况。",
+        "delete_migrate_to": "将它们移动到："
       },
       "project": {
         "description": "选择流程以及此项目中的工作项可使用的类型。",
@@ -53,8 +69,23 @@
         "assign": "添加",
         "unassign": "移除",
         "default_badge": "默认",
-        "action_failed": "无法更新项目的工作项类型。"
-      }
+        "action_failed": "无法更新项目的工作项类型。",
+        "confirm_process_title": "切换到 {process}？",
+        "confirm_process_description": "另一流程的类型将从此项目中移除，默认类型也会改变。现有工作项会保留其类型，除非您转换它们。",
+        "confirm_process_button": "切换流程",
+        "migrate_label": "将现有工作项转换为对应类型",
+        "process_blocked": "使用将被移除类型的工作项：{count} 个。请先转换它们才能切换。",
+        "process_conflict": "该类型属于另一流程。请先切换项目的流程。",
+        "disable_title": "停止使用工作项类型？",
+        "disable_description": "此项目中将隐藏类型字段和徽章。现有工作项会保留其类型。",
+        "unassign_title": "从此项目中移除 {name}？",
+        "unassign_description": "该类型在工作区中仍可使用。只要此项目中的工作项在使用它，就无法移除。",
+        "default_hint": "无法移除默认类型。请先将其他类型设为默认。"
+      },
+      "change_success": "工作项类型已更改。",
+      "load_failed": "无法加载工作项类型。",
+      "retry": "重试",
+      "confirm": "确认"
     },
     "settings": {
       "description": "自定义并添加您自己的属性以适应团队需求。",

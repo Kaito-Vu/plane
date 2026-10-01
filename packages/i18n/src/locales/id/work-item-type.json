@@ -36,10 +36,26 @@
         "low_contrast": "Warna ikon memiliki kontras rendah terhadap latar belakangnya.",
         "delete_title": "Hapus {name}",
         "delete_description": "Tindakan ini tidak dapat dibatalkan.",
-        "delete_in_use": "{count, plural, one {# item kerja menggunakan} other {# item kerja menggunakan}} tipe ini. Pindahkan ke:",
         "migrate_placeholder": "Pilih tipe",
         "delete_failed": "Tidak dapat menghapus tipe item kerja.",
-        "save_failed": "Tidak dapat menyimpan tipe item kerja."
+        "save_failed": "Tidak dapat menyimpan tipe item kerja.",
+        "name_required": "Nama wajib diisi.",
+        "description_label": "Deskripsi",
+        "seed_presets": "Tambahkan preset Scrum/Agile",
+        "seed_failed": "Tidak dapat menambahkan tipe preset.",
+        "level_meaning": {
+          "0": "Sub-tugas",
+          "1": "Tugas",
+          "2": "User Story / Bug",
+          "3": "Fitur",
+          "4": "Epik",
+          "other": "level kustom"
+        },
+        "delete_usage": "Digunakan oleh - item kerja: {issues}, draf: {drafts}.",
+        "delete_no_usage": "Tidak ada item kerja yang menggunakan tipe ini.",
+        "delete_no_candidates": "Tidak ada tipe aktif lain dengan level dan pengaturan Epik yang sama untuk memindahkan item kerja ini. Buat atau aktifkan satu terlebih dahulu.",
+        "delete_usage_failed": "Tidak dapat memeriksa di mana tipe ini digunakan.",
+        "delete_migrate_to": "Pindahkan ke:"
       },
       "project": {
         "description": "Pilih proses dan tipe yang dapat digunakan item kerja di proyek ini.",
@@ -53,8 +69,23 @@
         "assign": "Tambah",
         "unassign": "Hapus",
         "default_badge": "Default",
-        "action_failed": "Tidak dapat memperbarui tipe item kerja proyek."
-      }
+        "action_failed": "Tidak dapat memperbarui tipe item kerja proyek.",
+        "confirm_process_title": "Beralih ke {process}?",
+        "confirm_process_description": "Tipe dari proses lainnya dihapus dari proyek ini dan tipe default berubah. Item kerja yang ada tetap mempertahankan tipenya kecuali Anda mengonversinya.",
+        "confirm_process_button": "Ganti proses",
+        "migrate_label": "Konversi item kerja yang ada ke tipe yang sesuai",
+        "process_blocked": "Item kerja yang menggunakan tipe yang akan dihapus: {count}. Konversi untuk beralih.",
+        "process_conflict": "Tipe tersebut milik proses lainnya. Ganti proses proyek terlebih dahulu.",
+        "disable_title": "Berhenti menggunakan tipe item kerja?",
+        "disable_description": "Bidang tipe dan lencana disembunyikan di proyek ini. Item kerja yang ada tetap mempertahankan tipenya.",
+        "unassign_title": "Hapus {name} dari proyek ini?",
+        "unassign_description": "Tipe tetap tersedia di ruang kerja. Tipe tidak dapat dihapus selama masih digunakan oleh item kerja di proyek ini.",
+        "default_hint": "Tipe default tidak dapat dihapus. Jadikan tipe lain sebagai default terlebih dahulu."
+      },
+      "change_success": "Tipe item kerja diubah.",
+      "load_failed": "Tidak dapat memuat tipe item kerja.",
+      "retry": "Coba lagi",
+      "confirm": "Konfirmasi"
     },
     "settings": {
       "description": "Sesuaikan dan tambahkan properti Anda sendiri untuk menyesuaikannya dengan kebutuhan tim Anda.",

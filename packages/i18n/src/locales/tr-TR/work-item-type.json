@@ -36,10 +36,26 @@
         "low_contrast": "Simge renginin arka plana göre kontrastı düşük.",
         "delete_title": "{name} öğesini sil",
         "delete_description": "Bu işlem geri alınamaz.",
-        "delete_in_use": "{count, plural, one {# iş öğesi bu tipi kullanıyor.} other {# iş öğesi bu tipi kullanıyor.}} Bunları şuraya taşıyın:",
         "migrate_placeholder": "Bir tip seçin",
         "delete_failed": "İş öğesi tipi silinemedi.",
-        "save_failed": "İş öğesi tipi kaydedilemedi."
+        "save_failed": "İş öğesi tipi kaydedilemedi.",
+        "name_required": "Ad gereklidir.",
+        "description_label": "Açıklama",
+        "seed_presets": "Scrum/Agile hazır ayarlarını ekle",
+        "seed_failed": "Hazır türler eklenemedi.",
+        "level_meaning": {
+          "0": "Alt görev",
+          "1": "Görev",
+          "2": "Kullanıcı Hikâyesi / Hata",
+          "3": "Özellik",
+          "4": "Epik",
+          "other": "özel düzey"
+        },
+        "delete_usage": "Kullanan - çalışma öğeleri: {issues}, taslaklar: {drafts}.",
+        "delete_no_usage": "Bu türü kullanan çalışma öğesi yok.",
+        "delete_no_candidates": "Bu çalışma öğelerinin taşınabileceği, aynı düzeye ve aynı Epik ayarına sahip başka etkin tür yok. Önce bir tane oluşturun veya etkinleştirin.",
+        "delete_usage_failed": "Bu türün nerede kullanıldığı kontrol edilemedi.",
+        "delete_migrate_to": "Şuraya taşıyın:"
       },
       "project": {
         "description": "Bir süreç ve bu projedeki iş öğelerinin kullanabileceği tipleri seçin.",
@@ -53,8 +69,23 @@
         "assign": "Ekle",
         "unassign": "Kaldır",
         "default_badge": "Varsayılan",
-        "action_failed": "Projenin iş öğesi tipleri güncellenemedi."
-      }
+        "action_failed": "Projenin iş öğesi tipleri güncellenemedi.",
+        "confirm_process_title": "{process} sürecine geçilsin mi?",
+        "confirm_process_description": "Diğer sürecin türleri bu projeden kaldırılır ve varsayılan tür değişir. Mevcut çalışma öğeleri, dönüştürmediğiniz sürece türlerini korur.",
+        "confirm_process_button": "Süreci değiştir",
+        "migrate_label": "Mevcut çalışma öğelerini eşleşen türe dönüştür",
+        "process_blocked": "Kaldırılacak türleri kullanan çalışma öğeleri: {count}. Geçmek için bunları dönüştürün.",
+        "process_conflict": "Bu tür diğer işleme aittir. Önce projenin sürecini değiştirin.",
+        "disable_title": "Çalışma öğesi türleri kullanılmasın mı?",
+        "disable_description": "Tür alanı ve rozetler bu projede gizlenir. Mevcut çalışma öğeleri türlerini korur.",
+        "unassign_title": "{name} bu projeden kaldırılsın mı?",
+        "unassign_description": "Tür çalışma alanında kullanılabilir kalır. Bu projedeki çalışma öğeleri kullandığı sürece kaldırılamaz.",
+        "default_hint": "Varsayılan tür kaldırılamaz. Önce başka bir türü varsayılan yapın."
+      },
+      "change_success": "Çalışma öğesi türü değiştirildi.",
+      "load_failed": "Çalışma öğesi türleri yüklenemedi.",
+      "retry": "Yeniden dene",
+      "confirm": "Onayla"
     },
     "settings": {
       "description": "Ekibinizin ihtiyaçlarına göre özelleştirin ve kendi özelliklerinizi ekleyin.",

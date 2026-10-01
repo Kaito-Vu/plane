@@ -36,10 +36,26 @@
         "low_contrast": "Barva ikony má nízký kontrast vůči pozadí.",
         "delete_title": "Odstranit {name}",
         "delete_description": "Tuto akci nelze vrátit zpět.",
-        "delete_in_use": "{count, plural, one {Tento typ používá # pracovní položka.} few {Tento typ používají # pracovní položky.} many {Tento typ používá # pracovní položky.} other {Tento typ používá # pracovních položek.}} Přesuňte je do:",
         "migrate_placeholder": "Vyberte typ",
         "delete_failed": "Typ pracovní položky se nepodařilo odstranit.",
-        "save_failed": "Typ pracovní položky se nepodařilo uložit."
+        "save_failed": "Typ pracovní položky se nepodařilo uložit.",
+        "name_required": "Název je povinný.",
+        "description_label": "Popis",
+        "seed_presets": "Přidat přednastavení Scrum/Agile",
+        "seed_failed": "Přednastavené typy se nepodařilo přidat.",
+        "level_meaning": {
+          "0": "Podúkol",
+          "1": "Úkol",
+          "2": "Uživatelský příběh / Chyba",
+          "3": "Funkce",
+          "4": "Epik",
+          "other": "vlastní úroveň"
+        },
+        "delete_usage": "Používá - pracovní položky: {issues}, koncepty: {drafts}.",
+        "delete_no_usage": "Tento typ nepoužívá žádná pracovní položka.",
+        "delete_no_candidates": "Neexistuje jiný aktivní typ se stejnou úrovní a stejným nastavením Epik, na který by šlo tyto pracovní položky přesunout. Nejprve jeden vytvořte nebo aktivujte.",
+        "delete_usage_failed": "Nepodařilo se zjistit, kde se tento typ používá.",
+        "delete_migrate_to": "Přesunout je do:"
       },
       "project": {
         "description": "Vyberte proces a typy, které mohou pracovní položky v tomto projektu používat.",
@@ -53,8 +69,23 @@
         "assign": "Přidat",
         "unassign": "Odebrat",
         "default_badge": "Výchozí",
-        "action_failed": "Typy pracovních položek projektu se nepodařilo aktualizovat."
-      }
+        "action_failed": "Typy pracovních položek projektu se nepodařilo aktualizovat.",
+        "confirm_process_title": "Přepnout na {process}?",
+        "confirm_process_description": "Typy druhého procesu budou z tohoto projektu odebrány a změní se výchozí typ. Stávající pracovní položky si ponechají svůj typ, pokud je nepřevedete.",
+        "confirm_process_button": "Přepnout proces",
+        "migrate_label": "Převést stávající pracovní položky na odpovídající typ",
+        "process_blocked": "Pracovní položky používající typy, které by byly odebrány: {count}. Pro přepnutí je převeďte.",
+        "process_conflict": "Tento typ patří k druhému procesu. Nejprve změňte proces projektu.",
+        "disable_title": "Přestat používat typy pracovních položek?",
+        "disable_description": "Pole typu a štítky budou v tomto projektu skryty. Stávající pracovní položky si ponechají svůj typ.",
+        "unassign_title": "Odebrat {name} z tohoto projektu?",
+        "unassign_description": "Typ zůstane dostupný v pracovním prostoru. Nelze jej odebrat, dokud jej používají pracovní položky tohoto projektu.",
+        "default_hint": "Výchozí typ nelze odebrat. Nejprve nastavte jako výchozí jiný typ."
+      },
+      "change_success": "Typ pracovní položky byl změněn.",
+      "load_failed": "Typy pracovních položek se nepodařilo načíst.",
+      "retry": "Zkusit znovu",
+      "confirm": "Potvrdit"
     },
     "settings": {
       "description": "Přizpůsobte si a přidejte vlastní vlastnosti, abyste to upravili podle potřeb vašeho týmu.",

@@ -36,10 +36,26 @@
         "low_contrast": "아이콘 색상과 배경의 대비가 낮습니다.",
         "delete_title": "{name} 삭제",
         "delete_description": "이 작업은 취소할 수 없습니다.",
-        "delete_in_use": "{count, plural, one {#개의 워크 아이템이 이 타입을 사용 중입니다.} other {#개의 워크 아이템이 이 타입을 사용 중입니다.}} 다음으로 이동하세요:",
         "migrate_placeholder": "타입 선택",
         "delete_failed": "워크 아이템 타입을 삭제하지 못했습니다.",
-        "save_failed": "워크 아이템 타입을 저장하지 못했습니다."
+        "save_failed": "워크 아이템 타입을 저장하지 못했습니다.",
+        "name_required": "이름은 필수입니다.",
+        "description_label": "설명",
+        "seed_presets": "Scrum/Agile 프리셋 추가",
+        "seed_failed": "프리셋 유형을 추가하지 못했습니다.",
+        "level_meaning": {
+          "0": "하위 작업",
+          "1": "작업",
+          "2": "사용자 스토리 / 버그",
+          "3": "기능",
+          "4": "에픽",
+          "other": "사용자 지정 수준"
+        },
+        "delete_usage": "사용 중 - 작업 항목: {issues}개, 초안: {drafts}개.",
+        "delete_no_usage": "이 유형을 사용하는 작업 항목이 없습니다.",
+        "delete_no_candidates": "이 작업 항목을 옮길 수 있는, 같은 수준과 같은 에픽 설정의 다른 활성 유형이 없습니다. 먼저 하나를 만들거나 활성화하세요.",
+        "delete_usage_failed": "이 유형이 사용되는 위치를 확인하지 못했습니다.",
+        "delete_migrate_to": "다음으로 이동:"
       },
       "project": {
         "description": "프로세스와 이 프로젝트의 워크 아이템이 사용할 수 있는 타입을 선택하세요.",
@@ -53,8 +69,23 @@
         "assign": "추가",
         "unassign": "제거",
         "default_badge": "기본값",
-        "action_failed": "프로젝트의 워크 아이템 타입을 업데이트하지 못했습니다."
-      }
+        "action_failed": "프로젝트의 워크 아이템 타입을 업데이트하지 못했습니다.",
+        "confirm_process_title": "{process}(으)로 전환하시겠습니까?",
+        "confirm_process_description": "다른 프로세스의 유형이 이 프로젝트에서 제거되고 기본 유형이 변경됩니다. 기존 작업 항목은 변환하지 않는 한 유형이 유지됩니다.",
+        "confirm_process_button": "프로세스 전환",
+        "migrate_label": "기존 작업 항목을 해당 유형으로 변환",
+        "process_blocked": "제거될 유형을 사용하는 작업 항목: {count}개. 전환하려면 변환하세요.",
+        "process_conflict": "해당 유형은 다른 프로세스에 속합니다. 먼저 프로젝트의 프로세스를 전환하세요.",
+        "disable_title": "작업 항목 유형 사용을 중단하시겠습니까?",
+        "disable_description": "이 프로젝트에서 유형 필드와 배지가 숨겨집니다. 기존 작업 항목은 유형이 유지됩니다.",
+        "unassign_title": "이 프로젝트에서 {name}을(를) 제거하시겠습니까?",
+        "unassign_description": "유형은 워크스페이스에서 계속 사용할 수 있습니다. 이 프로젝트의 작업 항목이 사용하는 동안에는 제거할 수 없습니다.",
+        "default_hint": "기본 유형은 제거할 수 없습니다. 먼저 다른 유형을 기본으로 설정하세요."
+      },
+      "change_success": "작업 항목 유형을 변경했습니다.",
+      "load_failed": "작업 항목 유형을 불러오지 못했습니다.",
+      "retry": "다시 시도",
+      "confirm": "확인"
     },
     "settings": {
       "description": "팀의 요구에 맞게 자신만의 프로퍼티를 사용자 정의하고 추가하세요.",

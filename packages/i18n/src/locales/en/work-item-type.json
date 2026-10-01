@@ -36,10 +36,26 @@
         "low_contrast": "The icon colour has low contrast against its background.",
         "delete_title": "Delete {name}",
         "delete_description": "This can't be undone.",
-        "delete_in_use": "{count, plural, one {# work item uses} other {# work items use}} this type. Move them to:",
         "migrate_placeholder": "Pick a type",
         "delete_failed": "Couldn't delete the work item type.",
-        "save_failed": "Couldn't save the work item type."
+        "save_failed": "Couldn't save the work item type.",
+        "name_required": "Name is required.",
+        "description_label": "Description",
+        "seed_presets": "Add Scrum/Agile presets",
+        "seed_failed": "Couldn't add the preset types.",
+        "level_meaning": {
+          "0": "Sub-task",
+          "1": "Task",
+          "2": "User Story / Bug",
+          "3": "Feature",
+          "4": "Epic",
+          "other": "custom level"
+        },
+        "delete_usage": "In use by - work items: {issues}, drafts: {drafts}.",
+        "delete_no_usage": "No work items use this type.",
+        "delete_no_candidates": "There is no other active type with the same level and epic setting to move these work items to. Create or activate one first.",
+        "delete_usage_failed": "Couldn't check where this type is used.",
+        "delete_migrate_to": "Move them to:"
       },
       "project": {
         "description": "Choose a process and the types work items in this project can use.",
@@ -53,8 +69,23 @@
         "assign": "Add",
         "unassign": "Remove",
         "default_badge": "Default",
-        "action_failed": "Couldn't update the project's work item types."
-      }
+        "action_failed": "Couldn't update the project's work item types.",
+        "confirm_process_title": "Switch to {process}?",
+        "confirm_process_description": "The other process's types are removed from this project and its default type changes. Existing work items keep their type unless you convert them.",
+        "confirm_process_button": "Switch process",
+        "migrate_label": "Convert existing work items to the matching type",
+        "process_blocked": "Work items using types that would be removed: {count}. Convert them to switch.",
+        "process_conflict": "That type belongs to the other process. Switch the project's process first.",
+        "disable_title": "Stop using work item types?",
+        "disable_description": "The type field and badges are hidden in this project. Existing work items keep their type.",
+        "unassign_title": "Remove {name} from this project?",
+        "unassign_description": "The type stays available in the workspace. It can't be removed while work items in this project use it.",
+        "default_hint": "The default type can't be removed. Set another type as default first."
+      },
+      "change_success": "Work item type changed.",
+      "load_failed": "Couldn't load work item types.",
+      "retry": "Retry",
+      "confirm": "Confirm"
     },
     "settings": {
       "description": "Customize and add your own properties to tailor it to your team's needs.",

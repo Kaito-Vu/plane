@@ -4,7 +4,7 @@
     "label_lowercase": "loại mục công việc",
     "ee": {
       "field_label": "Loại mục công việc",
-      "placeholder": "Loại",
+      "placeholder": "Chọn loại",
       "disabled_suffix": "Đã tắt",
       "filter_label": "Loại",
       "change_failed": "Không đổi được loại mục công việc. Đã giữ loại cũ.",
@@ -21,7 +21,7 @@
         "needs_parent": "Nhiệm vụ con cần có mục cha.",
         "epic_no_parent": "Epic không được có mục cha.",
         "parent_level": "Hãy chọn loại có cấp thấp hơn mục cha.",
-        "subtask_parent": "Nhiệm vụ con chỉ nằm dưới mục cấp nhiệm vụ, lỗi hoặc story."
+        "subtask_parent": "Nhiệm vụ con chỉ nằm dưới mục cấp nhiệm vụ, lỗi hoặc User Story."
       },
       "workspace": {
         "description": "Các loại dùng chung cho mọi dự án trong không gian làm việc. Mỗi dự án chọn loại mình dùng.",
@@ -34,36 +34,67 @@
         "background": "Nền",
         "preset_badge": "Có sẵn",
         "low_contrast": "Màu biểu tượng có độ tương phản thấp so với nền.",
-        "delete_title": "Xoá {name}",
+        "delete_title": "Xóa {name}",
         "delete_description": "Không thể hoàn tác thao tác này.",
-        "delete_in_use": "{count, plural, one {# mục công việc đang dùng} other {# mục công việc đang dùng}} loại này. Chuyển chúng sang:",
         "migrate_placeholder": "Chọn một loại",
-        "delete_failed": "Không xoá được loại mục công việc.",
-        "save_failed": "Không lưu được loại mục công việc."
+        "delete_failed": "Không xóa được loại mục công việc.",
+        "save_failed": "Không lưu được loại mục công việc.",
+        "name_required": "Vui lòng nhập tên.",
+        "description_label": "Mô tả",
+        "seed_presets": "Thêm bộ cấu hình sẵn Scrum/Agile",
+        "seed_failed": "Không thể thêm các loại cấu hình sẵn.",
+        "level_meaning": {
+          "0": "Nhiệm vụ con",
+          "1": "Nhiệm vụ",
+          "2": "User Story / Lỗi",
+          "3": "Tính năng",
+          "4": "Epic",
+          "other": "cấp độ tùy chỉnh"
+        },
+        "delete_usage": "Đang được dùng bởi - mục công việc: {issues}, bản nháp: {drafts}.",
+        "delete_no_usage": "Không có mục công việc nào dùng loại này.",
+        "delete_no_candidates": "Không có loại đang hoạt động nào khác cùng cấp độ và cùng thiết lập epic để chuyển các mục công việc này sang. Hãy tạo hoặc kích hoạt một loại trước.",
+        "delete_usage_failed": "Không thể kiểm tra nơi loại này đang được dùng.",
+        "delete_migrate_to": "Chuyển chúng sang:"
       },
       "project": {
         "description": "Chọn quy trình và các loại mà mục công việc trong dự án này được dùng.",
         "process": "Quy trình",
         "scrum": "Scrum",
         "agile": "Agile",
-        "custom": "Tuỳ chỉnh",
+        "custom": "Tùy chỉnh",
         "enabled": "Dùng loại mục công việc trong dự án này",
         "assigned": "Đang dùng trong dự án",
         "available": "Các loại khác của không gian làm việc",
-        "assign": "Thêm",
-        "unassign": "Gỡ",
+        "assign": "Thêm vào dự án",
+        "unassign": "Gỡ khỏi dự án",
         "default_badge": "Mặc định",
-        "action_failed": "Không cập nhật được loại mục công việc của dự án."
-      }
+        "action_failed": "Không cập nhật được loại mục công việc của dự án.",
+        "confirm_process_title": "Chuyển sang {process}?",
+        "confirm_process_description": "Các loại của quy trình còn lại sẽ bị gỡ khỏi dự án này và loại mặc định sẽ thay đổi. Các mục công việc hiện có giữ nguyên loại trừ khi bạn chuyển đổi chúng.",
+        "confirm_process_button": "Chuyển quy trình",
+        "migrate_label": "Chuyển đổi các mục công việc hiện có sang loại tương ứng",
+        "process_blocked": "Số mục công việc đang dùng loại sẽ bị gỡ: {count}. Hãy chuyển đổi chúng để đổi quy trình.",
+        "process_conflict": "Loại đó thuộc quy trình còn lại. Hãy đổi quy trình của dự án trước.",
+        "disable_title": "Ngừng dùng loại mục công việc?",
+        "disable_description": "Trường loại và huy hiệu sẽ bị ẩn trong dự án này. Các mục công việc hiện có giữ nguyên loại.",
+        "unassign_title": "Gỡ {name} khỏi dự án này?",
+        "unassign_description": "Loại này vẫn còn trong không gian làm việc. Không thể gỡ khi vẫn còn mục công việc trong dự án này đang dùng loại đó.",
+        "default_hint": "Không thể gỡ loại mặc định. Hãy đặt loại khác làm mặc định trước."
+      },
+      "change_success": "Đã đổi loại mục công việc.",
+      "load_failed": "Không thể tải các loại mục công việc.",
+      "retry": "Thử lại",
+      "confirm": "Xác nhận"
     },
     "settings": {
       "description": "Tùy chỉnh và thêm thuộc tính riêng của bạn để điều chỉnh theo nhu cầu của nhóm.",
-      "cant_delete_default_message": "Không thể xóa loại hạng mục công việc này vì nó đang được liên kết với các hạng mục công việc hiện có.",
+      "cant_delete_default_message": "Không thể xóa loại mục công việc này vì nó đang được liên kết với các mục công việc hiện có.",
       "set_as_default": "Đặt làm mặc định",
       "cant_set_default_inactive_message": "Kích hoạt loại này trước khi đặt làm mặc định",
       "set_default_confirmation": {
-        "title": "Đặt làm loại hạng mục công việc mặc định",
-        "description": "Đặt {name} làm mặc định sẽ nhập nó vào tất cả các dự án trong không gian làm việc này. Tất cả hạng mục công việc mới sẽ sử dụng loại này theo mặc định.",
+        "title": "Đặt làm loại mục công việc mặc định",
+        "description": "Đặt {name} làm mặc định sẽ nhập nó vào tất cả các dự án trong không gian làm việc này. Tất cả mục công việc mới sẽ sử dụng loại này theo mặc định.",
         "confirm_button": "Đặt làm mặc định"
       },
       "properties": {

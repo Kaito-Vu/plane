@@ -36,10 +36,26 @@
         "low_contrast": "El color del icono tiene poco contraste con el fondo.",
         "delete_title": "Eliminar {name}",
         "delete_description": "Esta acción no se puede deshacer.",
-        "delete_in_use": "{count, plural, one {# elemento de trabajo usa} other {# elementos de trabajo usan}} este tipo. Muévalos a:",
         "migrate_placeholder": "Elija un tipo",
         "delete_failed": "No se pudo eliminar el tipo de elemento de trabajo.",
-        "save_failed": "No se pudo guardar el tipo de elemento de trabajo."
+        "save_failed": "No se pudo guardar el tipo de elemento de trabajo.",
+        "name_required": "El nombre es obligatorio.",
+        "description_label": "Descripción",
+        "seed_presets": "Añadir preajustes Scrum/Agile",
+        "seed_failed": "No se pudieron añadir los tipos predefinidos.",
+        "level_meaning": {
+          "0": "Subtarea",
+          "1": "Tarea",
+          "2": "Historia de usuario / Error",
+          "3": "Funcionalidad",
+          "4": "Epic",
+          "other": "nivel personalizado"
+        },
+        "delete_usage": "En uso por - elementos de trabajo: {issues}, borradores: {drafts}.",
+        "delete_no_usage": "Ningún elemento de trabajo usa este tipo.",
+        "delete_no_candidates": "No hay otro tipo activo con el mismo nivel y la misma configuración de Epic al que mover estos elementos de trabajo. Cree o active uno primero.",
+        "delete_usage_failed": "No se pudo comprobar dónde se usa este tipo.",
+        "delete_migrate_to": "Moverlos a:"
       },
       "project": {
         "description": "Elija un proceso y los tipos que pueden usar los elementos de trabajo de este proyecto.",
@@ -53,8 +69,23 @@
         "assign": "Añadir",
         "unassign": "Quitar",
         "default_badge": "Predeterminado",
-        "action_failed": "No se pudieron actualizar los tipos de elementos de trabajo del proyecto."
-      }
+        "action_failed": "No se pudieron actualizar los tipos de elementos de trabajo del proyecto.",
+        "confirm_process_title": "¿Cambiar a {process}?",
+        "confirm_process_description": "Los tipos del otro proceso se eliminan de este proyecto y cambia el tipo predeterminado. Los elementos de trabajo existentes conservan su tipo, a menos que los convierta.",
+        "confirm_process_button": "Cambiar proceso",
+        "migrate_label": "Convertir los elementos de trabajo existentes al tipo correspondiente",
+        "process_blocked": "Elementos de trabajo que usan tipos que se eliminarían: {count}. Conviértalos para cambiar.",
+        "process_conflict": "Ese tipo pertenece al otro proceso. Cambie primero el proceso del proyecto.",
+        "disable_title": "¿Dejar de usar tipos de elementos de trabajo?",
+        "disable_description": "El campo de tipo y las insignias se ocultan en este proyecto. Los elementos de trabajo existentes conservan su tipo.",
+        "unassign_title": "¿Quitar {name} de este proyecto?",
+        "unassign_description": "El tipo sigue disponible en el espacio de trabajo. No se puede quitar mientras haya elementos de trabajo de este proyecto que lo usen.",
+        "default_hint": "El tipo predeterminado no se puede quitar. Establezca primero otro tipo como predeterminado."
+      },
+      "change_success": "Tipo de elemento de trabajo cambiado.",
+      "load_failed": "No se pudieron cargar los tipos de elementos de trabajo.",
+      "retry": "Reintentar",
+      "confirm": "Confirmar"
     },
     "settings": {
       "description": "Personaliza y agrega tus propias propiedades para adaptarlo a las necesidades de tu equipo.",

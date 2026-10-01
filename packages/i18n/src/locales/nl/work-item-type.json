@@ -36,10 +36,26 @@
         "low_contrast": "De pictogramkleur heeft een laag contrast met de achtergrond.",
         "delete_title": "{name} verwijderen",
         "delete_description": "Dit kan niet ongedaan worden gemaakt.",
-        "delete_in_use": "{count, plural, one {# werkitem gebruikt} other {# werkitems gebruiken}} dit type. Verplaats ze naar:",
         "migrate_placeholder": "Kies een type",
         "delete_failed": "Het werkitemtype kon niet worden verwijderd.",
-        "save_failed": "Het werkitemtype kon niet worden opgeslagen."
+        "save_failed": "Het werkitemtype kon niet worden opgeslagen.",
+        "name_required": "Naam is verplicht.",
+        "description_label": "Beschrijving",
+        "seed_presets": "Scrum-/Agile-presets toevoegen",
+        "seed_failed": "Kan de presettypen niet toevoegen.",
+        "level_meaning": {
+          "0": "Subtaak",
+          "1": "Taak",
+          "2": "User Story / Bug",
+          "3": "Feature",
+          "4": "Epic",
+          "other": "aangepast niveau"
+        },
+        "delete_usage": "In gebruik door - werkitems: {issues}, concepten: {drafts}.",
+        "delete_no_usage": "Geen werkitems gebruiken dit type.",
+        "delete_no_candidates": "Er is geen ander actief type met hetzelfde niveau en dezelfde Epic-instelling waarnaar deze werkitems kunnen worden verplaatst. Maak er eerst een aan of activeer er een.",
+        "delete_usage_failed": "Kan niet controleren waar dit type wordt gebruikt.",
+        "delete_migrate_to": "Verplaats ze naar:"
       },
       "project": {
         "description": "Kies een proces en de typen die werkitems in dit project kunnen gebruiken.",
@@ -53,8 +69,23 @@
         "assign": "Toevoegen",
         "unassign": "Verwijderen",
         "default_badge": "Standaard",
-        "action_failed": "De werkitemtypen van het project konden niet worden bijgewerkt."
-      }
+        "action_failed": "De werkitemtypen van het project konden niet worden bijgewerkt.",
+        "confirm_process_title": "Overschakelen naar {process}?",
+        "confirm_process_description": "De typen van het andere proces worden uit dit project verwijderd en het standaardtype verandert. Bestaande werkitems behouden hun type, tenzij u ze converteert.",
+        "confirm_process_button": "Proces wijzigen",
+        "migrate_label": "Bestaande werkitems naar het bijpassende type converteren",
+        "process_blocked": "Werkitems met typen die zouden worden verwijderd: {count}. Converteer ze om over te schakelen.",
+        "process_conflict": "Dat type hoort bij het andere proces. Wijzig eerst het proces van het project.",
+        "disable_title": "Werkitemtypen niet meer gebruiken?",
+        "disable_description": "Het typeveld en de badges worden in dit project verborgen. Bestaande werkitems behouden hun type.",
+        "unassign_title": "{name} uit dit project verwijderen?",
+        "unassign_description": "Het type blijft beschikbaar in de werkruimte. Het kan niet worden verwijderd zolang werkitems in dit project het gebruiken.",
+        "default_hint": "Het standaardtype kan niet worden verwijderd. Stel eerst een ander type in als standaard."
+      },
+      "change_success": "Type werkitem gewijzigd.",
+      "load_failed": "Kan werkitemtypen niet laden.",
+      "retry": "Opnieuw proberen",
+      "confirm": "Bevestigen"
     },
     "settings": {
       "description": "Pas eigenschappen aan en voeg je eigen eigenschappen toe zodat ze aansluiten op de behoeften van je team.",
