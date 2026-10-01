@@ -72,6 +72,12 @@ services:
       - plane-mq
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/instances/', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   worker:
     build:
@@ -133,6 +139,8 @@ services:
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile.web
+    environment:
+      STATIC_RATE_LIMIT: "100000"
     restart: unless-stopped
     networks:
       - dev_env
@@ -143,6 +151,8 @@ services:
     build:
       context: .
       dockerfile: ./apps/admin/Dockerfile.admin
+    environment:
+      STATIC_RATE_LIMIT: "100000"
     restart: unless-stopped
     networks:
       - dev_env
@@ -153,6 +163,8 @@ services:
     build:
       context: .
       dockerfile: ./apps/space/Dockerfile.space
+    environment:
+      STATIC_RATE_LIMIT: "100000"
     restart: unless-stopped
     networks:
       - dev_env
@@ -193,12 +205,18 @@ services:
       BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
       SITE_ADDRESS: ":80"
     depends_on:
-      - web
-      - admin
-      - space
-      - live
-      - api
-      - plane-seaweedfs
+      web:
+        condition: service_started
+      admin:
+        condition: service_started
+      space:
+        condition: service_started
+      live:
+        condition: service_started
+      api:
+        condition: service_healthy
+      plane-seaweedfs:
+        condition: service_started
 
 volumes:
   redisdata:
