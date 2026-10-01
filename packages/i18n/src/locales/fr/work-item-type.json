@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Types d'éléments de travail",
     "label_lowercase": "types d'éléments de travail",
+    "ee": {
+      "field_label": "Type d'élément de travail",
+      "placeholder": "Type",
+      "disabled_suffix": "Désactivé",
+      "filter_label": "Type",
+      "change_failed": "Impossible de modifier le type d'élément de travail. Le type précédent a été conservé.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Fonctionnalité",
+        "bug": "Bug",
+        "task": "Tâche",
+        "sub_task": "Sous-tâche",
+        "product_backlog_item": "Élément du backlog produit",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "Une sous-tâche doit avoir un parent.",
+        "epic_no_parent": "Un epic ne peut pas avoir de parent.",
+        "parent_level": "Choisissez un type situé sous le niveau du parent.",
+        "subtask_parent": "Une sous-tâche ne peut se trouver que sous un élément de niveau tâche, bug ou story."
+      },
+      "workspace": {
+        "description": "Les types sont partagés par tous les projets de cet espace de travail. Les projets choisissent ceux qu'ils utilisent.",
+        "empty_title": "Aucun type d'élément de travail pour le moment",
+        "empty_description": "Choisissez Scrum ou Agile dans les paramètres d'un projet pour ajouter les types prédéfinis, ou créez votre propre type ici.",
+        "level": "Niveau",
+        "level_hint": "0–9. Un parent doit avoir un niveau supérieur à celui de son enfant ; 0 correspond à une sous-tâche.",
+        "is_epic": "Epic (ne peut pas avoir de parent)",
+        "icon": "Icône",
+        "background": "Arrière-plan",
+        "preset_badge": "Prédéfini",
+        "low_contrast": "La couleur de l'icône présente un faible contraste avec son arrière-plan.",
+        "delete_title": "Supprimer {name}",
+        "delete_description": "Cette action est irréversible.",
+        "delete_in_use": "{count, plural, one {# élément de travail utilise} many {# éléments de travail utilisent} other {# éléments de travail utilisent}} ce type. Déplacez-les vers :",
+        "migrate_placeholder": "Choisissez un type",
+        "delete_failed": "Impossible de supprimer le type d'élément de travail.",
+        "save_failed": "Impossible d'enregistrer le type d'élément de travail."
+      },
+      "project": {
+        "description": "Choisissez un processus et les types que les éléments de travail de ce projet peuvent utiliser.",
+        "process": "Processus",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Personnalisé",
+        "enabled": "Utiliser les types d'éléments de travail dans ce projet",
+        "assigned": "Utilisés dans ce projet",
+        "available": "Autres types de l'espace de travail",
+        "assign": "Ajouter",
+        "unassign": "Retirer",
+        "default_badge": "Par défaut",
+        "action_failed": "Impossible de mettre à jour les types d'éléments de travail du projet."
+      }
+    },
     "settings": {
       "description": "Personnalisez et ajoutez vos propres propriétés pour l’adapter aux besoins de votre équipe.",
       "cant_delete_default_message": "Ce type d'élément de travail ne peut pas être supprimé car il est défini comme le type par défaut pour ce projet.",

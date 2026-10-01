@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Arbeitsaufgabentypen",
     "label_lowercase": "arbeitsaufgabentypen",
+    "ee": {
+      "field_label": "Arbeitselementtyp",
+      "placeholder": "Typ",
+      "disabled_suffix": "Deaktiviert",
+      "filter_label": "Typ",
+      "change_failed": "Der Arbeitselementtyp konnte nicht geändert werden. Der vorherige Typ wurde beibehalten.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Feature",
+        "bug": "Fehler",
+        "task": "Aufgabe",
+        "sub_task": "Unteraufgabe",
+        "product_backlog_item": "Product-Backlog-Element",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "Eine Unteraufgabe benötigt ein übergeordnetes Element.",
+        "epic_no_parent": "Ein Epic kann kein übergeordnetes Element haben.",
+        "parent_level": "Wählen Sie einen Typ unterhalb der Ebene des übergeordneten Elements.",
+        "subtask_parent": "Eine Unteraufgabe kann nur unter einem Element der Ebene Aufgabe, Fehler oder Story stehen."
+      },
+      "workspace": {
+        "description": "Typen werden von allen Projekten in diesem Arbeitsbereich gemeinsam genutzt. Projekte wählen die Typen aus, die sie verwenden.",
+        "empty_title": "Noch keine Arbeitselementtypen",
+        "empty_description": "Wählen Sie in den Projekteinstellungen Scrum oder Agile, um die voreingestellten Typen hinzuzufügen, oder erstellen Sie hier einen eigenen Typ.",
+        "level": "Ebene",
+        "level_hint": "0–9. Ein übergeordnetes Element muss eine höhere Ebene als sein untergeordnetes haben; 0 ist eine Unteraufgabe.",
+        "is_epic": "Epic (kann kein übergeordnetes Element haben)",
+        "icon": "Symbol",
+        "background": "Hintergrund",
+        "preset_badge": "Voreinstellung",
+        "low_contrast": "Die Symbolfarbe hat einen geringen Kontrast zum Hintergrund.",
+        "delete_title": "{name} löschen",
+        "delete_description": "Diese Aktion kann nicht rückgängig gemacht werden.",
+        "delete_in_use": "{count, plural, one {# Arbeitselement verwendet} other {# Arbeitselemente verwenden}} diesen Typ. Verschieben Sie sie nach:",
+        "migrate_placeholder": "Typ auswählen",
+        "delete_failed": "Der Arbeitselementtyp konnte nicht gelöscht werden.",
+        "save_failed": "Der Arbeitselementtyp konnte nicht gespeichert werden."
+      },
+      "project": {
+        "description": "Wählen Sie einen Prozess und die Typen, die Arbeitselemente in diesem Projekt verwenden können.",
+        "process": "Prozess",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Benutzerdefiniert",
+        "enabled": "Arbeitselementtypen in diesem Projekt verwenden",
+        "assigned": "In diesem Projekt verwendet",
+        "available": "Weitere Typen des Arbeitsbereichs",
+        "assign": "Hinzufügen",
+        "unassign": "Entfernen",
+        "default_badge": "Standard",
+        "action_failed": "Die Arbeitselementtypen des Projekts konnten nicht aktualisiert werden."
+      }
+    },
     "settings": {
       "description": "Passen Sie eigene Eigenschaften an und fügen Sie sie hinzu, um sie an die Bedürfnisse Ihres Teams anzupassen.",
       "cant_delete_default_message": "Dieser Arbeitselementtyp kann nicht gelöscht werden, da er als Standard für dieses Projekt festgelegt ist.",

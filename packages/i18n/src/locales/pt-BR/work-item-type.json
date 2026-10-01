@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Tipos de Item de Trabalho",
     "label_lowercase": "tipos de item de trabalho",
+    "ee": {
+      "field_label": "Tipo de item de trabalho",
+      "placeholder": "Tipo",
+      "disabled_suffix": "Desativado",
+      "filter_label": "Tipo",
+      "change_failed": "Não foi possível alterar o tipo de item de trabalho. O tipo anterior foi mantido.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Funcionalidade",
+        "bug": "Bug",
+        "task": "Tarefa",
+        "sub_task": "Subtarefa",
+        "product_backlog_item": "Item do backlog do produto",
+        "user_story": "História de usuário"
+      },
+      "reason": {
+        "needs_parent": "Uma subtarefa precisa de um item pai.",
+        "epic_no_parent": "Um epic não pode ter um item pai.",
+        "parent_level": "Escolha um tipo abaixo do nível do item pai.",
+        "subtask_parent": "Uma subtarefa só pode ficar abaixo de um item de nível tarefa, bug ou história."
+      },
+      "workspace": {
+        "description": "Os tipos são compartilhados por todos os projetos deste espaço de trabalho. Cada projeto escolhe os que usa.",
+        "empty_title": "Ainda não há tipos de item de trabalho",
+        "empty_description": "Escolha Scrum ou Agile nas configurações de um projeto para adicionar os tipos predefinidos, ou crie seu próprio tipo aqui.",
+        "level": "Nível",
+        "level_hint": "0–9. Um item pai deve ter nível maior que o do item filho; 0 é uma subtarefa.",
+        "is_epic": "Epic (não pode ter item pai)",
+        "icon": "Ícone",
+        "background": "Fundo",
+        "preset_badge": "Predefinido",
+        "low_contrast": "A cor do ícone tem pouco contraste com o fundo.",
+        "delete_title": "Excluir {name}",
+        "delete_description": "Esta ação não pode ser desfeita.",
+        "delete_in_use": "{count, plural, one {# item de trabalho usa} many {# itens de trabalho usam} other {# itens de trabalho usam}} este tipo. Mova-os para:",
+        "migrate_placeholder": "Escolha um tipo",
+        "delete_failed": "Não foi possível excluir o tipo de item de trabalho.",
+        "save_failed": "Não foi possível salvar o tipo de item de trabalho."
+      },
+      "project": {
+        "description": "Escolha um processo e os tipos que os itens de trabalho deste projeto podem usar.",
+        "process": "Processo",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Personalizado",
+        "enabled": "Usar tipos de item de trabalho neste projeto",
+        "assigned": "Usados neste projeto",
+        "available": "Outros tipos do espaço de trabalho",
+        "assign": "Adicionar",
+        "unassign": "Remover",
+        "default_badge": "Padrão",
+        "action_failed": "Não foi possível atualizar os tipos de item de trabalho do projeto."
+      }
+    },
     "settings": {
       "description": "Personalize e adicione suas próprias propriedades para adaptar às necessidades da sua equipe.",
       "cant_delete_default_message": "Não é possível excluir este tipo de item de trabalho, pois ele está definido como o tipo padrão para este projeto.",

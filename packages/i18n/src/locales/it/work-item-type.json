@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Tipi di elemento di lavoro",
     "label_lowercase": "tipi di elementi di lavoro",
+    "ee": {
+      "field_label": "Tipo di elemento di lavoro",
+      "placeholder": "Tipo",
+      "disabled_suffix": "Disattivato",
+      "filter_label": "Tipo",
+      "change_failed": "Impossibile modificare il tipo di elemento di lavoro. È stato mantenuto il tipo precedente.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Funzionalità",
+        "bug": "Bug",
+        "task": "Attività",
+        "sub_task": "Sotto-attività",
+        "product_backlog_item": "Elemento del backlog di prodotto",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "Una sotto-attività richiede un elemento padre.",
+        "epic_no_parent": "Un epic non può avere un elemento padre.",
+        "parent_level": "Scegliere un tipo al di sotto del livello dell'elemento padre.",
+        "subtask_parent": "Una sotto-attività può trovarsi solo sotto un elemento di livello attività, bug o story."
+      },
+      "workspace": {
+        "description": "I tipi sono condivisi da tutti i progetti di questo spazio di lavoro. I progetti scelgono quelli che utilizzano.",
+        "empty_title": "Nessun tipo di elemento di lavoro",
+        "empty_description": "Scegliere Scrum o Agile nelle impostazioni di un progetto per aggiungere i tipi predefiniti, oppure creare qui un tipo personalizzato.",
+        "level": "Livello",
+        "level_hint": "0–9. Un elemento padre deve avere un livello superiore a quello del figlio; 0 è una sotto-attività.",
+        "is_epic": "Epic (non può avere un elemento padre)",
+        "icon": "Icona",
+        "background": "Sfondo",
+        "preset_badge": "Predefinito",
+        "low_contrast": "Il colore dell'icona ha uno scarso contrasto con lo sfondo.",
+        "delete_title": "Elimina {name}",
+        "delete_description": "Questa azione non può essere annullata.",
+        "delete_in_use": "{count, plural, one {# elemento di lavoro utilizza} many {# elementi di lavoro utilizzano} other {# elementi di lavoro utilizzano}} questo tipo. Spostarli in:",
+        "migrate_placeholder": "Scegliere un tipo",
+        "delete_failed": "Impossibile eliminare il tipo di elemento di lavoro.",
+        "save_failed": "Impossibile salvare il tipo di elemento di lavoro."
+      },
+      "project": {
+        "description": "Scegliere un processo e i tipi che gli elementi di lavoro di questo progetto possono utilizzare.",
+        "process": "Processo",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Personalizzato",
+        "enabled": "Usa i tipi di elemento di lavoro in questo progetto",
+        "assigned": "Utilizzati in questo progetto",
+        "available": "Altri tipi dello spazio di lavoro",
+        "assign": "Aggiungi",
+        "unassign": "Rimuovi",
+        "default_badge": "Predefinito",
+        "action_failed": "Impossibile aggiornare i tipi di elemento di lavoro del progetto."
+      }
+    },
     "settings": {
       "description": "Personalizza e aggiungi le tue proprietà per adattarle alle esigenze del tuo team.",
       "cant_delete_default_message": "Il tipo di elemento di lavoro non può essere eliminato perché è impostato come tipo predefinito per questo progetto.",

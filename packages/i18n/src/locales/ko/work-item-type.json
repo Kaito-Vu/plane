@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "워크 아이템 타입",
     "label_lowercase": "워크 아이템 타입",
+    "ee": {
+      "field_label": "워크 아이템 타입",
+      "placeholder": "타입",
+      "disabled_suffix": "비활성화됨",
+      "filter_label": "타입",
+      "change_failed": "워크 아이템 타입을 변경하지 못했습니다. 이전 타입이 유지되었습니다.",
+      "preset": {
+        "epic": "에픽",
+        "feature": "기능",
+        "bug": "버그",
+        "task": "작업",
+        "sub_task": "하위 작업",
+        "product_backlog_item": "프로덕트 백로그 아이템",
+        "user_story": "사용자 스토리"
+      },
+      "reason": {
+        "needs_parent": "하위 작업에는 상위 항목이 필요합니다.",
+        "epic_no_parent": "에픽에는 상위 항목을 지정할 수 없습니다.",
+        "parent_level": "상위 항목의 레벨보다 낮은 타입을 선택하세요.",
+        "subtask_parent": "하위 작업은 작업, 버그 또는 스토리 레벨 항목 아래에만 둘 수 있습니다."
+      },
+      "workspace": {
+        "description": "타입은 이 워크스페이스의 모든 프로젝트에서 공유됩니다. 각 프로젝트에서 사용할 타입을 선택합니다.",
+        "empty_title": "아직 워크 아이템 타입이 없습니다",
+        "empty_description": "프로젝트 설정에서 Scrum 또는 Agile을 선택하면 프리셋 타입이 추가됩니다. 여기에서 직접 타입을 만들 수도 있습니다.",
+        "level": "레벨",
+        "level_hint": "0–9. 상위 항목은 하위 항목보다 레벨이 높아야 합니다. 0은 하위 작업입니다.",
+        "is_epic": "에픽 (상위 항목 지정 불가)",
+        "icon": "아이콘",
+        "background": "배경",
+        "preset_badge": "프리셋",
+        "low_contrast": "아이콘 색상과 배경의 대비가 낮습니다.",
+        "delete_title": "{name} 삭제",
+        "delete_description": "이 작업은 취소할 수 없습니다.",
+        "delete_in_use": "{count, plural, one {#개의 워크 아이템이 이 타입을 사용 중입니다.} other {#개의 워크 아이템이 이 타입을 사용 중입니다.}} 다음으로 이동하세요:",
+        "migrate_placeholder": "타입 선택",
+        "delete_failed": "워크 아이템 타입을 삭제하지 못했습니다.",
+        "save_failed": "워크 아이템 타입을 저장하지 못했습니다."
+      },
+      "project": {
+        "description": "프로세스와 이 프로젝트의 워크 아이템이 사용할 수 있는 타입을 선택하세요.",
+        "process": "프로세스",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "사용자 정의",
+        "enabled": "이 프로젝트에서 워크 아이템 타입 사용",
+        "assigned": "이 프로젝트에서 사용 중",
+        "available": "기타 워크스페이스 타입",
+        "assign": "추가",
+        "unassign": "제거",
+        "default_badge": "기본값",
+        "action_failed": "프로젝트의 워크 아이템 타입을 업데이트하지 못했습니다."
+      }
+    },
     "settings": {
       "description": "팀의 요구에 맞게 자신만의 프로퍼티를 사용자 정의하고 추가하세요.",
       "cant_delete_default_message": "이 작업 항목 유형은 삭제할 수 없습니다. 이 프로젝트의 기본 작업 항목 유형으로 설정되어 있기 때문입니다.",

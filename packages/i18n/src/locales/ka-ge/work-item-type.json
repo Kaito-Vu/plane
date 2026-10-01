@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Work item Types",
     "label_lowercase": "work item types",
+    "ee": {
+      "field_label": "სამუშაო ერთეულის ტიპი",
+      "placeholder": "ტიპი",
+      "disabled_suffix": "გამორთული",
+      "filter_label": "ტიპი",
+      "change_failed": "სამუშაო ერთეულის ტიპის შეცვლა ვერ მოხერხდა. წინა ტიპი შენარჩუნდა.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Feature",
+        "bug": "Bug",
+        "task": "Task",
+        "sub_task": "Sub-task",
+        "product_backlog_item": "Product Backlog Item",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "ქვე-ამოცანას სჭირდება მშობელი.",
+        "epic_no_parent": "Epic-ს მშობელი ვერ ექნება.",
+        "parent_level": "აირჩიეთ ტიპი მშობლის დონეზე დაბლა.",
+        "subtask_parent": "ქვე-ამოცანა შეიძლება იყოს მხოლოდ ამოცანის, ბაგის ან სთორის დონის ელემენტის ქვეშ."
+      },
+      "workspace": {
+        "description": "ტიპები საერთოა ამ სამუშაო სივრცის ყველა პროექტისთვის. პროექტები თავად ირჩევენ გამოსაყენებელ ტიპებს.",
+        "empty_title": "სამუშაო ერთეულის ტიპები ჯერ არ არის",
+        "empty_description": "პროექტის პარამეტრებში აირჩიეთ Scrum ან Agile წინასწარ განსაზღვრული ტიპების დასამატებლად, ან შექმენით საკუთარი ტიპი აქ.",
+        "level": "დონე",
+        "level_hint": "0–9. მშობელს უნდა ჰქონდეს შვილზე მაღალი დონე; 0 არის ქვე-ამოცანა.",
+        "is_epic": "Epic (მშობელი ვერ ექნება)",
+        "icon": "ხატულა",
+        "background": "ფონი",
+        "preset_badge": "წინასწარ განსაზღვრული",
+        "low_contrast": "ხატულას ფერს ფონთან დაბალი კონტრასტი აქვს.",
+        "delete_title": "{name}-ის წაშლა",
+        "delete_description": "ამ მოქმედების გაუქმება შეუძლებელია.",
+        "delete_in_use": "{count, plural, one {# სამუშაო ერთეული იყენებს} other {# სამუშაო ერთეული იყენებს}} ამ ტიპს. გადაიტანეთ ისინი:",
+        "migrate_placeholder": "აირჩიეთ ტიპი",
+        "delete_failed": "სამუშაო ერთეულის ტიპის წაშლა ვერ მოხერხდა.",
+        "save_failed": "სამუშაო ერთეულის ტიპის შენახვა ვერ მოხერხდა."
+      },
+      "project": {
+        "description": "აირჩიეთ პროცესი და ტიპები, რომლებიც ამ პროექტის სამუშაო ერთეულებს შეუძლიათ გამოიყენონ.",
+        "process": "პროცესი",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "მორგებული",
+        "enabled": "სამუშაო ერთეულის ტიპების გამოყენება ამ პროექტში",
+        "assigned": "გამოიყენება ამ პროექტში",
+        "available": "სამუშაო სივრცის სხვა ტიპები",
+        "assign": "დამატება",
+        "unassign": "ამოშლა",
+        "default_badge": "ნაგულისხმევი",
+        "action_failed": "პროექტის სამუშაო ერთეულის ტიპების განახლება ვერ მოხერხდა."
+      }
+    },
     "settings": {
       "description": "Customize and add your own properties to tailor it to your team's needs.",
       "cant_delete_default_message": "This work item type cannot be deleted because it's set as the default for this project",

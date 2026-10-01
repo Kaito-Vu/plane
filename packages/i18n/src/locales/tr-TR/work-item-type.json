@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "İş Öğesi Tipleri",
     "label_lowercase": "iş öğesi tipleri",
+    "ee": {
+      "field_label": "İş öğesi tipi",
+      "placeholder": "Tip",
+      "disabled_suffix": "Devre dışı",
+      "filter_label": "Tip",
+      "change_failed": "İş öğesi tipi değiştirilemedi. Önceki tip korundu.",
+      "preset": {
+        "epic": "Epik",
+        "feature": "Özellik",
+        "bug": "Hata",
+        "task": "Görev",
+        "sub_task": "Alt görev",
+        "product_backlog_item": "Ürün Backlog Öğesi",
+        "user_story": "Kullanıcı Hikâyesi"
+      },
+      "reason": {
+        "needs_parent": "Bir alt görevin üst öğesi olmalıdır.",
+        "epic_no_parent": "Bir epiğin üst öğesi olamaz.",
+        "parent_level": "Üst öğenin seviyesinin altında bir tip seçin.",
+        "subtask_parent": "Bir alt görev yalnızca görev, hata veya hikâye seviyesindeki bir öğenin altında yer alabilir."
+      },
+      "workspace": {
+        "description": "Tipler bu çalışma alanındaki tüm projeler tarafından paylaşılır. Projeler kullandıklarını seçer.",
+        "empty_title": "Henüz iş öğesi tipi yok",
+        "empty_description": "Hazır tipleri eklemek için bir projenin ayarlarında Scrum veya Agile seçin ya da burada kendi tipinizi oluşturun.",
+        "level": "Seviye",
+        "level_hint": "0–9. Üst öğenin seviyesi alt öğesinden yüksek olmalıdır; 0 alt görevdir.",
+        "is_epic": "Epik (üst öğesi olamaz)",
+        "icon": "Simge",
+        "background": "Arka plan",
+        "preset_badge": "Hazır",
+        "low_contrast": "Simge renginin arka plana göre kontrastı düşük.",
+        "delete_title": "{name} öğesini sil",
+        "delete_description": "Bu işlem geri alınamaz.",
+        "delete_in_use": "{count, plural, one {# iş öğesi bu tipi kullanıyor.} other {# iş öğesi bu tipi kullanıyor.}} Bunları şuraya taşıyın:",
+        "migrate_placeholder": "Bir tip seçin",
+        "delete_failed": "İş öğesi tipi silinemedi.",
+        "save_failed": "İş öğesi tipi kaydedilemedi."
+      },
+      "project": {
+        "description": "Bir süreç ve bu projedeki iş öğelerinin kullanabileceği tipleri seçin.",
+        "process": "Süreç",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Özel",
+        "enabled": "Bu projede iş öğesi tiplerini kullan",
+        "assigned": "Bu projede kullanılan",
+        "available": "Diğer çalışma alanı tipleri",
+        "assign": "Ekle",
+        "unassign": "Kaldır",
+        "default_badge": "Varsayılan",
+        "action_failed": "Projenin iş öğesi tipleri güncellenemedi."
+      }
+    },
     "settings": {
       "description": "Ekibinizin ihtiyaçlarına göre özelleştirin ve kendi özelliklerinizi ekleyin.",
       "cant_delete_default_message": "Bu iş öğesi türü mevcut iş öğeleriyle bağlantılı olduğundan silinemez.",

@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Tipe Item Kerja",
     "label_lowercase": "tipe item kerja",
+    "ee": {
+      "field_label": "Tipe item kerja",
+      "placeholder": "Tipe",
+      "disabled_suffix": "Dinonaktifkan",
+      "filter_label": "Tipe",
+      "change_failed": "Tidak dapat mengubah tipe item kerja. Tipe sebelumnya dipertahankan.",
+      "preset": {
+        "epic": "Epik",
+        "feature": "Fitur",
+        "bug": "Bug",
+        "task": "Tugas",
+        "sub_task": "Sub-tugas",
+        "product_backlog_item": "Item Product Backlog",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "Sub-tugas memerlukan induk.",
+        "epic_no_parent": "Epik tidak dapat memiliki induk.",
+        "parent_level": "Pilih tipe di bawah level induk.",
+        "subtask_parent": "Sub-tugas hanya dapat berada di bawah item level tugas, bug, atau story."
+      },
+      "workspace": {
+        "description": "Tipe dibagikan oleh semua proyek di ruang kerja ini. Proyek memilih tipe yang digunakannya.",
+        "empty_title": "Belum ada tipe item kerja",
+        "empty_description": "Pilih Scrum atau Agile di pengaturan proyek untuk menambahkan tipe preset, atau buat tipe Anda sendiri di sini.",
+        "level": "Level",
+        "level_hint": "0–9. Induk harus memiliki level lebih tinggi daripada anaknya; 0 adalah sub-tugas.",
+        "is_epic": "Epik (tidak dapat memiliki induk)",
+        "icon": "Ikon",
+        "background": "Latar belakang",
+        "preset_badge": "Preset",
+        "low_contrast": "Warna ikon memiliki kontras rendah terhadap latar belakangnya.",
+        "delete_title": "Hapus {name}",
+        "delete_description": "Tindakan ini tidak dapat dibatalkan.",
+        "delete_in_use": "{count, plural, one {# item kerja menggunakan} other {# item kerja menggunakan}} tipe ini. Pindahkan ke:",
+        "migrate_placeholder": "Pilih tipe",
+        "delete_failed": "Tidak dapat menghapus tipe item kerja.",
+        "save_failed": "Tidak dapat menyimpan tipe item kerja."
+      },
+      "project": {
+        "description": "Pilih proses dan tipe yang dapat digunakan item kerja di proyek ini.",
+        "process": "Proses",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Kustom",
+        "enabled": "Gunakan tipe item kerja di proyek ini",
+        "assigned": "Digunakan di proyek ini",
+        "available": "Tipe ruang kerja lainnya",
+        "assign": "Tambah",
+        "unassign": "Hapus",
+        "default_badge": "Default",
+        "action_failed": "Tidak dapat memperbarui tipe item kerja proyek."
+      }
+    },
     "settings": {
       "description": "Sesuaikan dan tambahkan properti Anda sendiri untuk menyesuaikannya dengan kebutuhan tim Anda.",
       "cant_delete_default_message": "Jenis item kerja ini tidak dapat dihapus karena diatur sebagai default untuk proyek ini.",

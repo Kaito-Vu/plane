@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Typy Elementów Pracy",
     "label_lowercase": "typy elementów pracy",
+    "ee": {
+      "field_label": "Typ elementu pracy",
+      "placeholder": "Typ",
+      "disabled_suffix": "Wyłączony",
+      "filter_label": "Typ",
+      "change_failed": "Nie udało się zmienić typu elementu pracy. Zachowano poprzedni typ.",
+      "preset": {
+        "epic": "Epik",
+        "feature": "Funkcja",
+        "bug": "Błąd",
+        "task": "Zadanie",
+        "sub_task": "Podzadanie",
+        "product_backlog_item": "Element backlogu produktu",
+        "user_story": "Historyjka użytkownika"
+      },
+      "reason": {
+        "needs_parent": "Podzadanie wymaga elementu nadrzędnego.",
+        "epic_no_parent": "Epik nie może mieć elementu nadrzędnego.",
+        "parent_level": "Wybierz typ poniżej poziomu elementu nadrzędnego.",
+        "subtask_parent": "Podzadanie może znajdować się tylko pod elementem na poziomie zadania, błędu lub historyjki."
+      },
+      "workspace": {
+        "description": "Typy są współdzielone przez wszystkie projekty w tej przestrzeni roboczej. Projekty wybierają te, z których korzystają.",
+        "empty_title": "Brak typów elementów pracy",
+        "empty_description": "Wybierz Scrum lub Agile w ustawieniach projektu, aby dodać gotowe typy, albo utwórz tutaj własny typ.",
+        "level": "Poziom",
+        "level_hint": "0–9. Element nadrzędny musi mieć wyższy poziom niż jego element podrzędny; 0 oznacza podzadanie.",
+        "is_epic": "Epik (nie może mieć elementu nadrzędnego)",
+        "icon": "Ikona",
+        "background": "Tło",
+        "preset_badge": "Gotowy",
+        "low_contrast": "Kolor ikony ma niski kontrast względem tła.",
+        "delete_title": "Usuń {name}",
+        "delete_description": "Tej akcji nie można cofnąć.",
+        "delete_in_use": "{count, plural, one {# element pracy używa} few {# elementy pracy używają} many {# elementów pracy używa} other {# elementu pracy używa}} tego typu. Przenieś je do:",
+        "migrate_placeholder": "Wybierz typ",
+        "delete_failed": "Nie udało się usunąć typu elementu pracy.",
+        "save_failed": "Nie udało się zapisać typu elementu pracy."
+      },
+      "project": {
+        "description": "Wybierz proces oraz typy, z których mogą korzystać elementy pracy w tym projekcie.",
+        "process": "Proces",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Niestandardowy",
+        "enabled": "Używaj typów elementów pracy w tym projekcie",
+        "assigned": "Używane w tym projekcie",
+        "available": "Inne typy przestrzeni roboczej",
+        "assign": "Dodaj",
+        "unassign": "Usuń",
+        "default_badge": "Domyślny",
+        "action_failed": "Nie udało się zaktualizować typów elementów pracy projektu."
+      }
+    },
     "settings": {
       "description": "Dostosuj i dodaj własne właściwości, aby dopasować do potrzeb zespołu.",
       "cant_delete_default_message": "Nie można usunąć tego typu elementu pracy, ponieważ jest on ustawiony jako domyślny dla tego projektu.",

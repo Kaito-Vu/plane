@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Tipuri de Elemente de Lucru",
     "label_lowercase": "tipuri de elemente de lucru",
+    "ee": {
+      "field_label": "Tip de element de lucru",
+      "placeholder": "Tip",
+      "disabled_suffix": "Dezactivat",
+      "filter_label": "Tip",
+      "change_failed": "Tipul elementului de lucru nu a putut fi schimbat. Tipul anterior a fost păstrat.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Funcționalitate",
+        "bug": "Bug",
+        "task": "Sarcină",
+        "sub_task": "Subsarcină",
+        "product_backlog_item": "Element din backlogul produsului",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "O subsarcină are nevoie de un părinte.",
+        "epic_no_parent": "Un epic nu poate avea un părinte.",
+        "parent_level": "Alegeți un tip sub nivelul părintelui.",
+        "subtask_parent": "O subsarcină poate fi plasată doar sub un element de nivel sarcină, bug sau story."
+      },
+      "workspace": {
+        "description": "Tipurile sunt partajate de toate proiectele din acest spațiu de lucru. Proiectele le aleg pe cele pe care le folosesc.",
+        "empty_title": "Încă nu există tipuri de elemente de lucru",
+        "empty_description": "Alegeți Scrum sau Agile în setările unui proiect pentru a adăuga tipurile presetate sau creați aici propriul tip.",
+        "level": "Nivel",
+        "level_hint": "0–9. Un părinte trebuie să aibă un nivel mai mare decât copilul său; 0 este o subsarcină.",
+        "is_epic": "Epic (nu poate avea un părinte)",
+        "icon": "Pictogramă",
+        "background": "Fundal",
+        "preset_badge": "Presetat",
+        "low_contrast": "Culoarea pictogramei are un contrast scăzut față de fundal.",
+        "delete_title": "Ștergeți {name}",
+        "delete_description": "Această acțiune nu poate fi anulată.",
+        "delete_in_use": "{count, plural, one {# element de lucru folosește} few {# elemente de lucru folosesc} other {# de elemente de lucru folosesc}} acest tip. Mutați-le în:",
+        "migrate_placeholder": "Alegeți un tip",
+        "delete_failed": "Tipul elementului de lucru nu a putut fi șters.",
+        "save_failed": "Tipul elementului de lucru nu a putut fi salvat."
+      },
+      "project": {
+        "description": "Alegeți un proces și tipurile pe care le pot folosi elementele de lucru din acest proiect.",
+        "process": "Proces",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Personalizat",
+        "enabled": "Folosiți tipuri de elemente de lucru în acest proiect",
+        "assigned": "Folosite în acest proiect",
+        "available": "Alte tipuri din spațiul de lucru",
+        "assign": "Adăugați",
+        "unassign": "Eliminați",
+        "default_badge": "Implicit",
+        "action_failed": "Tipurile de elemente de lucru ale proiectului nu au putut fi actualizate."
+      }
+    },
     "settings": {
       "description": "Personalizează și adaugă propriile proprietăți pentru a le adapta nevoilor echipei tale.",
       "cant_delete_default_message": "Nu se poate șterge acest tip de element de lucru deoarece este setat ca tip implicit pentru acest proiect.",

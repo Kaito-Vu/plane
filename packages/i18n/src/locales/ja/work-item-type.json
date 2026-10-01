@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "作業項目タイプ",
     "label_lowercase": "作業項目タイプ",
+    "ee": {
+      "field_label": "作業項目タイプ",
+      "placeholder": "タイプ",
+      "disabled_suffix": "無効",
+      "filter_label": "タイプ",
+      "change_failed": "作業項目タイプを変更できませんでした。以前のタイプが維持されます。",
+      "preset": {
+        "epic": "エピック",
+        "feature": "フィーチャー",
+        "bug": "バグ",
+        "task": "タスク",
+        "sub_task": "サブタスク",
+        "product_backlog_item": "プロダクトバックログアイテム",
+        "user_story": "ユーザーストーリー"
+      },
+      "reason": {
+        "needs_parent": "サブタスクには親が必要です。",
+        "epic_no_parent": "エピックには親を設定できません。",
+        "parent_level": "親のレベルより下のタイプを選択してください。",
+        "subtask_parent": "サブタスクは、タスク、バグ、またはストーリーレベルの項目の下にのみ配置できます。"
+      },
+      "workspace": {
+        "description": "タイプはこのワークスペースのすべてのプロジェクトで共有されます。各プロジェクトが使用するタイプを選択します。",
+        "empty_title": "作業項目タイプはまだありません",
+        "empty_description": "プロジェクトの設定で Scrum または Agile を選択するとプリセットのタイプを追加できます。ここで独自のタイプを作成することもできます。",
+        "level": "レベル",
+        "level_hint": "0～9。親は子よりも高いレベルである必要があります。0 はサブタスクです。",
+        "is_epic": "エピック（親を設定できません）",
+        "icon": "アイコン",
+        "background": "背景",
+        "preset_badge": "プリセット",
+        "low_contrast": "アイコンの色が背景に対してコントラストが低くなっています。",
+        "delete_title": "{name} を削除",
+        "delete_description": "この操作は元に戻せません。",
+        "delete_in_use": "{count, plural, one {# 件の作業項目がこのタイプを使用しています。} other {# 件の作業項目がこのタイプを使用しています。}}次のタイプに移動してください：",
+        "migrate_placeholder": "タイプを選択",
+        "delete_failed": "作業項目タイプを削除できませんでした。",
+        "save_failed": "作業項目タイプを保存できませんでした。"
+      },
+      "project": {
+        "description": "プロセスと、このプロジェクトの作業項目で使用できるタイプを選択してください。",
+        "process": "プロセス",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "カスタム",
+        "enabled": "このプロジェクトで作業項目タイプを使用する",
+        "assigned": "このプロジェクトで使用中",
+        "available": "その他のワークスペースのタイプ",
+        "assign": "追加",
+        "unassign": "削除",
+        "default_badge": "デフォルト",
+        "action_failed": "プロジェクトの作業項目タイプを更新できませんでした。"
+      }
+    },
     "settings": {
       "description": "チームのニーズに合わせて独自のプロパティをカスタマイズして追加できます。",
       "cant_delete_default_message": "この作業項目タイプは削除できません。このプロジェクトのデフォルトの作業項目タイプとして設定されているためです。",

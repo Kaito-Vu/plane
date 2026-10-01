@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Typy pracovných položiek",
     "label_lowercase": "typy pracovných položiek",
+    "ee": {
+      "field_label": "Typ pracovnej položky",
+      "placeholder": "Typ",
+      "disabled_suffix": "Zakázané",
+      "filter_label": "Typ",
+      "change_failed": "Typ pracovnej položky sa nepodarilo zmeniť. Pôvodný typ zostal zachovaný.",
+      "preset": {
+        "epic": "Epik",
+        "feature": "Funkcia",
+        "bug": "Chyba",
+        "task": "Úloha",
+        "sub_task": "Podúloha",
+        "product_backlog_item": "Položka produktového backlogu",
+        "user_story": "Používateľský príbeh"
+      },
+      "reason": {
+        "needs_parent": "Podúloha potrebuje nadradenú položku.",
+        "epic_no_parent": "Epik nemôže mať nadradenú položku.",
+        "parent_level": "Vyberte typ pod úrovňou nadradenej položky.",
+        "subtask_parent": "Podúloha môže byť iba pod položkou na úrovni úlohy, chyby alebo príbehu."
+      },
+      "workspace": {
+        "description": "Typy zdieľajú všetky projekty v tomto pracovnom priestore. Projekty si vyberajú tie, ktoré používajú.",
+        "empty_title": "Zatiaľ žiadne typy pracovných položiek",
+        "empty_description": "V nastaveniach projektu vyberte Scrum alebo Agile na pridanie prednastavených typov, alebo si tu vytvorte vlastný typ.",
+        "level": "Úroveň",
+        "level_hint": "0–9. Nadradená položka musí mať vyššiu úroveň ako podradená; 0 je podúloha.",
+        "is_epic": "Epik (nemôže mať nadradenú položku)",
+        "icon": "Ikona",
+        "background": "Pozadie",
+        "preset_badge": "Prednastavený",
+        "low_contrast": "Farba ikony má nízky kontrast voči pozadiu.",
+        "delete_title": "Odstrániť {name}",
+        "delete_description": "Túto akciu nie je možné vrátiť späť.",
+        "delete_in_use": "{count, plural, one {Tento typ používa # pracovná položka.} few {Tento typ používajú # pracovné položky.} many {Tento typ používa # pracovnej položky.} other {Tento typ používa # pracovných položiek.}} Presuňte ich do:",
+        "migrate_placeholder": "Vyberte typ",
+        "delete_failed": "Typ pracovnej položky sa nepodarilo odstrániť.",
+        "save_failed": "Typ pracovnej položky sa nepodarilo uložiť."
+      },
+      "project": {
+        "description": "Vyberte proces a typy, ktoré môžu pracovné položky v tomto projekte používať.",
+        "process": "Proces",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Vlastný",
+        "enabled": "Používať typy pracovných položiek v tomto projekte",
+        "assigned": "Používané v tomto projekte",
+        "available": "Ďalšie typy pracovného priestoru",
+        "assign": "Pridať",
+        "unassign": "Odstrániť",
+        "default_badge": "Predvolený",
+        "action_failed": "Typy pracovných položiek projektu sa nepodarilo aktualizovať."
+      }
+    },
     "settings": {
       "description": "Prispôsobte a pridajte si vlastné vlastnosti, aby zodpovedali potrebám vášho tímu.",
       "cant_delete_default_message": "Tento typ pracovnej položky nie je možné odstrániť, pretože je nastavený ako predvolený pre tento projekt.",

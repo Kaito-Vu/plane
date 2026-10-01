@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Werkitemtypes",
     "label_lowercase": "werkitemtypes",
+    "ee": {
+      "field_label": "Werkitemtype",
+      "placeholder": "Type",
+      "disabled_suffix": "Uitgeschakeld",
+      "filter_label": "Type",
+      "change_failed": "Het werkitemtype kon niet worden gewijzigd. Het vorige type is behouden.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Feature",
+        "bug": "Bug",
+        "task": "Taak",
+        "sub_task": "Subtaak",
+        "product_backlog_item": "Product Backlog-item",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "Een subtaak heeft een bovenliggend item nodig.",
+        "epic_no_parent": "Een epic kan geen bovenliggend item hebben.",
+        "parent_level": "Kies een type onder het niveau van het bovenliggende item.",
+        "subtask_parent": "Een subtaak kan alleen onder een item van het niveau taak, bug of story staan."
+      },
+      "workspace": {
+        "description": "Typen worden gedeeld door alle projecten in deze werkruimte. Projecten kiezen de typen die ze gebruiken.",
+        "empty_title": "Nog geen werkitemtypen",
+        "empty_description": "Kies Scrum of Agile in de instellingen van een project om de vooraf ingestelde typen toe te voegen, of maak hier je eigen type.",
+        "level": "Niveau",
+        "level_hint": "0–9. Een bovenliggend item moet een hoger niveau hebben dan het onderliggende item; 0 is een subtaak.",
+        "is_epic": "Epic (kan geen bovenliggend item hebben)",
+        "icon": "Pictogram",
+        "background": "Achtergrond",
+        "preset_badge": "Voorinstelling",
+        "low_contrast": "De pictogramkleur heeft een laag contrast met de achtergrond.",
+        "delete_title": "{name} verwijderen",
+        "delete_description": "Dit kan niet ongedaan worden gemaakt.",
+        "delete_in_use": "{count, plural, one {# werkitem gebruikt} other {# werkitems gebruiken}} dit type. Verplaats ze naar:",
+        "migrate_placeholder": "Kies een type",
+        "delete_failed": "Het werkitemtype kon niet worden verwijderd.",
+        "save_failed": "Het werkitemtype kon niet worden opgeslagen."
+      },
+      "project": {
+        "description": "Kies een proces en de typen die werkitems in dit project kunnen gebruiken.",
+        "process": "Proces",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Aangepast",
+        "enabled": "Werkitemtypen gebruiken in dit project",
+        "assigned": "Gebruikt in dit project",
+        "available": "Andere typen van de werkruimte",
+        "assign": "Toevoegen",
+        "unassign": "Verwijderen",
+        "default_badge": "Standaard",
+        "action_failed": "De werkitemtypen van het project konden niet worden bijgewerkt."
+      }
+    },
     "settings": {
       "description": "Pas eigenschappen aan en voeg je eigen eigenschappen toe zodat ze aansluiten op de behoeften van je team.",
       "cant_delete_default_message": "Dit werkitemtype kan niet worden verwijderd omdat het is ingesteld als standaard voor dit project",

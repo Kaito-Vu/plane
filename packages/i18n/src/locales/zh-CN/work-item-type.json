@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "工作项类型",
     "label_lowercase": "工作项类型",
+    "ee": {
+      "field_label": "工作项类型",
+      "placeholder": "类型",
+      "disabled_suffix": "已禁用",
+      "filter_label": "类型",
+      "change_failed": "无法更改工作项类型，已保留之前的类型。",
+      "preset": {
+        "epic": "史诗",
+        "feature": "功能",
+        "bug": "缺陷",
+        "task": "任务",
+        "sub_task": "子任务",
+        "product_backlog_item": "产品待办项",
+        "user_story": "用户故事"
+      },
+      "reason": {
+        "needs_parent": "子任务需要一个父级。",
+        "epic_no_parent": "史诗不能有父级。",
+        "parent_level": "请选择低于父级层级的类型。",
+        "subtask_parent": "子任务只能位于任务、缺陷或故事层级的工作项之下。"
+      },
+      "workspace": {
+        "description": "类型由此工作区中的所有项目共享，各项目选择自己使用的类型。",
+        "empty_title": "暂无工作项类型",
+        "empty_description": "在项目设置中选择 Scrum 或 Agile 以添加预设类型，或在此创建您自己的类型。",
+        "level": "层级",
+        "level_hint": "0–9。父级的层级必须高于其子级；0 为子任务。",
+        "is_epic": "史诗（不能有父级）",
+        "icon": "图标",
+        "background": "背景",
+        "preset_badge": "预设",
+        "low_contrast": "图标颜色与背景的对比度较低。",
+        "delete_title": "删除 {name}",
+        "delete_description": "此操作无法撤销。",
+        "delete_in_use": "{count, plural, other {# 个工作项正在使用此类型。}}请将它们移至：",
+        "migrate_placeholder": "选择类型",
+        "delete_failed": "无法删除工作项类型。",
+        "save_failed": "无法保存工作项类型。"
+      },
+      "project": {
+        "description": "选择流程以及此项目中的工作项可使用的类型。",
+        "process": "流程",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "自定义",
+        "enabled": "在此项目中使用工作项类型",
+        "assigned": "此项目中使用的类型",
+        "available": "其他工作区类型",
+        "assign": "添加",
+        "unassign": "移除",
+        "default_badge": "默认",
+        "action_failed": "无法更新项目的工作项类型。"
+      }
+    },
     "settings": {
       "description": "自定义并添加您自己的属性以适应团队需求。",
       "cant_delete_default_message": "无法删除此工作项类型，因为它已设置为该项目的默认类型。",
