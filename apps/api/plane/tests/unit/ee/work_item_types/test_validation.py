@@ -65,9 +65,23 @@ def test_cycle_rejected(env):
     make, t, _ = env
     a = make("a", "feature")
     b = make("b", "product_backlog_item", parent=a)
+    # make the a-under-b edge pass the level rule so only the loop check can reject it
+    IssueType.objects.filter(pk=t["feature"].pk).update(level=1)
+    IssueType.objects.filter(pk=t["product_backlog_item"].pk).update(level=3)
     a.parent = b
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc:
         a.save()
+    assert "Parent would create a loop" in str(exc.value.detail)
+
+
+@pytest.mark.unit
+def test_clearing_type_keeps_old_type(env):
+    make, t, _ = env
+    pbi = make("pbi", "product_backlog_item")
+    pbi.type = None
+    pbi.save()
+    pbi.refresh_from_db()
+    assert pbi.type_id == t["product_backlog_item"].id
 
 
 @pytest.mark.unit
@@ -99,7 +113,11 @@ def test_type_from_other_workspace_rejected_with_generic_message(env, create_use
 
 
 @pytest.mark.unit
-def test_disabled_project_is_untouched(db, workspace, project, create_user):
-    state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
-    issue = Issue.objects.create(name="x", workspace=workspace, project=project, state=state, created_by=create_user)
-    assert issue.type_id is None
+def test_disabled_project_is_untouched(env, workspace, create_user):
+    from plane.db.models import Project
+
+    make, t, project = env
+    Project.objects.filter(pk=project.pk).update(is_issue_type_enabled=False)
+    project.refresh_from_db()
+    assert make("x").type_id is None
+    assert make("s", "sub_task").type_id == t["sub_task"].id  # rule-violating create succeeds

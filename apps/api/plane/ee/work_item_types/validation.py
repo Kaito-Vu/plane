@@ -33,6 +33,8 @@ def validate_issue_write(issue) -> None:
         return
     adding = issue._state.adding
     old = (None, None) if adding else Issue.objects.filter(pk=issue.pk).values_list("type_id", "parent_id").first()
+    if not adding and issue.type_id is None and old and old[0] is not None:
+        issue.type_id = old[0]  # None means "keep the old type", never a silent downgrade
     if adding and issue.type_id is None:
         issue.type_id = resolve_default_type_id(issue.project_id)
     new = (issue.type_id, issue.parent_id)
@@ -65,13 +67,16 @@ def validate_issue_write(issue) -> None:
         if message:
             raise ValidationError({"parent_id": message})
     if parent_changed and issue.parent_id and not adding:
-        parent_of = lambda i: Issue.objects.filter(pk=i).values_list("parent_id", flat=True).first()  # noqa: E731
+        def parent_of(i):
+            return Issue.objects.filter(pk=i).values_list("parent_id", flat=True).first()
+
+        # ponytail: check-then-write is not locked; TOCTOU on concurrent reparent
         if creates_cycle(issue.pk, issue.parent_id, parent_of):
             raise ValidationError({"parent_id": "Parent would create a loop"})
     if type_changed and not adding:
         conflicts = []
-        for sub in Issue.objects.filter(parent_id=issue.pk)[:200]:
-            sub_info = _type_info(sub.type_id, issue.project_id)
+        for sub in Issue.objects.filter(parent_id=issue.pk).select_related("type"):
+            sub_info = _info(sub.type) if sub.type_id else _type_info(None, issue.project_id)
             if sub_info and hierarchy_error(sub_info, child):
                 conflicts.append(sub.name)
         if conflicts:
