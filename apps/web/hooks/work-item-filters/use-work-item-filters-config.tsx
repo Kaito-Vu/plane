@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// oxlint-disable no-shadow -- pre-existing shadowing in this core file; keeps the seam diff minimal
 import { useCallback, useMemo } from "react";
 import {
   AtOutline,
@@ -19,6 +20,7 @@ import {
   StateOutline,
   UserOutline,
 } from "@makeplane/propel/icons";
+import { useWorkItemTypeFilterConfig } from "@/ee/work-item-types/filter-config";
 // plane imports
 import { Avatar } from "@makeplane/propel/components/avatar";
 import { Logo } from "@plane/blocks/emoji-icon-picker";
@@ -305,6 +307,14 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [isFilterEnabled, operatorConfigs]
   );
 
+  // work item type filter config (plugin)
+  const typeFilterConfig = useWorkItemTypeFilterConfig({
+    workspaceSlug,
+    projectId,
+    isEnabled: isFilterEnabled("type_id"),
+    operatorConfigs,
+  });
+
   // start date filter config
   const startDateFilterConfig = useMemo(
     () =>
@@ -369,6 +379,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       stateGroupFilterConfig,
       assigneeFilterConfig,
       priorityFilterConfig,
+      typeFilterConfig,
       projectFilterConfig,
       mentionFilterConfig,
       labelFilterConfig,
@@ -393,6 +404,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       created_by_id: createdByFilterConfig,
       subscriber_id: subscriberFilterConfig,
       priority: priorityFilterConfig,
+      type_id: typeFilterConfig,
       start_date: startDateFilterConfig,
       target_date: targetDateFilterConfig,
       created_at: createdAtFilterConfig,

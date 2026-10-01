@@ -43,3 +43,6 @@ apps/web/components/issues/issue-modal/components/default-properties.tsx
 apps/web/components/issues/parent-issues-list-modal.tsx
 apps/web/components/issues/issue-detail/issue-identifier.tsx
 apps/web/components/issues/issue-type-switcher.tsx
+packages/types/src/view-props.ts
+packages/constants/src/issue/filter.ts
+apps/web/hooks/work-item-filters/use-work-item-filters-config.tsx

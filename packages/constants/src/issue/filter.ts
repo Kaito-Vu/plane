@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+// oxlint-disable no-shadow -- pre-existing shadowing in this core file; keeps the seam diff minimal
 import type {
   IIssueFilterOptions,
   ILayoutDisplayFiltersOptions,
@@ -214,6 +215,7 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
       "mention_id",
       "created_by_id",
       "label_id",
+      "type_id",
       "start_date",
       "target_date",
     ],
