@@ -6,4 +6,9 @@
 
 import type { TExtendedLoginMediums } from "@plane/types";
 
-export const EXTENDED_LOGIN_MEDIUM_LABELS: Record<TExtendedLoginMediums, string> = {};
+export const EXTENDED_LOGIN_MEDIUM_LABELS: Record<TExtendedLoginMediums, string> = {
+  "sso-oidc": "OpenID Connect",
+  "sso-azure_ad": "Microsoft",
+  "sso-oauth2": "OAuth2",
+  "sso-saml": "SAML",
+};

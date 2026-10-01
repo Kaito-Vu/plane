@@ -4,6 +4,6 @@
  * See the LICENSE file for details.
  */
 
-export type TExtendedLoginMediums = never;
+export type TExtendedLoginMediums = "sso-oidc" | "sso-azure_ad" | "sso-oauth2" | "sso-saml";
 
 export type TExtendedInstanceAuthenticationModeKeys = never;
