@@ -10,9 +10,12 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.app.views.base import BaseAPIView
-from plane.db.models import Issue, IssueType, Workspace
+from plane.db.models import Issue, IssueType, Project, Workspace
 from plane.db.models.issue_type import ProjectIssueType
 from plane.ee.work_item_types.serializers import IssueTypeSerializer
+from plane.ee.work_item_types.presets import PROCESSES
+from plane.ee.work_item_types.seed import ProcessChangeBlocked, apply_process, project_process
+from plane.utils.permissions.project import ProjectAdminPermission, ProjectEntityPermission
 from plane.utils.permissions.workspace import WorkspaceOwnerPermission, WorkspaceViewerPermission
 
 
@@ -92,3 +95,84 @@ class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
             ProjectIssueType.objects.filter(issue_type=obj).delete()
             obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def _parse_uuid(raw):
+    try:
+        return uuid.UUID(raw) if isinstance(raw, str) else None
+    except ValueError:
+        return None
+
+
+_INVALID_TYPE = {"error": "Invalid work item type"}
+
+
+class _ProjectTypeBase(BaseAPIView):
+    def get_permissions(self):
+        cls = ProjectEntityPermission if self.request.method == "GET" else ProjectAdminPermission
+        return [cls()]
+
+    def project_obj(self, slug, project_id):
+        return get_object_or_404(Project, pk=project_id, workspace__slug=slug)
+
+
+class ProjectWorkItemTypesEndpoint(_ProjectTypeBase):
+    def get(self, request, slug, project_id):
+        project = self.project_obj(slug, project_id)
+        rows = ProjectIssueType.objects.filter(project=project).select_related("issue_type")
+        types = []
+        for r in sorted(rows, key=lambda r: (-r.issue_type.level, r.issue_type.name)):
+            data = IssueTypeSerializer(r.issue_type).data
+            data["is_project_default"] = r.is_default
+            types.append(data)
+        return Response(
+            {"process": project_process(project), "enabled": project.is_issue_type_enabled, "types": types}
+        )
+
+    def post(self, request, slug, project_id):
+        project = self.project_obj(slug, project_id)
+        process = request.data.get("process")
+        if not isinstance(process, str) or process not in PROCESSES:
+            return Response({"error": "process must be scrum or agile"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            apply_process(project, process)
+        except ProcessChangeBlocked as e:
+            return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
+        return Response({"process": process}, status=status.HTTP_200_OK)
+
+
+class ProjectWorkItemTypeAssignEndpoint(_ProjectTypeBase):
+    def post(self, request, slug, project_id):
+        project = self.project_obj(slug, project_id)
+        type_id = _parse_uuid(request.data.get("type_id"))
+        obj = type_id and IssueType.objects.filter(pk=type_id, workspace__slug=slug, is_active=True).first()
+        if not obj:
+            return Response(_INVALID_TYPE, status=status.HTTP_400_BAD_REQUEST)
+        ProjectIssueType.objects.get_or_create(project=project, issue_type=obj, defaults={"level": int(obj.level)})
+        return Response({"type_id": str(obj.id)}, status=status.HTTP_200_OK)
+
+    def delete(self, request, slug, project_id, type_id):
+        project = self.project_obj(slug, project_id)
+        row = get_object_or_404(ProjectIssueType, project=project, issue_type_id=type_id)
+        if row.is_default or Issue.objects.filter(project=project, type_id=type_id).exists():
+            return Response(
+                {"error": "Type is the project default or still used by work items"}, status=status.HTTP_409_CONFLICT
+            )
+        row.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProjectWorkItemTypeDefaultEndpoint(_ProjectTypeBase):
+    def post(self, request, slug, project_id):
+        project = self.project_obj(slug, project_id)
+        type_id = _parse_uuid(request.data.get("type_id"))
+        with transaction.atomic():
+            row = type_id and ProjectIssueType.objects.select_for_update().filter(
+                project=project, issue_type_id=type_id, issue_type__is_active=True
+            ).first()
+            if not row:
+                return Response(_INVALID_TYPE, status=status.HTTP_400_BAD_REQUEST)
+            ProjectIssueType.objects.filter(project=project, is_default=True).update(is_default=False)
+            row.is_default = True
+            row.save(update_fields=["is_default"])
+        return Response(status=status.HTTP_200_OK)
