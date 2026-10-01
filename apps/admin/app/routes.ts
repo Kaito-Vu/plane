@@ -6,6 +6,7 @@
 
 import { index, layout, route } from "@react-router/dev/routes";
 import type { RouteConfig } from "@react-router/dev/routes";
+import { eeRoutes } from "./ee/routes";
 
 export default [
   layout("./(all)/(home)/layout.tsx", [index("./(all)/(home)/page.tsx")]),
@@ -19,6 +20,7 @@ export default [
     route("authentication/gitlab", "./(all)/(dashboard)/authentication/gitlab/page.tsx"),
     route("authentication/google", "./(all)/(dashboard)/authentication/google/page.tsx"),
     route("authentication/gitea", "./(all)/(dashboard)/authentication/gitea/page.tsx"),
+    ...eeRoutes,
     route("ai", "./(all)/(dashboard)/ai/page.tsx"),
     route("image", "./(all)/(dashboard)/image/page.tsx"),
   ]),

@@ -5,6 +5,7 @@
  */
 
 import type { TInstanceAuthenticationModes } from "@plane/types";
+import { getExtendedAuthenticationModes } from "@/ee/sso/modes";
 import { getCoreAuthenticationModesMap } from "./core";
 import type { TGetAuthenticationModeProps } from "./types";
 
@@ -19,6 +20,7 @@ export const useAuthenticationModes = (props: TGetAuthenticationModeProps): TIns
     authenticationModes["github"],
     authenticationModes["gitlab"],
     authenticationModes["gitea"],
+    ...getExtendedAuthenticationModes(props),
   ];
 
   return availableAuthenticationModes;
