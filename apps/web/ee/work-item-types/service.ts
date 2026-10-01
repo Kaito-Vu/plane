@@ -6,7 +6,7 @@
 
 import type { AxiosResponse } from "axios";
 import { API_BASE_URL } from "@plane/constants";
-import type { TIssueType, TProjectWorkItemTypes, TWorkItemProcess } from "@plane/types";
+import type { TIssueType, TIssueTypeUsage, TProjectWorkItemTypes, TWorkItemProcess } from "@plane/types";
 import { APIService } from "@/services/api.service";
 
 // Errors are rethrown as the DRF body so callers can show it (same convention as the other web services).
@@ -33,10 +33,19 @@ export class WorkItemTypeService extends APIService {
   remove = (slug: string, id: string, migrateTo?: string): Promise<void> =>
     unwrap(this.delete(`${this.base(slug)}${id}/`, undefined, { params: migrateTo ? { migrate_to: migrateTo } : {} }));
 
+  /** Workspace admin: seed the Scrum + Agile presets (idempotent), returns the full list. */
+  seed = (slug: string): Promise<TIssueType[]> => unwrap(this.post(`${this.base(slug)}seed/`, {}));
+  usage = (slug: string, id: string): Promise<TIssueTypeUsage> => unwrap(this.get(`${this.base(slug)}${id}/usage/`));
+
   getProject = (slug: string, projectId: string): Promise<TProjectWorkItemTypes> =>
     unwrap(this.get(this.projectBase(slug, projectId)));
-  setProcess = (slug: string, projectId: string, process: TWorkItemProcess): Promise<{ process: TWorkItemProcess }> =>
-    unwrap(this.post(this.projectBase(slug, projectId), { process }));
+  setProcess = (
+    slug: string,
+    projectId: string,
+    process: TWorkItemProcess,
+    migrate?: boolean
+  ): Promise<{ process: TWorkItemProcess }> =>
+    unwrap(this.post(this.projectBase(slug, projectId), migrate ? { process, migrate } : { process }));
   assign = (slug: string, projectId: string, typeId: string): Promise<{ type_id: string }> =>
     unwrap(this.post(`${this.projectBase(slug, projectId)}assign/`, { type_id: typeId }));
   unassign = (slug: string, projectId: string, typeId: string): Promise<void> =>

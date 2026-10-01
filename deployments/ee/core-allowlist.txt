@@ -36,9 +36,11 @@ apps/api/plane/utils/filters/filterset.py
 apps/web/package.json
 pnpm-lock.yaml
 packages/types/src/work-item-types.ts
+packages/types/src/project/projects.ts
 packages/types/src/index.ts
 packages/i18n/src/locales/*/work-item-type.json
 apps/web/components/issues/issue-modal/provider.tsx
+apps/web/components/issues/issue-modal/form.tsx
 apps/web/components/issues/issue-modal/components/default-properties.tsx
 apps/web/components/issues/parent-issues-list-modal.tsx
 apps/web/components/issues/issue-detail/issue-identifier.tsx
@@ -52,3 +54,4 @@ packages/constants/src/settings/workspace.ts
 apps/web/components/settings/workspace/sidebar/item-icon.tsx
 packages/constants/src/settings/project.ts
 apps/web/components/settings/project/sidebar/item-icon.tsx
+apps/api/plane/app/views/search/issue.py

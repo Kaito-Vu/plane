@@ -8,7 +8,12 @@ import { describe, expect, it } from "vitest";
 import type { TProjectIssueType } from "@plane/types";
 import {
   defaultTypeId,
+  contrastRatio,
   firstErrorMessage,
+  isLowContrast,
+  levelMeaningKey,
+  resolveParentTypeId,
+  typeSelectMode,
   hierarchyReason,
   initialTypeId,
   presetLabelKey,
@@ -131,8 +136,37 @@ describe("defaults", () => {
 
 describe("labels and errors", () => {
   it("presetLabelKey only for presets", () => {
-    expect(presetLabelKey(EPIC)).toBe("work_item_types.ee.preset.epic");
+    expect(presetLabelKey({ ...EPIC, name: "Epic" })).toBe("work_item_types.ee.preset.epic");
+    expect(presetLabelKey({ ...STORY, name: "User Story" })).toBe("work_item_types.ee.preset.user_story");
+    // renamed by an admin: show the admin's name, not the translation
+    expect(presetLabelKey({ ...EPIC, name: "Initiative" })).toBeNull();
     expect(presetLabelKey(mkType({ id: "spike", level: 1, is_preset: false, external_id: null }))).toBeNull();
+  });
+  it("typeSelectMode is edit only for an existing non-draft issue", () => {
+    expect(typeSelectMode(undefined, false)).toBe("create");
+    expect(typeSelectMode("i1", true)).toBe("create");
+    expect(typeSelectMode("i1", false)).toBe("edit");
+  });
+  it("resolveParentTypeId keeps null (legacy) and unknown (undefined) apart", () => {
+    expect(resolveParentTypeId(null, "x")).toBeNull();
+    expect(resolveParentTypeId(undefined, "x")).toBe("x");
+    expect(resolveParentTypeId("", undefined)).toBeUndefined();
+    expect(resolveParentTypeId("t1", "x")).toBe("t1");
+  });
+  it("contrast ratio follows WCAG", () => {
+    expect(contrastRatio("#000000", "#FFFFFF")).toBeCloseTo(21, 0);
+    expect(contrastRatio("#FFFFFF", "#FFFFFF")).toBeCloseTo(1, 5);
+    expect(contrastRatio("red", "#FFFFFF")).toBeNull();
+    expect(isLowContrast("#CCCCCC", "#FFFFFF")).toBe(true);
+    expect(isLowContrast("#1D4ED8", "#FFFFFF")).toBe(false);
+    expect(isLowContrast("nope", "#FFFFFF")).toBe(false);
+  });
+  it("levelMeaningKey covers 0..4 else generic", () => {
+    expect(levelMeaningKey(0)).toBe("work_item_types.ee.workspace.level_meaning.0");
+    expect(levelMeaningKey(7)).toBe("work_item_types.ee.workspace.level_meaning.other");
+  });
+  it("firstErrorMessage reads nested bodies", () => {
+    expect(firstErrorMessage({ error: { parent_id: "bad parent" } })).toBe("bad parent");
   });
   it("firstErrorMessage reads DRF bodies", () => {
     expect(firstErrorMessage({ type_id: ["Invalid work item type"] })).toBe("Invalid work item type");

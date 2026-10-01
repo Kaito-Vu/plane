@@ -188,8 +188,8 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   useEffect(() => {
     const issueTypeId = watch("type_id");
 
-    // if issue type id is present or project not available, return
-    if (issueTypeId || !projectId) return;
+    // if issue type id is present or project not available (or an existing work item: never auto-assign a type), return
+    if (issueTypeId || !projectId || data?.id) return;
 
     // get issue type id on project change
     const issueTypeIdOnProjectChange = getIssueTypeIdOnProjectChange(projectId);

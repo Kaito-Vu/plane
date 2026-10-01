@@ -75,14 +75,20 @@ export class WorkItemTypeStore {
     });
     return updated;
   };
+  seedPresets = async (slug: string) => {
+    const types = await this.service.seed(slug);
+    this.setWorkspace(slug, types);
+    return types;
+  };
+  getUsage = (slug: string, id: string) => this.service.usage(slug, id);
   deleteType = async (slug: string, id: string, migrateTo?: string) => {
     await this.service.remove(slug, id, migrateTo);
     await this.fetchWorkspace(slug);
   };
 
   // project (project admin) — always refetch: the server owns process/default/enabled derivation
-  setProcess = async (slug: string, projectId: string, process: TWorkItemProcess) => {
-    await this.service.setProcess(slug, projectId, process);
+  setProcess = async (slug: string, projectId: string, process: TWorkItemProcess, migrate?: boolean) => {
+    await this.service.setProcess(slug, projectId, process, migrate);
     return this.fetchProject(slug, projectId);
   };
   assign = async (slug: string, projectId: string, typeId: string) => {

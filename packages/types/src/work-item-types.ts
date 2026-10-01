@@ -34,5 +34,12 @@ export type TProjectWorkItemTypes = {
   types: TProjectIssueType[];
 };
 
-/** 409 body of DELETE work-item-types/<id>/ */
-export type TIssueTypeConflict = { error: string; count?: number };
+/** 409 body of DELETE work-item-types/<id>/ and of the project process / assign endpoints. */
+export type TIssueTypeConflict = {
+  error: string;
+  code?: "process_change_blocked" | "process_conflict";
+  count?: number;
+};
+
+/** GET work-item-types/<id>/usage/ */
+export type TIssueTypeUsage = { issues: number; drafts: number; count: number; projects: string[] };

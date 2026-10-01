@@ -170,7 +170,8 @@ export interface ISearchIssueResponse {
   state__group: TStateGroups;
   state__name: string;
   workspace__slug: string;
-  type_id: string;
+  /** undefined = server did not send it (unknown); null = legacy issue (project default). */
+  type_id?: string | null;
 }
 
 export type TPartialProject = IPartialProject;

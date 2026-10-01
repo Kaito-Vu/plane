@@ -39,6 +39,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // plugin
 import { IssueTypeFormField } from "@/ee/work-item-types/components/issue-type-form-field";
 import { useParentIssueFilter } from "@/ee/work-item-types/hooks";
+import { resolveParentTypeId } from "@/ee/work-item-types/rules";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 
 type TIssueDefaultPropertiesProps = {
@@ -102,8 +103,12 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
         hasParent={!!parentId}
         // preloaded parents may carry an empty type_id: fall back to the store
         parentTypeId={
-          selectedParentIssue ? selectedParentIssue.type_id || getIssueById(selectedParentIssue.id)?.type_id : undefined
+          selectedParentIssue
+            ? resolveParentTypeId(selectedParentIssue.type_id, getIssueById(selectedParentIssue.id)?.type_id)
+            : undefined
         }
+        issueId={id}
+        isDraft={isDraft}
         onUserChange={handleFormChange}
       />
       <Controller
