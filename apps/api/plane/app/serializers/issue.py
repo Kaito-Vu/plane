@@ -89,7 +89,11 @@ class IssueCreateSerializer(BaseSerializer):
         source="parent", queryset=Issue.objects.all(), required=False, allow_null=True
     )
     type_id = serializers.PrimaryKeyRelatedField(
-        source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
+        source="type",
+        queryset=IssueType.objects.all(),
+        required=False,
+        allow_null=True,
+        error_messages={"does_not_exist": "Invalid work item type"},
     )
     label_ids = serializers.ListField(
         child=serializers.PrimaryKeyRelatedField(queryset=Label.objects.all()),

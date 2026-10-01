@@ -51,7 +51,7 @@ def validate_issue_write(issue) -> None:
             deleted_at__isnull=True,
         ).exists()
         if not allowed:
-            raise ValidationError({"type_id": "Invalid work item type"})
+            raise ValidationError({"type_id": ["Invalid work item type"]})
 
     child = _type_info(issue.type_id, issue.project_id)
     if child is None:

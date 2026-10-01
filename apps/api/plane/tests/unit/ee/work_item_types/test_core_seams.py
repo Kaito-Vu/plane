@@ -97,3 +97,49 @@ def test_public_api_rejects_type_not_in_project(db, workspace, project, env):
     other_ws_type = IssueType.objects.create(workspace=workspace, name="Loose", level=0)
     bad = IssueSerializer(data={"name": "x", "type_id": str(other_ws_type.id)}, context={"project_id": project.id})
     assert not bad.is_valid()
+
+
+@pytest.mark.contract
+def test_sub_issue_bulk_is_all_or_nothing(session_client, workspace, project, env, create_user):
+    state, t = env
+    mk = lambda n, ty: Issue.objects.create(  # noqa: E731
+        name=n, workspace=workspace, project=project, state=state, type=ty, created_by=create_user
+    )
+    parent, good, epic = mk("p", t["product_backlog_item"]), mk("g", t["task"]), mk("e", t["epic"])
+    r = session_client.post(
+        issues_url(workspace, project, f"{parent.id}/sub-issues/"),
+        {"sub_issue_ids": [str(good.id), str(epic.id)]},
+        format="json",
+    )
+    assert r.status_code == 400
+    good.refresh_from_db()
+    epic.refresh_from_db()
+    assert good.parent_id is None and epic.parent_id is None
+
+
+@pytest.mark.contract
+def test_public_api_error_message_and_null_type(db, workspace, project, env):
+    from plane.api.serializers.issue import IssueSerializer
+
+    loose = IssueType.objects.create(workspace=workspace, name="Loose2", level=0)
+    bad = IssueSerializer(data={"name": "x", "type_id": str(loose.id)}, context={"project_id": project.id})
+    assert not bad.is_valid()
+    assert "Invalid work item type" in str(bad.errors)
+    none = IssueSerializer(data={"name": "x", "type_id": None}, context={"project_id": project.id})
+    assert none.is_valid(), none.errors
+
+
+@pytest.mark.contract
+def test_foreign_and_unknown_type_same_error(session_client, workspace, project, env, create_user):
+    import uuid
+
+    from plane.db.models import Workspace
+
+    other = Workspace.objects.create(name="O2", owner=create_user, slug="other2")
+    foreign = IssueType.objects.create(workspace=other, name="F", level=2)
+    bodies = []
+    for tid in (foreign.id, uuid.uuid4()):
+        r = session_client.post(issues_url(workspace, project), {"name": "x", "type_id": str(tid)}, format="json")
+        assert r.status_code == 400
+        bodies.append(r.json())
+    assert bodies[0] == bodies[1]
