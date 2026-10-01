@@ -41,3 +41,5 @@ packages/i18n/src/locales/*/work-item-type.json
 apps/web/components/issues/issue-modal/provider.tsx
 apps/web/components/issues/issue-modal/components/default-properties.tsx
 apps/web/components/issues/parent-issues-list-modal.tsx
+apps/web/components/issues/issue-detail/issue-identifier.tsx
+apps/web/components/issues/issue-type-switcher.tsx
