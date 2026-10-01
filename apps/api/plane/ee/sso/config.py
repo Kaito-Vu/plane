@@ -16,7 +16,7 @@ OAUTH_FIELDS = ["CLIENT_ID", "CLIENT_SECRET", "SCOPE"]
 ENCRYPTED_FIELDS = {"CLIENT_SECRET"}
 
 # Every provider also has ENABLED and LABEL (see BASE_FIELDS). `fields` are the provider-specific
-# extras; `required` must all be non-empty for the provider to count as configured. Phase 2 adds "saml".
+# extras; `required` must all be non-empty for the provider to count as configured.
 PROVIDERS = {
     "oidc": {
         "label": "OpenID Connect",
@@ -35,6 +35,21 @@ PROVIDERS = {
         "protocol": "oauth2",
         "fields": [*OAUTH_FIELDS, "AUTH_URL", "TOKEN_URL", "USERINFO_URL", "CALLBACK_URL", "ALLOW_SIGNUP"],
         "required": ["CLIENT_ID", "CLIENT_SECRET", "AUTH_URL", "TOKEN_URL", "USERINFO_URL"],
+    },
+    "saml": {
+        "label": "SAML",
+        "protocol": "saml",
+        "fields": [
+            "IDP_ENTITY_ID",
+            "IDP_SSO_URL",
+            "IDP_X509CERT",
+            "SP_ENTITY_ID",
+            "ATTR_FIRST_NAME",
+            "ATTR_LAST_NAME",
+            "CALLBACK_URL",
+            "ALLOW_SIGNUP",
+        ],
+        "required": ["IDP_ENTITY_ID", "IDP_SSO_URL", "IDP_X509CERT"],
     },
 }
 PROVIDER_IDS = tuple(PROVIDERS)

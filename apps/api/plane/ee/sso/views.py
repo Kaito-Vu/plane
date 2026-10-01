@@ -16,6 +16,7 @@ from plane.authentication.utils.user_auth_workflow import post_user_auth_workflo
 from plane.ee.sso.adapter import SsoOauthProvider
 from plane.ee.sso.config import list_enabled_providers
 from plane.ee.sso.flow import complete_login, provider_error, redirect_error
+from plane.ee.sso.saml_views import saml_start
 from plane.license.models import Instance
 from plane.utils.path_validator import validate_next_path
 
@@ -43,6 +44,8 @@ class SsoInitiateEndpoint(View):
                 ),
                 next_path,
             )
+        if provider_id == "saml":
+            return saml_start(request, host, next_path)
         try:
             state, nonce = uuid.uuid4().hex, secrets.token_urlsafe(24)
             verifier = secrets.token_urlsafe(48)

@@ -4,10 +4,13 @@
 
 from django.urls import path
 
+from .saml_views import SamlAcsEndpoint, SamlMetadataEndpoint
 from .views import SsoCallbackEndpoint, SsoInitiateEndpoint, SsoProvidersEndpoint
 
 urlpatterns = [
     path("providers/", SsoProvidersEndpoint.as_view(), name="ee-sso-providers"),
+    path("saml/acs/", SamlAcsEndpoint.as_view(), name="ee-sso-saml-acs"),
+    path("saml/metadata/", SamlMetadataEndpoint.as_view(), name="ee-sso-saml-metadata"),
     path("<str:provider_id>/", SsoInitiateEndpoint.as_view(), name="ee-sso-initiate"),
     path("<str:provider_id>/callback/", SsoCallbackEndpoint.as_view(), name="ee-sso-callback"),
 ]
