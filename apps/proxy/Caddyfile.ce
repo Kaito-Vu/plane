@@ -52,6 +52,6 @@
 	}
 }
 
-{$SITE_ADDRESS} {
+{$SITE_ADDRESS::80} {
 	import plane_proxy
 }
