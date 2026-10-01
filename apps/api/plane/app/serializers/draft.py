@@ -77,6 +77,12 @@ class DraftIssueCreateSerializer(BaseSerializer):
         return data
 
     def validate(self, attrs):
+        issue_type = attrs.get("type")
+        if issue_type is not None and issue_type.workspace_id != (
+            self.context.get("workspace_id") or (self.instance and self.instance.workspace_id)
+        ):
+            raise serializers.ValidationError({"type_id": ["Invalid work item type"]})
+
         if (
             attrs.get("start_date", None) is not None
             and attrs.get("target_date", None) is not None

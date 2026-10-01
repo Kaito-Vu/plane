@@ -73,6 +73,10 @@ def validate_issue_write(issue) -> None:
         # ponytail: check-then-write is not locked; TOCTOU on concurrent reparent
         if creates_cycle(issue.pk, issue.parent_id, parent_of):
             raise ValidationError({"parent_id": "Parent would create a loop"})
+    if type_changed and not adding and old[0] is not None and not child.is_epic:
+        old_type = IssueType.objects.filter(pk=old[0]).first()
+        if old_type and old_type.is_epic and Issue.objects.filter(parent_id=issue.pk).exists():
+            raise ValidationError({"type_id": "An epic with sub-items cannot change to a non-epic type"})
     if type_changed and not adding:
         conflicts = []
         for sub in Issue.objects.filter(parent_id=issue.pk).select_related("type"):

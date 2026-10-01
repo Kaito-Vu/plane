@@ -143,3 +143,58 @@ def test_foreign_and_unknown_type_same_error(session_client, workspace, project,
         assert r.status_code == 400
         bodies.append(r.json())
     assert bodies[0] == bodies[1]
+
+
+GENERIC = {"type_id": ["Invalid work item type"]}
+
+
+@pytest.mark.contract
+def test_foreign_type_rejected_when_feature_off_issue_and_draft(session_client, workspace, project, create_user):
+    from plane.db.models import DraftIssue, Workspace
+
+    other = Workspace.objects.create(name="O", owner=create_user, slug="other")
+    foreign = IssueType.objects.create(workspace=other, name="F", level=2)
+    assert not project.is_issue_type_enabled
+    r = session_client.post(issues_url(workspace, project), {"name": "x", "type_id": str(foreign.id)}, format="json")
+    assert r.status_code == 400 and r.json() == GENERIC
+    assert not Issue.objects.filter(name="x").exists()
+    r = session_client.post(
+        f"/api/workspaces/{workspace.slug}/draft-issues/",
+        {"name": "d", "project_id": str(project.id), "type_id": str(foreign.id)},
+        format="json",
+    )
+    assert r.status_code == 400 and r.json() == GENERIC
+    assert not DraftIssue.objects.filter(name="d").exists()
+
+
+@pytest.mark.contract
+def test_draft_to_issue_carries_type(session_client, workspace, project, env, create_user):
+    from plane.db.models import DraftIssue, Workspace
+
+    state, t = env
+    draft = DraftIssue.objects.create(name="d", workspace=workspace, project=project, created_by=create_user)
+    DraftIssue.objects.filter(pk=draft.pk).update(created_by=create_user)
+    url = f"/api/workspaces/{workspace.slug}/draft-to-issue/{draft.id}/"
+    other = Workspace.objects.create(name="O", owner=create_user, slug="other")
+    foreign = IssueType.objects.create(workspace=other, name="F", level=2)
+    r = session_client.post(url, {"name": "d", "type_id": str(foreign.id)}, format="json")
+    assert r.status_code == 400 and r.json() == GENERIC
+    r = session_client.post(url, {"name": "d", "type_id": str(t["bug"].id)}, format="json")
+    assert r.status_code == 201, r.content
+    assert Issue.objects.get(pk=r.json()["id"]).type_id == t["bug"].id
+
+
+@pytest.mark.contract
+def test_epic_with_children_cannot_become_non_epic(session_client, workspace, project, env):
+    state, t = env
+    epic = session_client.post(issues_url(workspace, project), {"name": "e", "type_id": str(t["epic"].id)}, format="json").json()
+    lone = session_client.post(issues_url(workspace, project), {"name": "l", "type_id": str(t["epic"].id)}, format="json").json()
+    r = session_client.post(
+        issues_url(workspace, project), {"name": "f", "type_id": str(t["feature"].id), "parent_id": epic["id"]}, format="json"
+    )
+    assert r.status_code == 201, r.content
+    r = session_client.patch(issues_url(workspace, project, f"{epic['id']}/"), {"type_id": str(t["bug"].id)}, format="json")
+    assert r.status_code == 400
+    assert "epic with sub-items" in str(r.json())
+    r = session_client.patch(issues_url(workspace, project, f"{lone['id']}/"), {"type_id": str(t["bug"].id)}, format="json")
+    assert r.status_code == 204, r.content

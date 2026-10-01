@@ -82,6 +82,7 @@ def test_delete_in_use_requires_migrate_to(session_client, workspace, project, s
     custom = IssueType.objects.create(workspace=workspace, name="Spike", level=1)
     state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
     issue = Issue.objects.create(name="i", workspace=workspace, project=project, state=state, type=custom, created_by=create_user)
+    ProjectIssueType.objects.create(project=project, issue_type=seeded["task"], level=1)
     url = f"{base(workspace)}{custom.id}/"
     r = session_client.delete(url)
     assert r.status_code == 409 and r.json()["count"] == 1
@@ -192,3 +193,56 @@ def test_cannot_deactivate_project_default(session_client, workspace, project, s
     assert session_client.patch(url, {"is_active": False}, format="json").status_code == 409
     other = IssueType.objects.create(workspace=workspace, name="Other", level=1)
     assert session_client.patch(f"{base(workspace)}{other.id}/", {"is_active": False}, format="json").status_code == 200
+
+
+@pytest.mark.contract
+def test_cannot_delete_project_default_type(session_client, workspace, project, seeded):
+    custom = IssueType.objects.create(workspace=workspace, name="Spike", level=1)
+    ProjectIssueType.objects.create(project=project, issue_type=custom, level=1, is_default=True)
+    assert session_client.delete(f"{base(workspace)}{custom.id}/").status_code == 409
+    assert IssueType.objects.filter(pk=custom.pk).exists()
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("body", [[1, 2], "str"])
+def test_non_object_body_is_400_not_500(session_client, workspace, seeded, body):
+    assert session_client.post(base(workspace), body, format="json").status_code == 400
+    custom = IssueType.objects.create(workspace=workspace, name="Spike", level=1)
+    assert session_client.patch(f"{base(workspace)}{custom.id}/", body, format="json").status_code == 400
+
+
+@pytest.mark.contract
+def test_migrate_to_epic_mismatch_400(session_client, workspace, project, seeded, create_user):
+    a = IssueType.objects.create(workspace=workspace, name="A", level=1)
+    b = IssueType.objects.create(workspace=workspace, name="B", level=1, is_epic=True)
+    _issue(workspace, project, create_user, a)
+    r = session_client.delete(f"{base(workspace)}{a.id}/?migrate_to={b.id}")
+    assert r.status_code == 400 and "epic flag" in r.json()["error"]
+
+
+@pytest.mark.contract
+def test_migrate_to_must_be_assigned_to_using_project(session_client, workspace, project, seeded, create_user):
+    a = IssueType.objects.create(workspace=workspace, name="A", level=1)
+    b = IssueType.objects.create(workspace=workspace, name="B", level=1)
+    _issue(workspace, project, create_user, a)
+    url = f"{base(workspace)}{a.id}/?migrate_to={b.id}"
+    r = session_client.delete(url)
+    assert r.status_code == 409 and "assigned to every project" in r.json()["error"]
+    ProjectIssueType.objects.create(project=project, issue_type=b, level=1)
+    assert session_client.delete(url).status_code == 204
+
+
+@pytest.mark.contract
+def test_drafts_counted_and_migrated(session_client, workspace, project, seeded, create_user):
+    from plane.db.models import DraftIssue
+
+    a = IssueType.objects.create(workspace=workspace, name="A", level=1)
+    b = IssueType.objects.create(workspace=workspace, name="B", level=1)
+    d = DraftIssue.objects.create(name="d", workspace=workspace, project=project, type=a, created_by=create_user)
+    ProjectIssueType.objects.create(project=project, issue_type=b, level=1)
+    url = f"{base(workspace)}{a.id}/"
+    r = session_client.delete(url)
+    assert r.status_code == 409 and r.json()["count"] == 1
+    assert session_client.delete(f"{url}?migrate_to={b.id}").status_code == 204
+    d.refresh_from_db()
+    assert d.type_id == b.id

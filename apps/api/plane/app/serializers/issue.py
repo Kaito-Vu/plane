@@ -17,6 +17,7 @@ from .user import UserLiteSerializer
 from .state import StateLiteSerializer
 from .project import ProjectLiteSerializer
 from .workspace import WorkspaceLiteSerializer
+from plane.db.models import Project as ProjectModel
 from plane.db.models import (
     User,
     Issue,
@@ -130,6 +131,13 @@ class IssueCreateSerializer(BaseSerializer):
         return data
 
     def validate(self, attrs):
+        issue_type = attrs.get("type")
+        if issue_type is not None and issue_type.workspace_id != (
+            self.context.get("workspace_id")
+            or ProjectModel.objects.filter(pk=self.context.get("project_id")).values_list("workspace_id", flat=True).first()
+        ):
+            raise serializers.ValidationError({"type_id": ["Invalid work item type"]})
+
         allow_triage = self.context.get("allow_triage_state", False)
         state_manager = State.triage_objects if allow_triage else State.objects
 

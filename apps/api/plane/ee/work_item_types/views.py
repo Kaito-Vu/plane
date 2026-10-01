@@ -10,13 +10,17 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.app.views.base import BaseAPIView
-from plane.db.models import Issue, IssueType, Project, Workspace
+from plane.db.models import DraftIssue, Issue, IssueType, Project, Workspace
 from plane.db.models.issue_type import ProjectIssueType
 from plane.ee.work_item_types.serializers import IssueTypeSerializer
 from plane.ee.work_item_types.presets import PROCESSES
 from plane.ee.work_item_types.seed import ProcessChangeBlocked, apply_process, project_process
 from plane.utils.permissions.project import ProjectAdminPermission, ProjectEntityPermission
 from plane.utils.permissions.workspace import WorkspaceOwnerPermission, WorkspaceViewerPermission
+
+
+def _body(request):
+    return request.data if hasattr(request.data, "get") else {}
 
 
 class _WorkspaceTypeBase(BaseAPIView):
@@ -35,7 +39,7 @@ class WorkItemTypeListEndpoint(_WorkspaceTypeBase):
 
     def post(self, request, slug):
         ws = self.workspace(slug)
-        serializer = IssueTypeSerializer(data=request.data, context={"workspace": ws})
+        serializer = IssueTypeSerializer(data=_body(request), context={"workspace": ws})
         serializer.is_valid(raise_exception=True)
         serializer.save(workspace=ws)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -50,7 +54,9 @@ class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
 
     def patch(self, request, slug, pk):
         obj = self._get(slug, pk)
-        data = request.data
+        data = _body(request)
+        if data is not request.data:
+            return Response({"error": "Invalid body"}, status=status.HTTP_400_BAD_REQUEST)
         changed = any(k in data and data[k] != getattr(obj, k) for k in ("level", "is_epic"))
         if changed and (IssueTypeSerializer().get_is_preset(obj) or Issue.objects.filter(type=obj).exists()):
             return Response(
@@ -76,10 +82,15 @@ class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
                 return Response({"error": "Invalid migrate_to"}, status=status.HTTP_400_BAD_REQUEST)
         with transaction.atomic():
             obj = get_object_or_404(IssueType.objects.select_for_update(), pk=pk, workspace__slug=slug)
-            if IssueTypeSerializer().get_is_preset(obj) or obj.is_default:
+            if (
+                IssueTypeSerializer().get_is_preset(obj)
+                or obj.is_default
+                or ProjectIssueType.objects.filter(issue_type=obj, is_default=True).exists()
+            ):
                 return Response({"error": "This type cannot be deleted"}, status=status.HTTP_409_CONFLICT)
             in_use = Issue.objects.filter(type=obj)
-            count = in_use.count()
+            drafts = DraftIssue.objects.filter(type=obj)
+            count = in_use.count() + drafts.count()
             if count:
                 if not target_id:
                     return Response(
@@ -89,9 +100,25 @@ class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
                 target = get_object_or_404(
                     IssueType.objects.exclude(pk=obj.pk), pk=target_id, workspace__slug=slug, is_active=True
                 )
-                if target.level != obj.level:
-                    return Response({"error": "migrate_to must have the same level"}, status=status.HTTP_400_BAD_REQUEST)
+                if target.level != obj.level or target.is_epic != obj.is_epic:
+                    return Response(
+                        {"error": "migrate_to must have the same level and epic flag"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                using = set(in_use.values_list("project_id", flat=True)) | set(drafts.values_list("project_id", flat=True))
+                using.discard(None)
+                assigned = set(
+                    ProjectIssueType.objects.filter(issue_type=target, project_id__in=using).values_list(
+                        "project_id", flat=True
+                    )
+                )
+                if using - assigned:
+                    return Response(
+                        {"error": "migrate_to must be assigned to every project using this type"},
+                        status=status.HTTP_409_CONFLICT,
+                    )
                 in_use.update(type=target)
+                drafts.update(type=target)
             ProjectIssueType.objects.filter(issue_type=obj).delete()
             obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -102,10 +129,6 @@ def _parse_uuid(raw):
         return uuid.UUID(raw) if isinstance(raw, str) else None
     except ValueError:
         return None
-
-
-def _body(request):
-    return request.data if hasattr(request.data, "get") else {}
 
 
 def _lock_project(project):
