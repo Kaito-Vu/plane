@@ -4,6 +4,8 @@
 
 **Goal:** Add SAML 2.0 single sign-on (SP-initiated, HTTP-Redirect request, HTTP-POST response) to the `plane.ee` plugin.
 
+**Identity:** persistent NameID (never e-mail); see Task 3.
+
 **Architecture:** `SamlProvider` subclasses core `Adapter` and wraps `python3-saml`. Config lives in the same `InstanceConfiguration` rows as Phase 1 (provider id `saml`). Because the IdP posts the response cross-site and Django's session cookie is `SameSite=Lax` (not sent on cross-site POST), pending-request state (request id, host, next_path) is kept in the Django cache under a one-time random `RelayState` token, not in the session. Assertion ids are recorded in the cache to reject replays.
 
 **Tech Stack:** `python3-saml` (+ `xmlsec`, `lxml`), Django cache (Valkey), pytest.
@@ -15,7 +17,7 @@
 
 - Same constraints as Phase 1: add files only (no edits to upstream-owned files), license header on every new `.py`, config keys `EE_SSO_<ID>_<FIELD>`, error codes 6000-6099, Account/medium name `sso-saml`.
 - No new error codes: SAML failures use `SSO_PROVIDER_ERROR` (6001); details go to the server log only (never in the redirect).
-- SP-initiated only. Unsolicited (IdP-initiated) responses are rejected because they have no stored `RelayState`.
+- SP-initiated only. Unsolicited (IdP-initiated) responses are rejected: no stored `RelayState`, and `InResponseTo` must be present and equal to our request id.
 - Replays are rejected via the assertion id cache. Relay token TTL 600 s.
 - SAML dependencies live in `apps/api/requirements/ee.txt`, never in `base.txt`.
 - Tests run in Docker via the wrapper added in Task 1: `docker compose -f docker-compose-test.yml run --rm api-tests sh bin/run-ee-tests.sh <pytest args>`.
@@ -55,6 +57,10 @@ This task proves the native stack (`xmlsec`, `lxml`, `python3-saml`) installs an
 
 ```
 # EE-only dependencies (installed by Dockerfile.ee and bin/run-ee-tests.sh)
+# First guess. Before the first run, find the real pins inside the test image with
+#   pip install --dry-run -c requirements/base.txt python3-saml xmlsec
+# and replace these two lines with exact `==` pins. Installing them must NOT move lxml==6.1.0 (base.txt);
+# if python3-saml cannot coexist with it, stop and report instead of editing base.txt.
 python3-saml>=1.16.0,<2
 xmlsec>=1.3.14
 ```
@@ -67,9 +73,11 @@ xmlsec>=1.3.14
 #   docker compose -f docker-compose-test.yml run --rm api-tests sh bin/run-ee-tests.sh plane/tests/unit/ee
 set -e
 apk add --no-cache --virtual .ee-build gcc g++ musl-dev libffi-dev pkgconf xmlsec-dev libxml2-dev libxslt-dev
-# lxml and xmlsec must be linked against the same libxml2: build both from source.
-pip install --no-cache-dir --no-binary lxml,xmlsec lxml xmlsec
-pip install --no-cache-dir -r requirements/ee.txt
+# lxml and xmlsec must link the same libxml2. lxml is already installed as a wheel (base.txt pin), so a plain
+# "--no-binary" install would be a no-op: force-reinstall just these two from source, honoring the project pins.
+pip install --no-cache-dir --force-reinstall --no-deps --no-binary lxml,xmlsec -c requirements/base.txt -c requirements/ee.txt lxml xmlsec
+pip install --no-cache-dir -c requirements/base.txt -r requirements/ee.txt
+pip check
 exec pytest --ds=plane.settings.ee_test "$@"
 ```
 
@@ -93,8 +101,16 @@ def test_saml_stack_imports_and_xmlsec_sign_verify_roundtrip():
     from plane.tests.unit.ee.sso.saml_helpers import make_cert_and_key
 
     key_pem, cert_pem = make_cert_and_key()
-    xml = '<Root xmlns="urn:test" ID="_1"><Issuer>x</Issuer></Root>'
-    signed = OneLogin_Saml2_Utils.add_sign(xml, key_pem, cert_pem)
+    from onelogin.saml2.constants import OneLogin_Saml2_Constants as C
+
+    xml = (
+        '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"'
+        ' xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="_1" Version="2.0">'
+        "<saml:Issuer>x</saml:Issuer></samlp:Response>"
+    )
+    signed = OneLogin_Saml2_Utils.add_sign(
+        xml, key_pem, cert_pem, sign_algorithm=C.RSA_SHA256, digest_algorithm=C.SHA256
+    )
     root = etree.fromstring(signed)
     sig = xmlsec.tree.find_node(root, xmlsec.constants.NodeSignature)
     ctx = xmlsec.SignatureContext()
@@ -147,7 +163,7 @@ Run: `docker compose -f docker-compose-test.yml run --rm api-tests sh bin/run-ee
 Expected: PASS. If it fails:
 
 - `pip` cannot build `xmlsec`/`lxml`: confirm the `apk add` line ran; try `libxmlsec1-dev` / `xmlsec-dev` package names for the image's Alpine release (`apk search xmlsec`).
-- `add_sign` rejects the PEM: pass the key/cert without the `-----BEGIN`/`END` lines (`OneLogin_Saml2_Utils.format_cert(cert_pem, False)`), then update the test and helper accordingly.
+- `add_sign` rejects the PEM or the algorithm constants (names differ by version): pass the key/cert without the `-----BEGIN`/`END` lines (`OneLogin_Saml2_Utils.format_cert(cert_pem, False)`), then update the test and helper accordingly.
 - Import error from `lxml`/`xmlsec` ABI mismatch: keep `--no-binary` for both (already in the script).
   Record the final working versions: `pip freeze | grep -i -E "saml|xmlsec|lxml"` inside the container and pin them in `requirements/ee.txt` (`python3-saml==X`, `xmlsec==Y`). Note: `lxml` is already pinned in `base.txt` (6.1.0); if the pinned `xmlsec` does not support it, stop and report instead of changing `base.txt`.
 
@@ -170,8 +186,8 @@ git commit -m "feat(ee): SAML dependencies, test runner and xmlsec spike"
 
 **Interfaces:**
 
-- Produces config fields for `saml`: `IDP_ENTITY_ID`, `IDP_SSO_URL`, `IDP_X509CERT` (required), `SP_ENTITY_ID`, `ATTR_EMAIL`, `ATTR_FIRST_NAME`, `ATTR_LAST_NAME` (optional). `get_sso_config("saml")` returns a dict with those keys plus `ENABLED`, `LABEL`.
-- Produces `saml_helpers.build_saml_response(*, acs_url, idp_entity_id, sp_entity_id, in_response_to, email, key_pem, cert_pem, attrs=None, assertion_id=None, valid_for=300, sign=True) -> str` returning the base64 `SAMLResponse` form value. The whole `<Response>` is signed (python3-saml accepts a signed response or a signed assertion).
+- Produces config fields for `saml`: `IDP_ENTITY_ID`, `IDP_SSO_URL`, `IDP_X509CERT` (required), `SP_ENTITY_ID`, `ATTR_FIRST_NAME`, `ATTR_LAST_NAME`, `CALLBACK_URL` (optional; overrides the ACS URL, default `<WEB_URL or APP_BASE_URL>/auth/sso/saml/acs/` via Phase 1 `callback_url`). `get_sso_config("saml")` returns a dict with those keys plus `ENABLED`, `LABEL`.
+- Produces `saml_helpers.build_saml_response(*, acs_url, idp_entity_id, sp_entity_id, in_response_to, name_id, key_pem, cert_pem, attrs=None, assertion_id=None, valid_for=300, sign=True, name_id_format=<persistent>) -> str` returning the base64 `SAMLResponse` form value. The whole `<Response>` is signed (python3-saml accepts a signed response or a signed assertion).
 
 - [ ] **Step 1: Write failing tests** (append to `test_saml_provider.py`; create the file with this content)
 
@@ -233,9 +249,10 @@ Run: `docker compose -f docker-compose-test.yml run --rm api-tests sh bin/run-ee
             "IDP_SSO_URL",
             "IDP_X509CERT",
             "SP_ENTITY_ID",
-            "ATTR_EMAIL",
             "ATTR_FIRST_NAME",
             "ATTR_LAST_NAME",
+            "CALLBACK_URL",
+            "ALLOW_SIGNUP",
         ],
         "required": ["IDP_ENTITY_ID", "IDP_SSO_URL", "IDP_X509CERT"],
     },
@@ -250,6 +267,9 @@ import base64
 import uuid
 from datetime import datetime, timedelta, timezone
 
+from xml.sax.saxutils import escape
+
+from onelogin.saml2.constants import OneLogin_Saml2_Constants as C
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 _FMT = "%Y-%m-%dT%H:%M:%SZ"
@@ -261,14 +281,20 @@ def build_saml_response(
     idp_entity_id,
     sp_entity_id,
     in_response_to,
-    email,
+    name_id,
     key_pem,
     cert_pem,
     attrs=None,
     assertion_id=None,
     valid_for=300,
     sign=True,
+    name_id_format="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
 ):
+    irt_attr = f' InResponseTo="{escape(str(in_response_to), {chr(34): "&quot;"})}"' if in_response_to else ""
+    esc = lambda v: escape(str(v), {'"': "&quot;"})  # noqa: E731  (values go into XML text and attributes)
+    acs_url, idp_entity_id, sp_entity_id, in_response_to, name_id, name_id_format = (
+        esc(v) for v in (acs_url, idp_entity_id, sp_entity_id, in_response_to, name_id, name_id_format)
+    )
     now = datetime.now(timezone.utc)
     issued = now.strftime(_FMT)
     not_before = (now - timedelta(minutes=1)).strftime(_FMT)
@@ -276,7 +302,7 @@ def build_saml_response(
     assertion_id = assertion_id or f"_a{uuid.uuid4().hex}"
     attrs = attrs if attrs is not None else {"firstName": "An", "lastName": "Nguyen"}
     attribute_xml = "".join(
-        f'<saml:Attribute Name="{name}"><saml:AttributeValue xsi:type="xs:string">{value}</saml:AttributeValue></saml:Attribute>'
+        f'<saml:Attribute Name="{esc(name)}"><saml:AttributeValue xsi:type="xs:string">{esc(value)}</saml:AttributeValue></saml:Attribute>'
         for name, value in attrs.items()
     )
     xml = (
@@ -285,15 +311,15 @@ def build_saml_response(
         ' xmlns:xs="http://www.w3.org/2001/XMLSchema"'
         ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
         f' ID="_r{uuid.uuid4().hex}" Version="2.0" IssueInstant="{issued}"'
-        f' Destination="{acs_url}" InResponseTo="{in_response_to}">'
+        f' Destination="{acs_url}"{irt_attr}>'
         f"<saml:Issuer>{idp_entity_id}</saml:Issuer>"
         '<samlp:Status><samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/></samlp:Status>'
         f'<saml:Assertion ID="{assertion_id}" Version="2.0" IssueInstant="{issued}">'
         f"<saml:Issuer>{idp_entity_id}</saml:Issuer>"
         "<saml:Subject>"
-        f'<saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">{email}</saml:NameID>'
+        f'<saml:NameID Format="{name_id_format}">{name_id}</saml:NameID>'
         '<saml:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">'
-        f'<saml:SubjectConfirmationData NotOnOrAfter="{not_after}" Recipient="{acs_url}" InResponseTo="{in_response_to}"/>'
+        f'<saml:SubjectConfirmationData NotOnOrAfter="{not_after}" Recipient="{acs_url}"{irt_attr}/>'
         "</saml:SubjectConfirmation></saml:Subject>"
         f'<saml:Conditions NotBefore="{not_before}" NotOnOrAfter="{not_after}">'
         f"<saml:AudienceRestriction><saml:Audience>{sp_entity_id}</saml:Audience></saml:AudienceRestriction>"
@@ -305,7 +331,10 @@ def build_saml_response(
         "</saml:Assertion></samlp:Response>"
     )
     if sign:
-        signed = OneLogin_Saml2_Utils.add_sign(xml, key_pem, cert_pem)
+        # explicit SHA-256: settings use rejectDeprecatedAlgorithm, and add_sign's default differs by version
+        signed = OneLogin_Saml2_Utils.add_sign(
+            xml, key_pem, cert_pem, sign_algorithm=C.RSA_SHA256, digest_algorithm=C.SHA256
+        )
         xml = signed.decode() if isinstance(signed, bytes) else signed
     return base64.b64encode(xml.encode()).decode()
 ```
@@ -323,6 +352,8 @@ git commit -m "feat(ee): SAML config entry and signed-response test builder"
 
 ### Task 3: SamlProvider, relay store and settings builder
 
+**Identity (decision, same rule as Phase 1 Task 4):** a SAML user is identified by the IdP's **persistent NameID** (SAML Core §8.3.7: an opaque, stable, pairwise identifier), namespaced by the IdP entity id: key = `subject_key(IDP_ENTITY_ID, NameID)`. E-mail, `emailAddress` and `unspecified` NameIDs and any e-mail attribute are never used as identity (they are reassignable); a response whose NameID format is not `persistent` is rejected. In Microsoft Entra ID set the enterprise application's _Unique User Identifier_ (NameID) to `user.objectid` with format _Persistent_, and enable _Assignment required_. Names come from optional attributes and are display data only. No Plane user is ever matched or linked by e-mail; existing users are linked by an admin with `sso_link` (Phase 1 Task 6).
+
 **Files:**
 
 - Create: `apps/api/plane/ee/sso/saml.py`
@@ -330,15 +361,16 @@ git commit -m "feat(ee): SAML config entry and signed-response test builder"
 
 **Interfaces:**
 
-- Consumes: `get_sso_config("saml")` (Task 2); core `Adapter` (`complete_login_or_signup`, `sanitize_email`); `flow.provider_error`.
+- Consumes: `get_sso_config("saml")`, `callback_url`, `public_origin` (Phase 1 Task 2); `SubjectLoginMixin`, `subject_key` (Phase 1 Task 4); `flow.provider_error`; core `Adapter`.
 - Produces (all in `plane.ee.sso.saml`):
+  - `NAMEID_PERSISTENT = "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"`
   - `normalize_cert(value: str) -> str` — strips PEM header/footer and whitespace.
   - `acs_url(request) -> str`, `metadata_url(request) -> str`.
   - `new_relay_token() -> str`; `save_relay(token: str, data: dict) -> None`; `pop_relay(token: str) -> dict | None` (one-time).
-  - `class SamlProvider(Adapter)`: `__init__(self, request, callback=None)` (raises `AuthenticationException(SSO_NOT_CONFIGURED)` if not configured); `login_url(relay_token: str) -> str`; `request_id() -> str`; `metadata_xml() -> str`; `authenticate(request_id: str) -> User`.
-- Attribute lookup order for email: configured `ATTR_EMAIL`, then `email`, `mail`, `emailaddress`, `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress`, `urn:oid:0.9.2342.19200300.100.1.3`, then a NameID that contains `@`. First/last name: configured attribute, then `firstName`/`givenName`/`given_name`/`http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname`/`urn:oid:2.5.4.42` and `lastName`/`sn`/`surname`/`family_name`/`http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname`/`urn:oid:2.5.4.4`.
+  - `class SamlProvider(SubjectLoginMixin, Adapter)`: `__init__(self, request, callback=None)` (raises `AuthenticationException(SSO_NOT_CONFIGURED)` if not configured); `login_url(relay_token: str) -> str`; `request_id() -> str`; `metadata_xml() -> str`; `authenticate(request_id: str) -> User`.
+- Optional name attributes: configured `ATTR_FIRST_NAME` / `ATTR_LAST_NAME`, then `firstName`/`givenName`/`given_name`/`http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname`/`urn:oid:2.5.4.42` and `lastName`/`sn`/`surname`/`family_name`/`http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname`/`urn:oid:2.5.4.4`.
 
-- [ ] **Step 1: Failing tests** (append to `test_saml_provider.py`)
+- [ ] **Step 1: Failing tests** (append to `test_saml_provider.py`; hoist the new `import` lines to the top of the file so linters do not flag mid-file imports)
 
 ```python
 import pytest
@@ -346,10 +378,13 @@ from django.core.cache import cache
 from django.test import RequestFactory
 
 from plane.authentication.adapter.error import AuthenticationException
-from plane.db.models import User
+from plane.db.models import Account, User
+from plane.ee.sso.identity import subject_key
 from plane.ee.sso.saml import (
+    NAMEID_PERSISTENT,
     SamlProvider,
     acs_url,
+    metadata_url,
     new_relay_token,
     normalize_cert,
     pop_relay,
@@ -362,7 +397,7 @@ IDP = "https://idp.example.com/meta"
 
 @pytest.fixture(autouse=True)
 def _clear_cache():
-    cache.clear()
+    cache.delete_pattern("ee_sso_*")
 
 
 @pytest.fixture(scope="module")
@@ -375,7 +410,7 @@ def saml(db, keys):
     configure_saml(IDP_X509CERT=keys[1])
 
 
-def _acs_request(saml_response):
+def _acs_request(saml_response=""):
     request = RequestFactory().post("/auth/sso/saml/acs/", {"SAMLResponse": saml_response})
     request.META["HTTP_USER_AGENT"] = "pytest"
     return request
@@ -388,18 +423,24 @@ def _login_request():
 
 
 def _response(keys, request, **kw):
-    sp = f"http://{request.get_host()}/auth/sso/saml/metadata/"
     args = dict(
         acs_url=acs_url(request),
         idp_entity_id=IDP,
-        sp_entity_id=sp,
+        sp_entity_id=metadata_url(request),
         in_response_to="_req1",
-        email="a@b.com",
+        name_id="persistent-id-1",
         key_pem=keys[0],
         cert_pem=keys[1],
     )
     args.update(kw)
     return build_saml_response(**args)
+
+
+def _authenticate(keys, **kw):
+    request = _acs_request()
+    request.POST = request.POST.copy()
+    request.POST["SAMLResponse"] = _response(keys, request, **kw)
+    return SamlProvider(request).authenticate("_req1")
 
 
 @pytest.mark.unit
@@ -418,31 +459,52 @@ def test_relay_store_is_one_time():
 
 
 @pytest.mark.unit
-def test_login_url_and_metadata(saml):
+def test_login_url_requests_a_persistent_nameid_and_metadata_says_so(saml):
     provider = SamlProvider(_login_request())
     url = provider.login_url("tok")
     assert url.startswith("https://idp.example.com/sso?SAMLRequest=")
     assert "RelayState=tok" in url
-    assert provider.request_id().startswith("ONELOGIN_") or provider.request_id()
-    assert "EntityDescriptor" in provider.metadata_xml()
+    assert provider.request_id().startswith("ONELOGIN_")  # login_url() above generated the AuthnRequest
+    assert NAMEID_PERSISTENT in provider.metadata_xml()
 
 
 @pytest.mark.unit
-def test_valid_signed_response_creates_user(saml, keys):
-    request = _acs_request("")
-    request.POST = request.POST.copy()
-    request.POST["SAMLResponse"] = _response(keys, request)
-    user = SamlProvider(request).authenticate("_req1")
-    assert (user.email, user.first_name, user.last_name) == ("a@b.com", "An", "Nguyen")
+def test_valid_signed_response_logs_in_by_persistent_nameid(saml, keys):
+    user = _authenticate(keys)
+    account = Account.objects.get(user=user)
+    assert account.provider == "sso-saml"
+    assert account.provider_account_id == subject_key(IDP, "persistent-id-1")
+    assert (user.first_name, user.last_name) == ("An", "Nguyen")
+    assert user.email.endswith("@sso.invalid")
 
 
 @pytest.mark.unit
-def test_existing_user_matched_by_email(saml, keys):
-    existing = User.objects.create(email="a@b.com", username="x")
-    request = _acs_request("")
-    request.POST = request.POST.copy()
-    request.POST["SAMLResponse"] = _response(keys, request)
-    assert SamlProvider(request).authenticate("_req1").id == existing.id
+def test_same_nameid_is_the_same_user_on_the_next_login(saml, keys):
+    first = _authenticate(keys)
+    assert _authenticate(keys).id == first.id
+
+
+@pytest.mark.unit
+def test_email_like_nameid_never_links_an_existing_plane_user(saml, keys):
+    victim = User.objects.create(email="a@b.com", username="victim")
+    user = _authenticate(keys, name_id="a@b.com")  # persistent format, value looks like an e-mail
+    assert user.id != victim.id
+    assert not Account.objects.filter(user=victim).exists()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "name_id_format",
+    [
+        "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+        "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
+        "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
+    ],
+)
+def test_non_persistent_nameid_is_rejected(saml, keys, name_id_format):
+    with pytest.raises(AuthenticationException) as exc:
+        _authenticate(keys, name_id_format=name_id_format)
+    assert exc.value.error_code == 6001
 
 
 @pytest.mark.unit
@@ -451,44 +513,58 @@ def test_existing_user_matched_by_email(saml, keys):
     [
         {"sign": False},  # unsigned
         {"in_response_to": "_other"},  # InResponseTo mismatch
+        {"in_response_to": None},  # unsolicited: no InResponseTo at all
         {"sp_entity_id": "https://evil.example.com/"},  # wrong audience
         {"valid_for": -600},  # expired
     ],
 )
 def test_invalid_responses_rejected(saml, keys, override):
-    request = _acs_request("")
-    request.POST = request.POST.copy()
-    request.POST["SAMLResponse"] = _response(keys, request, **override)
     with pytest.raises(AuthenticationException) as exc:
-        SamlProvider(request).authenticate("_req1")
+        _authenticate(keys, **override)
     assert exc.value.error_code == 6001
 
 
 @pytest.mark.unit
 def test_response_signed_by_other_key_rejected(saml, keys):
     other_key, other_cert = make_cert_and_key()
-    request = _acs_request("")
-    request.POST = request.POST.copy()
-    request.POST["SAMLResponse"] = _response(keys, request, key_pem=other_key, cert_pem=other_cert)
     with pytest.raises(AuthenticationException):
+        _authenticate(keys, key_pem=other_key, cert_pem=other_cert)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("post", [{}, {"SAMLResponse": "!!!not-base64!!!"}, {"SAMLResponse": "Z2FyYmFnZQ=="}])
+def test_unparsable_response_is_provider_error_not_500(saml, post):
+    request = RequestFactory().post("/auth/sso/saml/acs/", post)
+    request.META["HTTP_USER_AGENT"] = "pytest"
+    with pytest.raises(AuthenticationException) as exc:
         SamlProvider(request).authenticate("_req1")
+    assert exc.value.error_code == 6001
+
+
+@pytest.mark.unit
+def test_custom_acs_url_is_used_for_destination_check(saml, keys):
+    configure_saml(IDP_X509CERT=keys[1], CALLBACK_URL="https://sso.corp.com/auth/sso/saml/acs/")
+    assert acs_url(_acs_request()) == "https://sso.corp.com/auth/sso/saml/acs/"
+    assert _authenticate(keys).id
+
+
+@pytest.mark.unit
+def test_allow_signup_off_blocks_new_saml_users_but_not_linked_ones(saml, keys):
+    user = _authenticate(keys)
+    configure_saml(IDP_X509CERT=keys[1], ALLOW_SIGNUP="0")
+    assert _authenticate(keys, assertion_id="_again").id == user.id  # already linked
+    with pytest.raises(AuthenticationException) as exc:
+        _authenticate(keys, name_id="someone-else")
+    assert exc.value.error_code == 5015
 
 
 @pytest.mark.unit
 def test_assertion_replay_rejected(saml, keys):
-    def attempt():
-        request = _acs_request("")
-        request.POST = request.POST.copy()
-        request.POST["SAMLResponse"] = _response(keys, request, assertion_id="_same")
-        return SamlProvider(request).authenticate("_req1")
-
-    attempt()
+    _authenticate(keys, assertion_id="_same")
     with pytest.raises(AuthenticationException) as exc:
-        attempt()
+        _authenticate(keys, assertion_id="_same")
     assert exc.value.error_code == 6001
 ```
-
-(`_response` is called after the request exists because `Destination` and the audience derive from `request.get_host()`; with `RequestFactory` that is `testserver`.)
 
 - [ ] **Step 2: Run, expect FAIL** (`ModuleNotFoundError: plane.ee.sso.saml`).
 
@@ -502,6 +578,7 @@ def test_assertion_replay_rejected(saml, keys):
 import re
 import secrets
 import time
+from urllib.parse import urlparse
 
 from django.core.cache import cache
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
@@ -510,22 +587,16 @@ from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from plane.authentication.adapter.base import Adapter
 from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
 from plane.ee.sso import errors  # noqa: F401
-from plane.ee.sso.config import get_sso_config
+from plane.ee.sso.config import callback_url, get_sso_config, public_origin
 from plane.ee.sso.flow import provider_error
+from plane.ee.sso.identity import SubjectLoginMixin, subject_key
 
 RELAY_TTL = 600
 REPLAY_TTL_FALLBACK = 3600
 BINDING_POST = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
 BINDING_REDIRECT = "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
-NAMEID_EMAIL = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+NAMEID_PERSISTENT = "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent"
 
-EMAIL_ATTRS = [
-    "email",
-    "mail",
-    "emailaddress",
-    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
-    "urn:oid:0.9.2342.19200300.100.1.3",
-]
 FIRST_ATTRS = [
     "firstName",
     "givenName",
@@ -547,16 +618,12 @@ def normalize_cert(value):
     return re.sub(r"-----(BEGIN|END) CERTIFICATE-----|\s+", "", value or "")
 
 
-def _origin(request):
-    return f"{'https' if request.is_secure() else 'http'}://{request.get_host()}"
-
-
 def acs_url(request):
-    return f"{_origin(request)}/auth/sso/saml/acs/"
+    return callback_url(request, "saml", get_sso_config("saml") or {})
 
 
 def metadata_url(request):
-    return f"{_origin(request)}/auth/sso/saml/metadata/"
+    return f"{public_origin(request)}/auth/sso/saml/metadata/"
 
 
 def new_relay_token():
@@ -586,8 +653,9 @@ def build_settings(request, cfg):
         "debug": False,
         "sp": {
             "entityId": cfg["SP_ENTITY_ID"] or metadata_url(request),
-            "assertionConsumerService": {"url": acs_url(request), "binding": BINDING_POST},
-            "NameIDFormat": NAMEID_EMAIL,
+            "assertionConsumerService": {"url": callback_url(request, "saml", cfg), "binding": BINDING_POST},
+            # stable pairwise identifier; e-mail / unspecified NameIDs are reassignable and never used as identity
+            "NameIDFormat": NAMEID_PERSISTENT,
         },
         "idp": {
             "entityId": cfg["IDP_ENTITY_ID"],
@@ -597,6 +665,9 @@ def build_settings(request, cfg):
         # python3-saml rejects a response that carries no valid signature (response or assertion)
         # when the IdP certificate is configured, so no extra flags are needed here.
         "security": {
+            # intranet / dev hosts ("plane", "localhost", "testserver") are single-label; python3-saml rejects
+            # such SP URLs unless this is set
+            "allowSingleLabelDomains": True,
             "authnRequestsSigned": False,
             "wantNameIdEncrypted": False,
             "rejectDeprecatedAlgorithm": True,
@@ -605,10 +676,13 @@ def build_settings(request, cfg):
 
 
 def _prepare_request(request):
+    # Derive scheme/host/path from the configured ACS URL, so python3-saml's Destination check compares against
+    # what the IdP was told to post to, independent of the Host header and of proxy rewriting.
+    parsed = urlparse(acs_url(request))
     return {
-        "https": "on" if request.is_secure() else "off",
-        "http_host": request.get_host(),
-        "script_name": request.path,
+        "https": "on" if parsed.scheme == "https" else "off",
+        "http_host": parsed.netloc,
+        "script_name": parsed.path,
         "get_data": request.GET.dict(),
         "post_data": request.POST.dict(),
     }
@@ -622,7 +696,7 @@ def _first(attrs, names):
     return None
 
 
-class SamlProvider(Adapter):
+class SamlProvider(SubjectLoginMixin, Adapter):
     def __init__(self, request, callback=None):
         cfg = get_sso_config("saml")
         if not cfg:
@@ -632,7 +706,11 @@ class SamlProvider(Adapter):
         super().__init__(request, "sso-saml", callback)
         self.cfg = cfg
         self.saml_settings = build_settings(request, cfg)
-        self.auth = OneLogin_Saml2_Auth(_prepare_request(request), self.saml_settings)
+        try:
+            self.auth = OneLogin_Saml2_Auth(_prepare_request(request), self.saml_settings)
+        except Exception as e:  # OneLogin_Saml2_Error: invalid settings
+            self.logger.warning("SAML settings rejected: %s", e)
+            raise provider_error()
 
     def login_url(self, relay_token):
         return self.auth.login(return_to=relay_token)
@@ -643,64 +721,62 @@ class SamlProvider(Adapter):
     def metadata_xml(self):
         settings = OneLogin_Saml2_Settings(self.saml_settings, sp_validation_only=True)
         xml = settings.get_sp_metadata()
+        xml = xml.decode() if isinstance(xml, bytes) else xml
         errors = settings.validate_metadata(xml)
         if errors:
             raise provider_error(f"SSO_PROVIDER_ERROR: invalid SP metadata {errors}")
-        return xml.decode() if isinstance(xml, bytes) else xml
+        return xml
 
     def authenticate(self, request_id):
-        self.auth.process_response(request_id=request_id)
+        try:
+            self.auth.process_response(request_id=request_id)
+        except Exception as e:  # OneLogin_Saml2_Error / lxml XMLSyntaxError / binascii.Error on garbage input
+            self.logger.warning("SAML response unparsable: %s", e)
+            raise provider_error()
         if self.auth.get_errors() or not self.auth.is_authenticated():
             # reason is logged only; never put it in the redirect (it can leak IdP/SP details)
             self.logger.warning("SAML response rejected: %s %s", self.auth.get_errors(), self.auth.get_last_error_reason())
             raise provider_error()
+        # python3-saml checks InResponseTo only when the response carries one: require it to be present and ours,
+        # otherwise a signed unsolicited response could be replayed against a relay token obtained from any flow
+        if self.auth.get_last_response_in_response_to() != request_id:
+            raise provider_error("SSO_PROVIDER_ERROR: InResponseTo missing or not ours")
         self._reject_replay()
-        self.set_user_data()
-        return self.complete_login_or_signup()
+        nameid = self.auth.get_nameid()
+        if not nameid or self.auth.get_nameid_format() != NAMEID_PERSISTENT:
+            self.logger.warning("SAML NameID is not persistent (format=%s)", self.auth.get_nameid_format())
+            raise provider_error("SSO_PROVIDER_ERROR: NameID must be persistent")
+        key = subject_key(self.cfg["IDP_ENTITY_ID"], nameid)
+        attrs = self.auth.get_attributes()
+        first = _first(attrs, ([self.cfg["ATTR_FIRST_NAME"]] if self.cfg.get("ATTR_FIRST_NAME") else []) + FIRST_ATTRS)
+        last = _first(attrs, ([self.cfg["ATTR_LAST_NAME"]] if self.cfg.get("ATTR_LAST_NAME") else []) + LAST_ATTRS)
+        profile = {"first_name": first, "last_name": last, "display_name": f"{first or ''} {last or ''}".strip()}
+        return self.login_by_subject(key, profile, self.cfg["ALLOW_SIGNUP"])
 
     def _reject_replay(self):
         assertion_id = self.auth.get_last_assertion_id()
         not_on_or_after = self.auth.get_last_assertion_not_on_or_after()
-        ttl = max(int(not_on_or_after - time.time()), 60) if not_on_or_after else REPLAY_TTL_FALLBACK
+        try:
+            ttl = max(int(not_on_or_after - time.time()), 60)
+        except (TypeError, ValueError):
+            ttl = REPLAY_TTL_FALLBACK
         if assertion_id and not cache.add(f"ee_sso_saml_assertion:{assertion_id}", 1, ttl):
             self.logger.warning("SAML assertion replay rejected")
             raise provider_error()
-
-    def set_user_data(self):
-        attrs = self.auth.get_attributes()
-        configured = self.cfg.get("ATTR_EMAIL")
-        nameid = self.auth.get_nameid() or ""
-        email = _first(attrs, ([configured] if configured else []) + EMAIL_ATTRS) or (nameid if "@" in nameid else None)
-        if not email:
-            raise provider_error("SSO_PROVIDER_ERROR: no email in SAML response")
-        first = _first(attrs, ([self.cfg["ATTR_FIRST_NAME"]] if self.cfg.get("ATTR_FIRST_NAME") else []) + FIRST_ATTRS)
-        last = _first(attrs, ([self.cfg["ATTR_LAST_NAME"]] if self.cfg.get("ATTR_LAST_NAME") else []) + LAST_ATTRS)
-        super().set_user_data(
-            {
-                "email": email,
-                "user": {
-                    "provider_id": nameid or email,
-                    "first_name": first or "",
-                    "last_name": last or "",
-                    "avatar": "",
-                    "is_password_autoset": True,
-                },
-            }
-        )
 ```
 
-Notes for the implementer: `Adapter.set_user_data(self, data)` stores `self.user_data = data`; our override takes no argument and delegates, matching Phase 1. `token_data` stays `None`, so core's `complete_login_or_signup` skips creating an `Account` row (SAML has no tokens) — intended. In the test `test_login_url_and_metadata` the assertion on `request_id()` only checks it is non-empty (`or` branch is deliberately loose because the id format is library-defined).
+Notes: `get_nameid_format()` returns the `Format` attribute of the response NameID; the builder in Task 2 writes it explicitly. `token_data` is never set, so core's `OauthAdapter` Account logic is not involved: the mixin creates the `Account` itself.
 
 - [ ] **Step 4: Run, expect PASS**
 
 Run: `docker compose -f docker-compose-test.yml run --rm api-tests sh bin/run-ee-tests.sh plane/tests/unit/ee/sso/test_saml_provider.py`
-If `test_invalid_responses_rejected[valid_for=-600]` passes only because Conditions are in the past — that is the intended "expired" case. If any "valid" test fails with a `Destination`/`Audience`/`Recipient` mismatch, print `provider.auth.get_last_error_reason()` and fix the helper values (not the provider's strict settings).
+If any "valid" test fails with a `Destination`/`Audience`/`Recipient` mismatch, print `provider.auth.get_last_error_reason()` and fix the helper values (not the provider's strict settings).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add apps/api/plane/ee/sso/saml.py apps/api/plane/tests/unit/ee/sso/test_saml_provider.py
-git commit -m "feat(ee): SAML provider with relay store and replay protection"
+git commit -m "feat(ee): SAML provider with persistent-NameID identity, relay store and replay protection"
 ```
 
 ---
@@ -734,9 +810,9 @@ from django.core.cache import cache
 from django.test import Client
 from django.utils import timezone
 
-from plane.db.models import User
+from plane.db.models import Account
 from plane.ee.sso.config import config_key, seed_config
-from plane.ee.sso.saml import acs_url
+from plane.ee.sso.saml import acs_url, metadata_url
 from plane.license.models import Instance, InstanceConfiguration
 from plane.tests.unit.ee.sso.saml_helpers import build_saml_response, make_cert_and_key
 
@@ -750,7 +826,7 @@ def keys():
 
 @pytest.fixture
 def setup(db, keys):
-    cache.clear()
+    cache.delete_pattern("ee_sso_*")
     Instance.objects.create(
         instance_name="t", instance_id="i", current_version="1", last_checked_at=timezone.now(), is_setup_done=True
     )
@@ -778,15 +854,15 @@ def _start(client):
 
 
 def _post_acs(client, keys, relay, request_id, **kw):
-    sp = "http://testserver/auth/sso/saml/metadata/"
     from django.test import RequestFactory
 
+    sp = metadata_url(RequestFactory().get("/"))
     args = dict(
         acs_url=acs_url(RequestFactory().get("/")),
         idp_entity_id=IDP,
         sp_entity_id=sp,
         in_response_to=request_id,
-        email="new@corp.com",
+        name_id="persistent-new",
         key_pem=keys[0],
         cert_pem=keys[1],
     )
@@ -825,7 +901,21 @@ def test_acs_success_without_csrf_token_or_session(setup, keys):
     # a fresh client models the IdP's cross-site POST: no session cookie, no CSRF token
     response = _post_acs(Client(enforce_csrf_checks=True), keys, relay, request_id)
     assert response.status_code == 302 and _error_code(response) is None
-    assert User.objects.filter(email="new@corp.com").exists()
+    assert Account.objects.filter(provider="sso-saml").count() == 1
+
+
+@pytest.mark.unit
+def test_oauth_callback_url_for_saml_is_a_provider_error_not_500(setup):
+    # the generic OAuth callback route also matches /auth/sso/saml/callback/; it must fail cleanly
+    response = Client().get("/auth/sso/saml/callback/?code=c&state=x")
+    assert response.status_code == 302 and _error_code(response) == "6001"
+
+
+@pytest.mark.unit
+def test_acs_garbage_post_redirects_with_error(setup, keys):
+    relay, _ = _start(Client())
+    response = Client().post("/auth/sso/saml/acs/", {"SAMLResponse": "garbage", "RelayState": relay})
+    assert response.status_code == 302 and _error_code(response) == "6001"
 
 
 @pytest.mark.unit
@@ -846,7 +936,7 @@ def test_acs_rejects_bad_signature(setup, keys):
     relay, request_id = _start(Client())
     response = _post_acs(Client(), keys, relay, request_id, sign=False)
     assert _error_code(response) == "6001"
-    assert not User.objects.filter(email="new@corp.com").exists()
+    assert Account.objects.filter(provider="sso-saml").count() == 0
 ```
 
 - [ ] **Step 2: Run, expect FAIL** (404 / import errors).
@@ -918,7 +1008,7 @@ from plane.ee.sso.saml_views import saml_start
             return saml_start(request, host, next_path)
 ```
 
-Modify `urls.py` — add before the `<str:provider_id>/` routes (literal paths must win):
+Modify `urls.py` — add the two routes next to the others (they cannot be shadowed: `<str:provider_id>/` does not match a second path segment, and `<str:provider_id>/callback/` does not match `saml/acs/`; keeping them literal and first just makes that obvious):
 
 ```python
 from .saml_views import SamlAcsEndpoint, SamlMetadataEndpoint
@@ -948,8 +1038,8 @@ git commit -m "feat(ee): SAML initiate, ACS and metadata endpoints"
 
 ## Self-Review (done against the spec)
 
-- Spec coverage: SAML signature/audience/NotOnOrAfter/InResponseTo validation (Task 3 tests), attribute mapping configurable (Task 3), ACS + metadata + SP-initiated login (Task 4), JIT signup via core adapter (inherited), config in `InstanceConfiguration` (Task 2), deps outside `base.txt` (Task 1). SLO, IdP-initiated, encrypted assertions, signed AuthnRequests are out of scope.
+- Spec coverage: SAML signature/audience/NotOnOrAfter/InResponseTo validation (Task 3 tests), attribute mapping configurable (Task 3), ACS + metadata + SP-initiated login (Task 4), JIT signup through the Phase 1 `SubjectLoginMixin`, config in `InstanceConfiguration` (Task 2), deps outside `base.txt` (Task 1). SLO, IdP-initiated, encrypted assertions, signed AuthnRequests are out of scope.
 - Deviation from spec: ACS path is `/auth/sso/saml/acs/` (POST), not `<id>/callback/`. Spec text to be updated.
 - Decision recorded: pending state is cached (not in session) because of `SameSite=Lax` session cookies.
-- Known risks: (1) native `xmlsec`/`lxml` stack on Alpine + Python 3.14 is unproven until Task 1 Step 5 passes; (2) `add_sign` argument format may need adjustment; (3) `_prepare_request` host/port behind proxies relies on `SECURE_PROXY_SSL_HEADER` (already set in production settings) — verify with a real IdP in Phase 5 smoke test; (4) not run here — written from code reading and library knowledge.
+- Known risks: (0) **login CSRF**: the one-time RelayState is not bound to the starting browser, so an attacker who started a flow could make a victim's browser post the attacker's own signed response (victim ends up logged in as the attacker). Mitigation to consider later: a `SameSite=None; Secure` binding cookie set in `saml_start` and checked at the ACS (not enforceable on plain-http dev). (1) native `xmlsec`/`lxml` stack on Alpine + Python 3.14 is unproven until Task 1 Step 5 passes; (2) `add_sign` argument format may need adjustment; (3) the SP/ACS/entity URLs now come from `WEB_URL`/`APP_BASE_URL` (or the admin `CALLBACK_URL`) rather than the Host header, so those env vars must be right — verify with a real IdP in the Phase 5 smoke test; (4) not run here — written from code reading and library knowledge.
 - Names checked across tasks: `normalize_cert`, `acs_url`, `metadata_url`, `new_relay_token`, `save_relay`, `pop_relay`, `SamlProvider.login_url/request_id/metadata_xml/authenticate`, `saml_start`, relay data keys `request_id/host/next_path`.

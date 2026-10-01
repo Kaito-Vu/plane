@@ -9,7 +9,7 @@
 **Tech Stack:** React Router 7 (framework mode), MobX, SWR, react-hook-form, `@makeplane/propel`, `@plane/blocks/toast`.
 
 **Spec:** `docs/superpowers/specs/2026-10-01-ee-sso-plugin-design.md`
-**Depends on:** Phase 1 (seeded keys) and Phase 2 (for the SAML keys; SAML card simply shows "Configure" even before that, but saving would fail because rows do not exist — do Phase 2 first).
+**Depends on:** Phase 1 (seeded keys) and Phase 2 (the SAML keys). Without them saving fails; the page now detects that and shows an error / "not available" state instead of reporting success.
 
 ## Global Constraints
 
@@ -51,18 +51,19 @@ apps/admin/hooks/oauth/index.ts            # (modify, 2 lines)
 - Produces (`core-bridge.ts`):
   - `readConfig(config: IFormattedInstanceConfiguration | undefined, key: string): string`
   - `toConfigPayload(payload: Record<string, string>): Partial<IFormattedInstanceConfiguration>`
+  - `hasConfigKey(config: IFormattedInstanceConfiguration | undefined, key: string): boolean`
   - `asMethodKey(key: string): TInstanceAuthenticationMethodKeys`
   - `asModeKey(key: string): TInstanceAuthenticationModeKeys`
 - Produces (`provider-fields.ts`):
   - `type TSsoProviderId = "oidc" | "azure_ad" | "oauth2" | "saml"`
   - `SSO_PROVIDER_IDS: TSsoProviderId[]`
-  - `type TSsoField = { field: string; label: string; type: "text" | "password"; required: boolean; placeholder: string; description?: string }`
+  - `type TSsoField = { field: string; label: string; type: "text" | "password" | "switch"; required: boolean; placeholder: string; description?: string; defaultValue?: string }` (`switch` fields are the per-provider "Options", stored as "1"/"0")
   - `type TSsoProviderDef = { id: TSsoProviderId; name: string; description: string; fields: TSsoField[] }`
   - `SSO_PROVIDERS: Record<TSsoProviderId, TSsoProviderDef>`
   - `ssoConfigKey(id: TSsoProviderId, field: string): string`
   - `providerIdFromPath(pathname: string): TSsoProviderId | undefined`
   - `isSsoConfigured(def: TSsoProviderDef, config: IFormattedInstanceConfiguration | undefined): boolean`
-  - `getServiceFields(id: TSsoProviderId, origin: string): { key: string; label: string; url: string; description: string }[]`
+  - `getServiceFields(id: TSsoProviderId, origin: string, callbackOverride?: string): { key: string; label: string; url: string; description: string }[]` (the override, when it is an absolute http(s) URL, replaces the default callback/ACS URL)
 - Produces (`provider-icon.tsx`): `SsoProviderIcon({ id, size })`.
 
 - [ ] **Step 1: `core-bridge.ts`**
@@ -85,6 +86,11 @@ import type {
 
 export const readConfig = (config: IFormattedInstanceConfiguration | undefined, key: string): string =>
   (config as unknown as Record<string, string | undefined> | undefined)?.[key] ?? "";
+
+/** True when the key exists at all (readConfig cannot tell "missing" from "empty"): false means the API plugin
+ *  is not enabled or migrations have not seeded the EE_SSO_* rows yet. */
+export const hasConfigKey = (config: IFormattedInstanceConfiguration | undefined, key: string): boolean =>
+  !!config && Object.prototype.hasOwnProperty.call(config, key);
 
 export const toConfigPayload = (payload: Record<string, string>): Partial<IFormattedInstanceConfiguration> =>
   payload as unknown as Partial<IFormattedInstanceConfiguration>;
@@ -111,10 +117,12 @@ export type TSsoProviderId = "oidc" | "azure_ad" | "oauth2" | "saml";
 export type TSsoField = {
   field: string;
   label: string;
-  type: "text" | "password";
+  type: "text" | "password" | "switch";
   required: boolean;
   placeholder: string;
   description?: string;
+  /** used when the stored value is empty (switches: "1" = on) */
+  defaultValue?: string;
 };
 
 export type TSsoProviderDef = {
@@ -153,8 +161,29 @@ const SCOPE: TSsoField = {
   label: "Scopes",
   type: "text",
   required: false,
-  placeholder: "openid email profile",
+  placeholder: "openid profile",
   description: "Space-separated. Leave empty for the default.",
+};
+
+const ALLOW_SIGNUP: TSsoField = {
+  field: "ALLOW_SIGNUP",
+  label: "Allow sign-up",
+  type: "switch",
+  required: false,
+  placeholder: "",
+  defaultValue: "1",
+  description:
+    "On: a user that is not linked yet is created at first login. Off: only users linked by an administrator (`sso_link`) can log in with this provider. The instance-wide sign-up setting still applies on top.",
+};
+
+const CALLBACK_URL: TSsoField = {
+  field: "CALLBACK_URL",
+  label: "Callback URL (optional)",
+  type: "text",
+  required: false,
+  placeholder: "Leave empty to use the URL shown on the right",
+  description:
+    "Override only if your identity provider must use a different public URL. It must be an absolute http(s) URL that still reaches this server's /auth/sso/... endpoint.",
 };
 
 export const SSO_PROVIDERS: Record<TSsoProviderId, TSsoProviderDef> = {
@@ -175,6 +204,8 @@ export const SSO_PROVIDERS: Record<TSsoProviderId, TSsoProviderDef> = {
       CLIENT_ID,
       CLIENT_SECRET,
       SCOPE,
+      CALLBACK_URL,
+      ALLOW_SIGNUP,
     ],
   },
   azure_ad: {
@@ -185,15 +216,25 @@ export const SSO_PROVIDERS: Record<TSsoProviderId, TSsoProviderDef> = {
       { ...LABEL, placeholder: "Microsoft" },
       {
         field: "TENANT_ID",
-        label: "Directory (tenant) ID",
+        label: "Tenant ID",
         type: "text",
         required: true,
         placeholder: "00000000-0000-0000-0000-000000000000",
-        description: "Single-tenant only. Find it on the app registration overview page.",
+        description:
+          "The tenant (GUID) of your directory. Plane accepts sign-ins from this one tenant only (it must be the tenant GUID, not a domain name; the `tid` claim is always checked). Users are identified by their Entra object id (`oid`, with `tid`), never by e-mail or UPN; guest accounts are rejected. Enable Assignment required on the enterprise application in Entra to control who may sign in.",
       },
-      { ...CLIENT_ID, label: "Application (client) ID" },
-      CLIENT_SECRET,
-      SCOPE,
+      { ...CALLBACK_URL, label: "Callback URL" },
+      {
+        field: "ISSUER",
+        label: "Issuer URL (optional)",
+        type: "text",
+        required: false,
+        placeholder: "https://login.microsoftonline.com/<tenant-id>/v2.0",
+        description: "Leave empty to use the v2.0 issuer of the tenant above. Override only for a sovereign cloud.",
+      },
+      { ...CLIENT_ID, label: "Client ID" },
+      { ...CLIENT_SECRET, label: "Client Secret" },
+      ALLOW_SIGNUP,
     ],
   },
   oauth2: {
@@ -222,11 +263,13 @@ export const SSO_PROVIDERS: Record<TSsoProviderId, TSsoProviderDef> = {
         type: "text",
         required: true,
         placeholder: "https://idp.example.com/oauth/userinfo",
-        description: "Must return email and a stable id (sub or id).",
+        description: "Must return a stable user id (`sub` or `id`). No e-mail is needed or used.",
       },
       CLIENT_ID,
       CLIENT_SECRET,
       SCOPE,
+      CALLBACK_URL,
+      ALLOW_SIGNUP,
     ],
   },
   saml: {
@@ -264,7 +307,6 @@ export const SSO_PROVIDERS: Record<TSsoProviderId, TSsoProviderDef> = {
         required: false,
         placeholder: "Defaults to the metadata URL",
       },
-      { field: "ATTR_EMAIL", label: "Email attribute", type: "text", required: false, placeholder: "email" },
       {
         field: "ATTR_FIRST_NAME",
         label: "First name attribute",
@@ -273,6 +315,8 @@ export const SSO_PROVIDERS: Record<TSsoProviderId, TSsoProviderDef> = {
         placeholder: "firstName",
       },
       { field: "ATTR_LAST_NAME", label: "Last name attribute", type: "text", required: false, placeholder: "lastName" },
+      { ...CALLBACK_URL, label: "ACS URL (optional)" },
+      ALLOW_SIGNUP,
     ],
   },
 };
@@ -289,30 +333,35 @@ export const providerIdFromPath = (pathname: string): TSsoProviderId | undefined
 export const isSsoConfigured = (def: TSsoProviderDef, config: IFormattedInstanceConfiguration | undefined): boolean =>
   def.fields.filter((f) => f.required).every((f) => !!readConfig(config, ssoConfigKey(def.id, f.field)));
 
-export const getServiceFields = (id: TSsoProviderId, origin: string) =>
-  id === "saml"
+export const getServiceFields = (id: TSsoProviderId, origin: string, callbackOverride?: string) => {
+  const custom = (callbackOverride ?? "").trim();
+  const override = custom.startsWith("http://") || custom.startsWith("https://") ? custom : undefined;
+  return id === "saml"
     ? [
         {
           key: "acs_url",
           label: "ACS (Assertion Consumer Service) URL",
-          url: `${origin}/auth/sso/saml/acs/`,
+          url: override ?? `${origin}/auth/sso/saml/acs/`,
           description: "Paste this as the reply / ACS URL in your identity provider. Binding: HTTP-POST.",
         },
         {
           key: "entity_id",
           label: "Entity ID / metadata URL",
           url: `${origin}/auth/sso/saml/metadata/`,
-          description: "Use as the SP entity ID, or import it as SP metadata. NameID format: email address.",
+          description:
+            "Use as the SP entity ID, or import it as SP metadata. NameID format: Persistent (Entra: user.objectid).",
         },
       ]
     : [
         {
           key: "callback_uri",
           label: "Redirect (callback) URI",
-          url: `${origin}/auth/sso/${id}/callback/`,
-          description: "Paste this as an allowed redirect URI in your identity provider.",
+          url: override ?? `${origin}/auth/sso/${id}/callback/`,
+          description:
+            "Paste this as an allowed redirect URI in your identity provider. Shown for this site's address; the server uses WEB_URL / APP_BASE_URL unless you set a callback URL override.",
         },
       ];
+};
 ```
 
 - [ ] **Step 3: `microsoft-logo.svg`** (same file as Phase 3)
@@ -378,11 +427,12 @@ git commit -m "feat(ee): admin SSO field table, core bridge and icon"
 import { useState } from "react";
 import { isEmpty } from "lodash-es";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 // plane internal packages
 import { setToast } from "@plane/blocks/toast";
 import { API_BASE_URL } from "@plane/constants";
 import { Button } from "@makeplane/propel/components/button";
+import { Switch } from "@makeplane/propel/components/switch";
 import type { IFormattedInstanceConfiguration } from "@plane/types";
 // components
 import { ConfirmDiscardModal } from "@/components/common/confirm-discard-modal";
@@ -413,21 +463,39 @@ export function SsoProviderForm(props: Props) {
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors, isDirty, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: Object.fromEntries(
-      def.fields.map((f) => [f.field, readConfig(config, ssoConfigKey(def.id, f.field))])
+      def.fields.map((f) => [f.field, readConfig(config, ssoConfigKey(def.id, f.field)) || f.defaultValue || ""])
     ),
   });
 
   const originURL = !isEmpty(API_BASE_URL) ? API_BASE_URL : typeof window !== "undefined" ? window.location.origin : "";
 
   const onSubmit = async (formData: FormValues) => {
+    // the backend silently hides an Azure provider whose tenant is not a GUID: fail loudly here instead
+    if (
+      def.id === "azure_ad" &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test((formData.TENANT_ID ?? "").trim())
+    ) {
+      setToast({
+        type: "error",
+        title: "Invalid Tenant ID",
+        message: "Tenant ID must be the directory (tenant) GUID.",
+      });
+      return;
+    }
     const payload = Object.fromEntries(
       def.fields.map((f) => [ssoConfigKey(def.id, f.field), (formData[f.field] ?? "").trim()])
     );
     try {
       const response = await updateInstanceConfigurations(toConfigPayload(payload));
+      // core's PATCH silently ignores keys that do not exist (plugin not enabled / not migrated): detect it
+      // instead of reporting success and then wiping the form.
+      if (!response.some((item) => (item.key as string) === ssoConfigKey(def.id, def.fields[0].field))) {
+        throw new Error("SSO configuration keys are missing on the server");
+      }
       setToast({
         type: "success",
         title: "Done!",
@@ -437,12 +505,19 @@ export function SsoProviderForm(props: Props) {
         Object.fromEntries(
           def.fields.map((f) => [
             f.field,
-            response.find((item) => (item.key as string) === ssoConfigKey(def.id, f.field))?.value ?? "",
+            response.find((item) => (item.key as string) === ssoConfigKey(def.id, f.field))?.value ||
+              f.defaultValue ||
+              "",
           ])
         )
       );
     } catch (err) {
       console.error(err);
+      setToast({
+        type: "error",
+        title: "Error",
+        message: "Could not save. Make sure the API runs with the SSO plugin enabled and migrations have completed.",
+      });
     }
   };
 
@@ -464,19 +539,47 @@ export function SsoProviderForm(props: Props) {
         <div className="grid w-full grid-cols-2 gap-x-12 gap-y-8">
           <div className="col-span-2 flex flex-col gap-y-4 pt-1 md:col-span-1">
             <div className="pt-2.5 text-18 font-medium">{def.name} details for Plane</div>
-            {def.fields.map((f) => (
-              <ControllerInput
-                key={f.field}
-                control={control}
-                type={f.type}
-                name={f.field}
-                label={f.label}
-                description={f.description}
-                placeholder={f.placeholder}
-                error={Boolean(errors[f.field])}
-                required={f.required}
-              />
-            ))}
+            {def.fields
+              .filter((f) => f.type !== "switch")
+              .map((f) => (
+                <ControllerInput
+                  key={f.field}
+                  control={control}
+                  type={f.type === "password" ? "password" : "text"}
+                  name={f.field}
+                  label={f.label}
+                  description={f.description}
+                  placeholder={f.placeholder}
+                  error={Boolean(errors[f.field])}
+                  required={f.required}
+                />
+              ))}
+            {def.fields.some((f) => f.type === "switch") && <div className="pt-2.5 text-18 font-medium">Options</div>}
+            {def.fields
+              .filter((f) => f.type === "switch")
+              .map((f) => (
+                // core's ControllerSwitch hard-codes "Refresh user attributes from <label> during sign in", so the
+                // option switch is rendered directly with Controller + Switch ("1" / "0" values).
+                <Controller
+                  key={f.field}
+                  control={control}
+                  name={f.field}
+                  render={({ field: { value, onChange } }) => (
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col gap-1">
+                        <div className="text-13 text-secondary">{f.label}</div>
+                        {f.description && <div className="text-11 text-tertiary">{f.description}</div>}
+                      </div>
+                      <Switch
+                        aria-label={f.label}
+                        checked={value === "1"}
+                        onCheckedChange={() => onChange(value === "1" ? "0" : "1")}
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                />
+              ))}
             <div className="flex flex-col gap-1 pt-4">
               <div className="flex items-center gap-4">
                 <Button
@@ -502,7 +605,7 @@ export function SsoProviderForm(props: Props) {
           <div className="col-span-2 md:col-span-1">
             <div className="flex flex-col gap-y-4 rounded-lg bg-layer-1 px-6 pt-1.5 pb-4">
               <div className="pt-2 text-18 font-medium">Plane-provided details for {def.name}</div>
-              {getServiceFields(def.id, originURL).map((field) => (
+              {getServiceFields(def.id, originURL, watch("CALLBACK_URL")).map((field) => (
                 <CopyField key={field.key} label={field.label} url={field.url} description={field.description} />
               ))}
             </div>
@@ -537,7 +640,7 @@ import { Skeleton } from "@/components/common/skeleton";
 // hooks
 import { useInstance } from "@/hooks/store";
 // ee
-import { readConfig, toConfigPayload } from "@/ee/sso/core-bridge";
+import { hasConfigKey, readConfig, toConfigPayload } from "@/ee/sso/core-bridge";
 import { SsoProviderForm } from "@/ee/sso/provider-form";
 import { SSO_PROVIDERS, providerIdFromPath, ssoConfigKey } from "@/ee/sso/provider-fields";
 import { SsoProviderIcon } from "@/ee/sso/provider-icon";
@@ -557,9 +660,30 @@ const SsoProviderPage = observer(function SsoProviderPage() {
   const enabledKey = ssoConfigKey(providerId, "ENABLED");
   const isEnabled = readConfig(formattedConfig, enabledKey) === "1";
 
+  if (formattedConfig && !hasConfigKey(formattedConfig, enabledKey)) {
+    return (
+      <PageWrapper
+        header={{
+          title: def.name,
+          description:
+            "Single sign-on is not available on this server. Make sure the API runs with the EE settings and that migrations have completed, then reload this page.",
+        }}
+      >
+        {null}
+      </PageWrapper>
+    );
+  }
+
   const updateEnabled = async (value: string) => {
     setIsSubmitting(true);
-    const updateConfigPromise = updateInstanceConfigurations(toConfigPayload({ [enabledKey]: value }));
+    const updateConfigPromise = updateInstanceConfigurations(toConfigPayload({ [enabledKey]: value })).then(
+      (response) => {
+        if (!response.some((item) => (item.key as string) === enabledKey)) {
+          throw new Error("SSO configuration keys are missing on the server");
+        }
+        return response;
+      }
+    );
     setPromiseToast(updateConfigPromise, {
       loading: "Saving Configuration",
       success: {
@@ -776,7 +900,7 @@ import { eeRoutes } from "./ee/routes";
     ...eeRoutes,
 ```
 
-(`react-router` evaluates `routes.ts` with its own loader; the relative import `./ee/routes` resolves inside `app/`. If the CLI rejects TypeScript path aliases there, that is why `routes.ts` uses relative imports only.)
+(`routes.ts` is evaluated by the React Router CLI, so keep its imports relative, as the existing ones are.)
 
 - [ ] **Step 5: Verify**
 
@@ -798,9 +922,12 @@ No automated frontend runner exists for admin, so this is a recorded manual chec
 
 - [ ] **Step 1:** Run the API with the plugin enabled (see Phase 5 compose override, or set `DJANGO_SETTINGS_MODULE=plane.settings.ee` on api/migrator and run `migrate` so the keys are seeded), then `pnpm dev` (admin on :3001).
 - [ ] **Step 2:** Open God Mode → Authentication. Expected: four new cards (OpenID Connect, Microsoft, OAuth2, SAML 2.0) after Gitea, each with "Configure".
+- [ ] **Step 2b:** If the new cards are missing on an existing instance, the configuration list is still served from core's 2 h cache; restart the API (its entrypoint runs `clear_cache`) and reload. Phase 1's `seed_config` clears it when it seeds, so this should only happen if seeding ran before that fix.
 - [ ] **Step 3:** Open OpenID Connect → fill issuer/client id/secret → Save. Expected: success toast; back on the list the card shows "Edit" + switch; switch on → web login page shows the button (Phase 3).
 - [ ] **Step 4:** Disable every other method then try to disable the last one (SSO). Expected: core's "at least one authentication method must remain enabled" toast (proves the modes are in core's list).
 - [ ] **Step 5:** Reload the page: saved values persist (secret field shows the stored value like Gitea's). Open SAML: the right-hand panel shows ACS URL and metadata URL; saving certificate text with and without BEGIN/END lines both work (backend normalizes).
+- [ ] **Step 5b:** Set a callback URL override (e.g. `https://sso.example.com/auth/sso/oidc/callback/`): the right-hand panel updates live, and after saving the login redirect to the IdP carries that `redirect_uri`. Clear it again and confirm the default returns.
+- [ ] **Step 5c:** On Microsoft: with a real single-tenant app, sign in as a tenant member (identified by `oid`; no e-mail or UPN is read); switch "Allow sign-up" off and confirm a brand-new user is refused (`SIGNUP_DISABLED`) while an existing Plane user still gets in. The Options section appears under the text fields on every provider.
 - [ ] **Step 6:** Check the breadcrumb on `/authentication/sso-oidc` shows only "Authentication" (no broken link).
 - [ ] **Step 7:** Record what was run/seen in the PR description.
 
@@ -811,6 +938,6 @@ No automated frontend runner exists for admin, so this is a recorded manual chec
 - Spec coverage: admin config pages for all four protocols (generic form + field table), enable switches integrated with core's disable-guard, callback/ACS/metadata values for the admin to copy.
 - Spec deviations: no `packages/ee-sso` (admin pages need `@/` app internals, and a new package would force `package.json`/lockfile edits); no EE admin API endpoint (core configurations endpoint is reused); route per provider instead of `:provider` so core's breadcrumb needs no label (the `header/extended.ts` seam stays untouched). Update the spec.
 - Core files touched: only `apps/admin/app/routes.ts` and `apps/admin/hooks/oauth/index.ts` (2 lines each).
-- Field names match backend `PROVIDERS` (`ISSUER`, `TENANT_ID`, `AUTH_URL`, `TOKEN_URL`, `USERINFO_URL`, `CLIENT_ID`, `CLIENT_SECRET`, `SCOPE`, `IDP_ENTITY_ID`, `IDP_SSO_URL`, `IDP_X509CERT`, `SP_ENTITY_ID`, `ATTR_EMAIL`, `ATTR_FIRST_NAME`, `ATTR_LAST_NAME`, plus `ENABLED`, `LABEL`) — checked.
+- Field names match backend `PROVIDERS` (including `CALLBACK_URL`, `ALLOW_SIGNUP`, and `ISSUER` for azure_ad; the Azure form shows exactly Tenant ID, Callback URL, Issuer URL, Client ID, Client Secret and the Options block, with the button label as the only extra; scopes use the backend default).
 - Risks: `*.svg?url` / `KeyOutline` prop typing; `routes.ts` import resolution of `./ee/routes`; whether the configuration serializer returns decrypted secrets (assumed, as for Gitea); the duplicated provider-id list in `app/ee/routes.ts` must be kept in sync with `SSO_PROVIDER_IDS` (add a note when adding providers).
 - Not verified by running: written from code reading only.

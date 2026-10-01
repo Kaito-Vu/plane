@@ -21,7 +21,8 @@
 - Provider ids: `oidc`, `azure_ad`, `oauth2` (`saml` reserved for Phase 2). Account.provider stored as `sso-<id>`.
 - Config keys: `EE_SSO_<PROVIDER_ID_UPPER>_<FIELD>`; `CLIENT_SECRET` is `is_encrypted=True`.
 - Error codes 6000-6099 reserved for the plugin.
-- Verified email only: reject when `email_verified` is present and false.
+- Ruff selects `E501` (120 columns, also for tests): wrap long lines and run `ruff check` before committing.
+- Identity is the stable subject, never an e-mail: OIDC `(iss, sub)`, Entra `tid:oid`, SAML persistent NameID, OAuth2 userinfo id. E-mail claims, `email_verified`, `preferred_username` and UPN are never read as identity and users are never matched or linked by e-mail automatically (existing users are linked by an admin with `sso_link`). JIT users get a `<hash>@sso.invalid` placeholder e-mail.
 - Tests run in Docker: `docker compose -f docker-compose-test.yml run --rm api-tests pytest --ds=plane.settings.ee_test <path>` (run `./setup.sh` once first).
 
 ## File Structure
@@ -38,10 +39,13 @@ apps/api/plane/ee/sso/config.py               # keys, seeding, get_sso_config, l
 apps/api/plane/ee/sso/oidc.py                 # discovery + id_token verification
 apps/api/plane/ee/sso/adapter.py              # SsoOauthProvider
 apps/api/plane/ee/sso/flow.py                 # shared helpers: redirect_error, provider_error, complete_login
+apps/api/plane/ee/sso/identity.py             # subject-keyed login (SubjectLoginMixin), placeholder e-mail
+apps/api/plane/ee/management/commands/sso_link.py  # admin: link existing Plane users to an SSO subject
 apps/api/plane/ee/sso/views.py                # providers list, initiate, callback
 apps/api/plane/ee/sso/urls.py
 apps/api/plane/tests/unit/ee/__init__.py
 apps/api/plane/tests/unit/ee/sso/__init__.py
+apps/api/plane/tests/unit/ee/conftest.py      # skips EE tests unless plane.ee is installed
 apps/api/plane/tests/unit/ee/sso/conftest.py  # RSA key + id_token helper
 apps/api/plane/tests/unit/ee/sso/test_*.py
 ```
@@ -55,16 +59,27 @@ apps/api/plane/tests/unit/ee/sso/test_*.py
 - Create: `apps/api/plane/settings/ee.py`, `apps/api/plane/settings/ee_test.py`
 - Create: `apps/api/plane/ee/__init__.py`, `apps/api/plane/ee/apps.py`, `apps/api/plane/ee/urls.py`
 - Create: `apps/api/plane/ee/sso/__init__.py`, `apps/api/plane/ee/sso/errors.py`
-- Create: `apps/api/plane/tests/unit/ee/__init__.py`, `apps/api/plane/tests/unit/ee/sso/__init__.py`
+- Create: `apps/api/plane/tests/unit/ee/__init__.py`, `apps/api/plane/tests/unit/ee/sso/__init__.py`, `apps/api/plane/tests/unit/ee/conftest.py`
 - Test: `apps/api/plane/tests/unit/ee/sso/test_skeleton.py`
 
 **Interfaces:**
 
-- Produces: `plane.ee.sso.errors.EE_SSO_ERROR_CODES` (dict) registered into `AUTHENTICATION_ERROR_CODES` with keys `SSO_NOT_CONFIGURED=6000`, `SSO_PROVIDER_ERROR=6001`, `SSO_PROVIDER_UNVERIFIED_EMAIL=6002`.
+- Produces: `plane.ee.sso.errors.EE_SSO_ERROR_CODES` (dict) registered into `AUTHENTICATION_ERROR_CODES` with keys `SSO_NOT_CONFIGURED=6000`, `SSO_PROVIDER_ERROR=6001`.
 - Produces: `plane.ee.apps.EeConfig` (label `ee`); `plane.ee.urls.urlpatterns` and `handler404`.
 - Produces: settings modules `plane.settings.ee`, `plane.settings.ee_test`.
 
-- [ ] **Step 1: Create empty package files** (`ee/__init__.py`, `ee/sso/__init__.py`, `tests/unit/ee/__init__.py`, `tests/unit/ee/sso/__init__.py`) containing only the license header.
+- [ ] **Step 1: Create empty package files** (`ee/__init__.py`, `ee/sso/__init__.py`, `tests/unit/ee/__init__.py`, `tests/unit/ee/sso/__init__.py`) containing only the license header, plus `tests/unit/ee/conftest.py`. The default suite (`pytest.ini`, compose default command, `pytest -m unit`) runs under `plane.settings.test` where `plane.ee` is not installed, so EE tests must be skipped there instead of failing:
+
+```python
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+from django.conf import settings
+
+# EE tests only make sense under plane.settings.ee_test (--ds). Otherwise do not collect them.
+collect_ignore_glob = [] if "plane.ee" in settings.INSTALLED_APPS else ["sso/*", "test_*.py"]
+```
 
 - [ ] **Step 2: Write the failing test** `plane/tests/unit/ee/sso/test_skeleton.py`
 
@@ -90,7 +105,6 @@ def test_plugin_installed_and_urlconf_swapped():
 def test_error_codes_registered():
     assert AUTHENTICATION_ERROR_CODES["SSO_NOT_CONFIGURED"] == 6000
     assert AUTHENTICATION_ERROR_CODES["SSO_PROVIDER_ERROR"] == 6001
-    assert AUTHENTICATION_ERROR_CODES["SSO_PROVIDER_UNVERIFIED_EMAIL"] == 6002
 ```
 
 - [ ] **Step 3: Run, expect FAIL** (`ModuleNotFoundError: plane.settings.ee_test`)
@@ -141,7 +155,6 @@ from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES
 EE_SSO_ERROR_CODES = {
     "SSO_NOT_CONFIGURED": 6000,
     "SSO_PROVIDER_ERROR": 6001,
-    "SSO_PROVIDER_UNVERIFIED_EMAIL": 6002,
 }
 
 # Register into the core dict so AuthenticationException lookups work unchanged.
@@ -267,21 +280,69 @@ def test_enabled_oidc_decrypts_secret_and_lists():
     _set("oidc", "ISSUER", "https://idp.example.com")
     cfg = get_sso_config("oidc")
     assert cfg["CLIENT_SECRET"] == "sek"
-    assert cfg["SCOPE"] == "openid email profile"
+    assert cfg["SCOPE"] == "openid profile"
     assert list_enabled_providers() == [{"id": "oidc", "label": "ETC SSO", "protocol": "oidc"}]
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_azure_requires_a_guid_tenant():
+    seed_config()
+    for f, v in [("ENABLED", "1"), ("CLIENT_ID", "c"), ("TENANT_ID", "contoso.onmicrosoft.com")]:
+        _set("azure_ad", f, v)
+    _set("azure_ad", "CLIENT_SECRET", "s", encrypted=True)
+    assert get_sso_config("azure_ad") is None
+    for bad in ("common", "organizations", "consumers"):
+        _set("azure_ad", "TENANT_ID", bad)
+        assert get_sso_config("azure_ad") is None
+    _set("azure_ad", "TENANT_ID", "11111111-1111-1111-1111-111111111111")
+    assert get_sso_config("azure_ad") is not None
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_allow_signup_defaults_to_on_and_enabled_to_off():
+    seed_config()
+    assert InstanceConfiguration.objects.get(key="EE_SSO_AZURE_AD_ALLOW_SIGNUP").value == "1"
+    assert InstanceConfiguration.objects.get(key="EE_SSO_AZURE_AD_ENABLED").value == "0"
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_seed_invalidates_cached_configuration_list():
+    from django.core.cache import cache
+
+    # the test DB already holds seeded rows (post_migrate), so start from an empty table
+    InstanceConfiguration.objects.filter(key__startswith="EE_SSO_").delete()
+    cache.set("/api/instances/configurations/", ["stale"])
+    seed_config()
+    assert cache.get("/api/instances/configurations/") is None
+
+
+@pytest.mark.unit
+def test_callback_url_default_and_override(settings):
+    from django.test import RequestFactory
+
+    from plane.ee.sso.config import callback_url
+
+    settings.WEB_URL = "https://plane.example.com/"
+    request = RequestFactory().get("/")
+    assert callback_url(request, "oidc", {}) == "https://plane.example.com/auth/sso/oidc/callback/"
+    assert callback_url(request, "saml", {}) == "https://plane.example.com/auth/sso/saml/acs/"
+    assert callback_url(request, "oidc", {"CALLBACK_URL": " https://sso.corp.com/cb/ "}) == "https://sso.corp.com/cb/"
+    # non-absolute values are ignored
+    assert callback_url(request, "oidc", {"CALLBACK_URL": "/relative"}) == "https://plane.example.com/auth/sso/oidc/callback/"
 
 
 @pytest.mark.unit
 @pytest.mark.django_db
 def test_default_label_when_blank():
     seed_config()
-    for f, v in [("ENABLED", "1"), ("CLIENT_ID", "c"), ("TENANT_ID", "t")]:
+    for f, v in [("ENABLED", "1"), ("CLIENT_ID", "c"), ("TENANT_ID", "11111111-1111-1111-1111-111111111111")]:
         _set("azure_ad", f, v)
     _set("azure_ad", "CLIENT_SECRET", "s", encrypted=True)
     assert list_enabled_providers()[0]["label"] == "Microsoft"
 ```
-
-(20 keys: 5 common per provider x 3, plus ISSUER, TENANT_ID, AUTH_URL, TOKEN_URL, USERINFO_URL.)
 
 - [ ] **Step 2: Run, expect FAIL** (`ModuleNotFoundError: plane.ee.sso.config`).
 
@@ -292,10 +353,16 @@ def test_default_label_when_blank():
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+import re
+
+from django.conf import settings
+from django.core.cache import cache
+
 from plane.license.models import InstanceConfiguration
 from plane.license.utils.instance_value import get_configuration_value
 
-DEFAULT_SCOPE = "openid email profile"
+DEFAULT_SCOPE = "openid profile"  # least privilege: e-mail is never used
+GUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 OAUTH_FIELDS = ["CLIENT_ID", "CLIENT_SECRET", "SCOPE"]
 ENCRYPTED_FIELDS = {"CLIENT_SECRET"}
 
@@ -305,24 +372,26 @@ PROVIDERS = {
     "oidc": {
         "label": "OpenID Connect",
         "protocol": "oidc",
-        "fields": [*OAUTH_FIELDS, "ISSUER"],
+        "fields": [*OAUTH_FIELDS, "ISSUER", "CALLBACK_URL", "ALLOW_SIGNUP"],
         "required": ["CLIENT_ID", "CLIENT_SECRET", "ISSUER"],
     },
     "azure_ad": {
         "label": "Microsoft",
         "protocol": "oidc",
-        "fields": [*OAUTH_FIELDS, "TENANT_ID"],
+        "fields": [*OAUTH_FIELDS, "TENANT_ID", "ISSUER", "CALLBACK_URL", "ALLOW_SIGNUP"],  # ISSUER optional override
         "required": ["CLIENT_ID", "CLIENT_SECRET", "TENANT_ID"],
     },
     "oauth2": {
         "label": "OAuth2",
         "protocol": "oauth2",
-        "fields": [*OAUTH_FIELDS, "AUTH_URL", "TOKEN_URL", "USERINFO_URL"],
+        "fields": [*OAUTH_FIELDS, "AUTH_URL", "TOKEN_URL", "USERINFO_URL", "CALLBACK_URL", "ALLOW_SIGNUP"],
         "required": ["CLIENT_ID", "CLIENT_SECRET", "AUTH_URL", "TOKEN_URL", "USERINFO_URL"],
     },
 }
 PROVIDER_IDS = tuple(PROVIDERS)
 BASE_FIELDS = ["ENABLED", "LABEL"]
+# seeded defaults; ALLOW_SIGNUP is the per-provider "allow sign-up" option ("0": only existing users may log in here)
+DEFAULT_VALUES = {"ENABLED": "0", "ALLOW_SIGNUP": "1"}
 
 
 def config_key(provider_id, field):
@@ -334,16 +403,22 @@ def _fields(provider_id):
 
 
 def seed_config(**_kwargs):
+    created_any = False
     for provider_id in PROVIDER_IDS:
         for field in _fields(provider_id):
-            InstanceConfiguration.objects.get_or_create(
+            _, created = InstanceConfiguration.objects.get_or_create(
                 key=config_key(provider_id, field),
                 defaults={
-                    "value": "0" if field == "ENABLED" else "",
+                    "value": DEFAULT_VALUES.get(field, ""),
                     "category": f"EE_SSO_{provider_id.upper()}",
                     "is_encrypted": field in ENCRYPTED_FIELDS,
                 },
             )
+            created_any = created_any or created
+    if created_any:
+        # core caches GET /api/instances/configurations/ for 2h and only PATCH invalidates it; without this
+        # the admin UI would not see freshly seeded keys on an existing instance.
+        cache.delete_many(["/api/instances/configurations/", "/api/instances/"])
 
 
 def get_sso_config(provider_id):
@@ -356,10 +431,35 @@ def get_sso_config(provider_id):
         return None
     if not all(cfg.get(f) for f in PROVIDERS[provider_id]["required"]):
         return None
+    # Azure AD is single-tenant: TENANT_ID must be the tenant GUID (not a domain, `common`, `organizations`,
+    # `consumers`). Azure publishes the GUID in the discovery issuer / `tid` claim, so anything else can never match.
+    if provider_id == "azure_ad" and not GUID_RE.fullmatch(cfg["TENANT_ID"].strip().lower()):
+        return None
     if "SCOPE" in cfg:
         cfg["SCOPE"] = cfg["SCOPE"] or DEFAULT_SCOPE
+    if "ALLOW_SIGNUP" in cfg:
+        cfg["ALLOW_SIGNUP"] = cfg["ALLOW_SIGNUP"] or "1"
     cfg["LABEL"] = cfg["LABEL"] or PROVIDERS[provider_id]["label"]
     return cfg
+
+
+def public_origin(request):
+    """Public base URL of this Plane instance. Prefers the configured WEB_URL/APP_BASE_URL (not Host-header
+    controlled); falls back to the request only when neither is set."""
+    configured = settings.WEB_URL or settings.APP_BASE_URL
+    if configured:
+        return configured.rstrip("/")
+    return f"{'https' if request.is_secure() else 'http'}://{request.get_host()}"
+
+
+def callback_url(request, provider_id, cfg):
+    """Redirect URI (OIDC/Azure/OAuth2) or ACS URL (SAML) sent to / registered at the IdP.
+    An admin-set CALLBACK_URL wins; it must be absolute http(s) and must still reach our endpoint."""
+    custom = (cfg.get("CALLBACK_URL") or "").strip()
+    if custom.startswith(("http://", "https://")):
+        return custom
+    path = "acs" if provider_id == "saml" else "callback"
+    return f"{public_origin(request)}/auth/sso/{provider_id}/{path}/"
 
 
 def list_enabled_providers():
@@ -371,29 +471,33 @@ def list_enabled_providers():
     return out
 ```
 
-Connect seeding in `apps.py` `ready()` (append):
+Replace `plane/ee/apps.py` with its final form (seeding hooks `post_migrate` of the `license` app, because `plane.ee` has no models and Django emits `post_migrate` only for apps with models):
 
 ```python
-        from django.db.models.signals import post_migrate
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
 
-        from plane.ee.sso.config import seed_config
+from django.apps import AppConfig
+from django.db.models.signals import post_migrate
 
-        # plane.ee has no models, so post_migrate is not emitted for it; hook on the
-        # license app (owner of InstanceConfiguration) instead. seed_config is idempotent.
-        post_migrate.connect(_seed_on_license_migrate, dispatch_uid="ee_sso_seed")
-```
 
-and module-level:
-
-```python
 def _seed_on_license_migrate(sender, **kwargs):
-    if sender.label == "license":
+    if sender.label == "license":  # LicenseConfig has no explicit label, so it is "license"
         from plane.ee.sso.config import seed_config
 
         seed_config()
-```
 
-(Remove the unused `seed_config` import inside `ready`.)
+
+class EeConfig(AppConfig):
+    name = "plane.ee"
+    label = "ee"
+
+    def ready(self):
+        from plane.ee.sso import errors  # noqa: F401  (registers error codes)
+
+        post_migrate.connect(_seed_on_license_migrate, dispatch_uid="ee_sso_seed")
+```
 
 - [ ] **Step 4: Run, expect PASS**
 
@@ -451,7 +555,8 @@ def rsa_keys():
 
 @pytest.fixture(autouse=True)
 def _patch_jwks(mocker, rsa_keys):
-    cache.clear()
+    # delete only our keys (cache.clear() would flush the whole shared Redis DB); needs the compose Redis
+    cache.delete_pattern("ee_sso_*")
     mocker.patch("plane.ee.sso.oidc._signing_key", return_value=rsa_keys[1])
 
 
@@ -508,6 +613,7 @@ def test_valid_token_returns_claims(make_id_token):
         ({"iss": "https://evil.example.com"}, {}),  # wrong issuer
         ({"nonce": "zzz"}, {}),  # nonce mismatch
         ({"nonce": None}, {}),  # nonce missing
+        ({"aud": ["cid", "other"], "azp": "other"}, {}),  # multi-audience token for another authorized party
     ],
 )
 def test_invalid_claims_rejected(make_id_token, override, kw):
@@ -523,17 +629,24 @@ def test_garbage_token_rejected():
 
 @pytest.mark.unit
 def test_discover_ok_and_cached(mocker):
-    get = mocker.patch("plane.ee.sso.oidc.requests.get")
-    get.return_value.json.return_value = {"issuer": ISS, "jwks_uri": f"{ISS}/jwks"}
+    fetch = mocker.patch("plane.ee.sso.oidc._fetch_json", return_value={"issuer": ISS, "jwks_uri": f"{ISS}/jwks"})
     assert discover(ISS)["jwks_uri"] == f"{ISS}/jwks"
     discover(ISS)
-    assert get.call_count == 1
+    assert fetch.call_count == 1
+
+
+@pytest.mark.unit
+def test_discover_accepts_trailing_slash_issuer(mocker, make_id_token):
+    fetch = mocker.patch("plane.ee.sso.oidc._fetch_json", return_value={"issuer": ISS + "/", "jwks_uri": "x"})
+    meta = discover(ISS)  # configured without slash
+    assert fetch.call_args.args[0] == f"{ISS}/.well-known/openid-configuration"
+    # tokens are then verified against the verbatim issuer
+    assert _verify(make_id_token(iss=ISS + "/"), issuer=meta["issuer"])["sub"] == "u1"
 
 
 @pytest.mark.unit
 def test_discover_issuer_mismatch_rejected(mocker):
-    get = mocker.patch("plane.ee.sso.oidc.requests.get")
-    get.return_value.json.return_value = {"issuer": "https://other", "jwks_uri": "x"}
+    mocker.patch("plane.ee.sso.oidc._fetch_json", return_value={"issuer": "https://other", "jwks_uri": "x"})
     with pytest.raises(AuthenticationException):
         discover(ISS)
 ```
@@ -546,6 +659,8 @@ def test_discover_issuer_mismatch_rejected(mocker):
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
+
+from functools import lru_cache
 
 import jwt
 import requests
@@ -565,26 +680,40 @@ def _provider_error(message):
     )
 
 
+def _fetch_json(url):
+    # Single patch point for tests (patching requests.get itself would also mock the core adapter's calls).
+    # ponytail: admin-configured URL, not SSRF-guarded (internal IdPs are legitimate); see Known limits.
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    return response.json()
+
+
 def discover(issuer):
-    cache_key = f"ee_sso_discovery:{issuer}"
+    base = issuer.rstrip("/")
+    cache_key = f"ee_sso_discovery:{base}"
     meta = cache.get(cache_key)
     if meta:
         return meta
     try:
-        response = requests.get(f"{issuer}/.well-known/openid-configuration", timeout=10)
-        response.raise_for_status()
-        meta = response.json()
+        meta = _fetch_json(f"{base}/.well-known/openid-configuration")
     except (requests.RequestException, ValueError):
         raise _provider_error("discovery failed")
-    # OIDC Discovery §4.3: issuer in metadata must match the one used to fetch it.
-    if meta.get("issuer") != issuer:
+    # OIDC Discovery §4.3: issuer in metadata must match the one used to fetch it. Some IdPs (Auth0) publish
+    # it with a trailing slash, so compare ignoring that one character; callers must then verify tokens
+    # against meta["issuer"] verbatim.
+    if str(meta.get("issuer", "")).rstrip("/") != base:
         raise _provider_error("issuer mismatch")
     cache.set(cache_key, meta, DISCOVERY_TTL)
     return meta
 
 
+@lru_cache(maxsize=16)
+def _jwk_client(jwks_uri):
+    return jwt.PyJWKClient(jwks_uri, timeout=10)  # keeps its own key cache
+
+
 def _signing_key(jwks_uri, id_token):
-    return jwt.PyJWKClient(jwks_uri, timeout=10).get_signing_key_from_jwt(id_token).key
+    return _jwk_client(jwks_uri).get_signing_key_from_jwt(id_token).key
 
 
 def verify_id_token(id_token, jwks_uri, issuer, audience, nonce):
@@ -595,12 +724,16 @@ def verify_id_token(id_token, jwks_uri, issuer, audience, nonce):
             algorithms=ALLOWED_ALGS,
             audience=audience,
             issuer=issuer,
+            leeway=60,  # clock skew
             options={"require": ["exp", "iss", "aud", "sub"]},
         )
     except jwt.PyJWTError:
         raise _provider_error("invalid id_token")
     if not nonce or claims.get("nonce") != nonce:
         raise _provider_error("nonce mismatch")
+    # OIDC Core 3.1.3.7: with several audiences the authorized party (azp) must be this client
+    if isinstance(claims.get("aud"), list) and len(claims["aud"]) > 1 and claims.get("azp") != audience:
+        raise _provider_error("azp mismatch")
     return claims
 ```
 
@@ -617,32 +750,154 @@ git commit -m "feat(ee): OIDC discovery and id_token verification"
 
 ---
 
-### Task 4: SsoOauthProvider adapter
+### Task 4: Subject-keyed login (`identity.py`) and `SsoOauthProvider`
+
+**Decision: identity is the stable subject, never an e-mail.** None of the identity providers send a usable e-mail, and best practice says not to use one anyway: OIDC Core (§2, §5.7) — `sub` is the only identifier that is stable and never reassigned, and is unique only _per issuer_, so the key is `(iss, sub)`; Microsoft Entra — use `oid` together with `tid` (`sub` is per-application, and `preferred_username`, UPN and `email` are mutable and must not identify or authorize a user); SAML Core §8.3.7 — a `persistent` NameID is the stable pairwise identifier (e-mail / unspecified NameIDs are reassignable); OAuth 2.0 Security BCP and RFC 9700 — do not link accounts by unverified e-mail (account-pre-hijacking). Therefore e-mail claims, `email_verified`, `preferred_username` and UPN are **never** read as identity, and Plane users are never matched or linked by e-mail automatically.
+
+Plane requires a unique e-mail per user, so a user created at first login gets a reserved-domain placeholder `<hash>@sso.invalid` (RFC 2606: it can never be a real mailbox, so a pending workspace invite addressed to a real e-mail can never auto-attach to an SSO user, and an SSO user can never collide with a real account). Existing Plane users are linked **explicitly by an administrator** with the `sso_link` command (Task 6). Consequence: Plane's e-mail notifications and e-mail invites do not reach SSO-created users (documented limit).
 
 **Files:**
 
-- Create: `apps/api/plane/ee/sso/adapter.py`
-- Test: `apps/api/plane/tests/unit/ee/sso/test_adapter.py`
+- Create: `apps/api/plane/ee/sso/flow.py` (code under Task 5 Step 3; created here because `identity.py` imports `provider_error` from it), `apps/api/plane/ee/sso/identity.py`, `apps/api/plane/ee/sso/adapter.py`
+- Test: `apps/api/plane/tests/unit/ee/sso/test_identity.py`, `apps/api/plane/tests/unit/ee/sso/test_adapter.py`
 
 **Interfaces:**
 
-- Consumes: `get_sso_config`, `PROVIDERS` (Task 2); `discover`, `verify_id_token` (Task 3); core `OauthAdapter` (`authenticate()`, `get_user_token(data, headers)`, `get_user_response()`, `sanitize_email`, `complete_login_or_signup`).
-- Produces: `class SsoOauthProvider(OauthAdapter)`:
-  - `__init__(self, request, provider_id, state=None, nonce=None, code_challenge=None, code=None, code_verifier=None, callback=None)` — raises `AuthenticationException(SSO_NOT_CONFIGURED)` if `get_sso_config(provider_id)` is None.
-  - `get_auth_url() -> str` (inherited name; URL includes `state`, plus `nonce`, `code_challenge`, `code_challenge_method=S256` when the provider is OIDC-based).
-  - `authenticate() -> User` (inherited flow: token exchange → user data → `complete_login_or_signup`).
-  - `self.provider == f"sso-{provider_id}"`.
-  - `authentication_error_code()` returns `"SSO_PROVIDER_ERROR"`.
+- Consumes: `get_sso_config`, `PROVIDERS`, `callback_url` (Task 2); `discover`, `verify_id_token` (Task 3); core `OauthAdapter` (`get_user_token`, `get_user_response`), core `Adapter` (`save_user_data`, `callback`, `request`, `provider`).
+- Produces (`identity.py`):
+  - `issuer_fingerprint(issuer: str) -> str` (first 12 hex of sha256).
+  - `subject_key(issuer: str, subject) -> str` = `"<fingerprint>:<subject>"`; raises `AuthenticationException(SSO_PROVIDER_ERROR)` when the subject is empty or the key exceeds 255 chars (`Account.provider_account_id`).
+  - `placeholder_email(provider: str, key: str) -> str` = `"<32 hex>@sso.invalid"`, deterministic.
+  - `class SubjectLoginMixin` with `login_by_subject(self, key: str, profile: dict, allow_signup: str) -> User`. `profile` keys: `first_name`, `last_name`, `display_name`. Finds the user through `Account(provider=self.provider, provider_account_id=key)`; otherwise provisions one (blocked by `allow_signup != "1"` or the instance-wide `ENABLE_SIGNUP == "0"` with `SIGNUP_DISABLED` 5015); rejects deactivated users (5019) and bots (5017); updates `last_connected_at`; calls `save_user_data` and `self.callback(user, is_signup, request)`. No access/refresh tokens are persisted (least privilege).
+- Produces (`adapter.py`): `SsoOauthProvider(request, provider_id, state=None, nonce=None, code_challenge=None, code=None, code_verifier=None, callback=None)`; `get_auth_url()`; `authenticate() -> User`; `provider == f"sso-{provider_id}"`.
 
-Behavior rules:
+Subject rules per provider:
 
-- OIDC-based (`oidc`, `azure_ad`): issuer = `cfg["ISSUER"].rstrip("/")` or `https://login.microsoftonline.com/{TENANT_ID}/v2.0`; endpoints from `discover(issuer)`; token response must contain `id_token`, verified with `verify_id_token(..., audience=CLIENT_ID, nonce=nonce)`; if `email` claim missing and `userinfo_endpoint` exists, merge `get_user_response()`; Azure fallback `preferred_username`.
-- `oauth2`: endpoints from config; claims come from `get_user_response()` (userinfo).
-- `email_verified` present and falsy (`False` / `"false"`) → `SSO_PROVIDER_UNVERIFIED_EMAIL`. Absent → accepted.
-- `provider_id` (Account) = `claims["sub"]` or `claims["id"]`, as string; missing → `SSO_PROVIDER_ERROR`.
-- Names: `given_name`/`family_name`, falling back to splitting `name` on first space.
+- **oidc:** key = `subject_key(<discovery issuer, verbatim>, id_token.sub)`. Profile from `given_name` / `family_name` (else `name` split), display name from `name` or `preferred_username` (display only).
+- **azure_ad (single tenant):** `tid` must equal the configured Tenant ID (always; `get_sso_config` guarantees it is a GUID); `oid` is required; key = `"<tid>:<oid>"`; B2B guests rejected (`idp` present and different from `iss`, `acct == 1`, or `#EXT#` in a present `preferred_username`). No userinfo/Graph call. For authorization use Entra's **"Assignment required"** on the enterprise application (assign users/groups there); that is the authoritative access control and replaces group sync.
+- **oauth2 (generic):** key = `subject_key(<token URL>, userinfo.sub or userinfo.id)`; profile from userinfo `given_name`/`family_name`/`name`. (Plain OAuth2 is not an authentication protocol; prefer OIDC where the IdP offers it.)
 
-- [ ] **Step 1: Failing tests** `test_adapter.py`
+- [ ] **Step 1: Failing tests** `test_identity.py`
+
+```python
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+import pytest
+from django.test import RequestFactory
+from django.utils import timezone
+
+from plane.authentication.adapter.base import Adapter
+from plane.authentication.adapter.error import AuthenticationException
+from plane.db.models import Account, Profile
+from plane.ee.sso.identity import SubjectLoginMixin, placeholder_email, subject_key
+from plane.license.models import InstanceConfiguration
+
+
+class _Provider(SubjectLoginMixin, Adapter):
+    pass
+
+
+def _provider(callback=None):
+    request = RequestFactory().get("/")
+    request.META["HTTP_USER_AGENT"] = "pytest"
+    return _Provider(request, "sso-test", callback)
+
+
+PROFILE = {"first_name": "An", "last_name": "Nguyen", "display_name": "An Nguyen"}
+KEY = subject_key("https://idp.example.com", "sub-1")
+
+
+@pytest.mark.unit
+def test_subject_key_is_namespaced_by_issuer():
+    assert subject_key("https://a", "1") != subject_key("https://b", "1")
+    assert subject_key("https://a", "1") == subject_key("https://a", "1")
+    assert subject_key("https://a/", "1") == subject_key("https://a", "1")
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("subject", ["", None, "x" * 300])
+def test_subject_key_rejects_empty_or_oversized(subject):
+    with pytest.raises(AuthenticationException):
+        subject_key("https://a", subject)
+
+
+@pytest.mark.unit
+def test_placeholder_email_is_reserved_and_deterministic():
+    email = placeholder_email("sso-test", KEY)
+    assert email.endswith("@sso.invalid")
+    assert email == placeholder_email("sso-test", KEY)
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_first_login_provisions_user_account_profile_and_runs_workflow(mocker):
+    callback = mocker.Mock()
+    user = _provider(callback).login_by_subject(KEY, PROFILE, "1")
+    assert user.email == placeholder_email("sso-test", KEY)
+    assert (user.first_name, user.last_name) == ("An", "Nguyen")
+    assert Account.objects.get(user=user).provider_account_id == KEY
+    assert Profile.objects.filter(user=user).exists()
+    assert not user.has_usable_password() or user.is_password_autoset
+    assert callback.call_args.args[1] is True  # is_signup
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_second_login_reuses_the_user_even_with_signup_off(mocker):
+    first = _provider().login_by_subject(KEY, PROFILE, "1")
+    callback = mocker.Mock()
+    second = _provider(callback).login_by_subject(KEY, {}, "0")
+    assert second.id == first.id
+    assert Account.objects.count() == 1
+    assert callback.call_args.args[1] is False
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_signup_off_blocks_unknown_subjects():
+    with pytest.raises(AuthenticationException) as exc:
+        _provider().login_by_subject(KEY, PROFILE, "0")
+    assert exc.value.error_code == 5015
+    assert Account.objects.count() == 0
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_instance_wide_signup_off_blocks_unknown_subjects():
+    InstanceConfiguration.objects.create(key="ENABLE_SIGNUP", value="0", category="AUTHENTICATION")
+    with pytest.raises(AuthenticationException) as exc:
+        _provider().login_by_subject(KEY, PROFILE, "1")
+    assert exc.value.error_code == 5015
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_login_after_the_link_was_removed_reuses_the_placeholder_user():
+    first = _provider().login_by_subject(KEY, PROFILE, "1")
+    Account.objects.all().delete()  # e.g. `sso_link --unlink`
+    assert _provider().login_by_subject(KEY, PROFILE, "1").id == first.id
+    assert Account.objects.count() == 1
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_deactivated_and_bot_users_are_rejected():
+    user = _provider().login_by_subject(KEY, PROFILE, "1")
+    user.is_active, user.last_logout_time = False, timezone.now()
+    user.save()
+    with pytest.raises(AuthenticationException) as exc:
+        _provider().login_by_subject(KEY, PROFILE, "1")
+    assert exc.value.error_code == 5019
+    user.is_active, user.last_logout_time, user.is_bot = True, None, True
+    user.save()
+    with pytest.raises(AuthenticationException) as exc:
+        _provider().login_by_subject(KEY, PROFILE, "1")
+    assert exc.value.error_code == 5017
+```
+
+`test_adapter.py`:
 
 ```python
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
@@ -657,7 +912,8 @@ from django.test import RequestFactory
 from plane.authentication.adapter.error import AuthenticationException
 from plane.db.models import Account, User
 from plane.ee.sso.adapter import SsoOauthProvider
-from plane.ee.sso.config import config_key, seed_config
+from plane.ee.sso.config import PROVIDERS, config_key, seed_config
+from plane.ee.sso.identity import issuer_fingerprint, placeholder_email, subject_key
 from plane.license.models import InstanceConfiguration
 from plane.license.utils.encryption import encrypt_data
 
@@ -669,6 +925,8 @@ META = {
     "userinfo_endpoint": f"{ISS}/userinfo",
     "jwks_uri": f"{ISS}/jwks",
 }
+GUID = "11111111-1111-1111-1111-111111111111"
+OTHER_GUID = "22222222-2222-2222-2222-222222222222"
 
 
 def _configure(provider, **fields):
@@ -687,16 +945,27 @@ def _request():
     return request
 
 
-@pytest.fixture
-def oidc(db, mocker):
-    _configure("oidc", ISSUER=ISS)
-    mocker.patch("plane.ee.sso.oidc.requests.get").return_value.json.return_value = META
-
-
 def _token_response(mocker, id_token):
     post = mocker.patch("plane.authentication.adapter.oauth.requests.post")
     post.return_value.json.return_value = {"access_token": "at", "id_token": id_token}
     return post
+
+
+def _auth(provider_id):
+    return SsoOauthProvider(_request(), provider_id, code="c", nonce="n1", code_verifier="v").authenticate()
+
+
+@pytest.fixture
+def oidc(db, mocker):
+    _configure("oidc", ISSUER=ISS)
+    mocker.patch("plane.ee.sso.oidc._fetch_json", return_value=META)
+
+
+def _azure(mocker, **cfg):
+    iss = cfg.pop("iss", f"https://login.microsoftonline.com/{GUID}/v2.0")
+    _configure("azure_ad", TENANT_ID=GUID, **cfg)
+    mocker.patch("plane.ee.sso.oidc._fetch_json", return_value={**META, "issuer": iss})
+    return iss
 
 
 @pytest.mark.unit
@@ -708,41 +977,64 @@ def test_not_configured_raises(db):
 
 
 @pytest.mark.unit
-def test_auth_url_has_pkce_nonce_state(oidc):
+def test_auth_url_has_pkce_nonce_state_and_no_email_scope(oidc):
     p = SsoOauthProvider(_request(), "oidc", state="s1", nonce="n1", code_challenge="ch")
-    parsed = urlparse(p.get_auth_url())
-    q = parse_qs(parsed.query)
-    assert f"{parsed.scheme}://{parsed.netloc}{parsed.path}" == f"{ISS}/authorize"
+    q = parse_qs(urlparse(p.get_auth_url()).query)
     assert q["state"] == ["s1"] and q["nonce"] == ["n1"]
     assert q["code_challenge"] == ["ch"] and q["code_challenge_method"] == ["S256"]
     assert q["client_id"] == ["cid"] and q["response_type"] == ["code"]
+    assert q["scope"] == ["openid profile"]  # least privilege: we never ask for e-mail
 
 
 @pytest.mark.unit
-def test_oidc_login_creates_user_and_account(oidc, mocker, make_id_token):
-    _token_response(mocker, make_id_token(given_name="An", family_name="Nguyen"))
-    p = SsoOauthProvider(_request(), "oidc", code="c", nonce="n1", code_verifier="v")
-    user = p.authenticate()
-    assert user.email == "a@b.com" and user.first_name == "An" and user.last_name == "Nguyen"
-    assert Account.objects.get(user=user).provider == "sso-oidc"
-    assert Account.objects.get(user=user).provider_account_id == "u1"
+def test_custom_callback_url_is_used_everywhere(db, mocker, make_id_token):
+    _configure("oidc", ISSUER=ISS, CALLBACK_URL="https://sso.corp.com/auth/sso/oidc/callback/")
+    mocker.patch("plane.ee.sso.oidc._fetch_json", return_value=META)
+    p = SsoOauthProvider(_request(), "oidc", state="s1", nonce="n1", code_challenge="ch")
+    assert parse_qs(urlparse(p.get_auth_url()).query)["redirect_uri"] == ["https://sso.corp.com/auth/sso/oidc/callback/"]
+    post = _token_response(mocker, make_id_token())
+    _auth("oidc")
+    assert post.call_args.kwargs["data"]["redirect_uri"] == "https://sso.corp.com/auth/sso/oidc/callback/"
 
 
 @pytest.mark.unit
-def test_oidc_existing_user_is_matched_by_email(oidc, mocker, make_id_token):
-    existing = User.objects.create(email="a@b.com", username="x")
-    _token_response(mocker, make_id_token())
-    user = SsoOauthProvider(_request(), "oidc", code="c", nonce="n1", code_verifier="v").authenticate()
-    assert user.id == existing.id
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize("flag", [False, "false"])
-def test_unverified_email_rejected(oidc, mocker, make_id_token, flag):
-    _token_response(mocker, make_id_token(email_verified=flag))
+def test_saml_provider_id_is_rejected_by_oauth_adapter(db):
+    if "saml" not in PROVIDERS:
+        pytest.skip("saml added in phase 2")
     with pytest.raises(AuthenticationException) as exc:
-        SsoOauthProvider(_request(), "oidc", code="c", nonce="n1", code_verifier="v").authenticate()
-    assert exc.value.error_code == 6002
+        SsoOauthProvider(_request(), "saml")
+    assert exc.value.error_code == 6000
+
+
+@pytest.mark.unit
+def test_oidc_identity_is_issuer_plus_sub_and_email_claims_are_ignored(oidc, mocker, make_id_token):
+    _token_response(mocker, make_id_token(name="An Nguyen", email="a@b.com", email_verified=False))
+    user = _auth("oidc")
+    key = f"{issuer_fingerprint(ISS)}:u1"
+    assert Account.objects.get(user=user).provider_account_id == key
+    assert Account.objects.get(user=user).provider == "sso-oidc"
+    assert user.email == placeholder_email("sso-oidc", key)
+    assert (user.first_name, user.last_name) == ("An", "Nguyen")
+    assert not User.objects.filter(email="a@b.com").exists()
+
+
+@pytest.mark.unit
+def test_existing_plane_user_with_the_same_email_is_never_taken_over(oidc, mocker, make_id_token):
+    victim = User.objects.create(email="a@b.com", username="victim")
+    _token_response(mocker, make_id_token(email="a@b.com", email_verified=True))
+    user = _auth("oidc")
+    assert user.id != victim.id
+    assert not Account.objects.filter(user=victim).exists()
+
+
+@pytest.mark.unit
+def test_same_subject_logs_into_the_same_user_and_other_subject_does_not(oidc, mocker, make_id_token):
+    _token_response(mocker, make_id_token(sub="s1"))
+    first = _auth("oidc")
+    _token_response(mocker, make_id_token(sub="s1", email="changed@b.com"))
+    assert _auth("oidc").id == first.id
+    _token_response(mocker, make_id_token(sub="s2"))
+    assert _auth("oidc").id != first.id
 
 
 @pytest.mark.unit
@@ -750,25 +1042,84 @@ def test_missing_id_token_rejected(oidc, mocker):
     post = mocker.patch("plane.authentication.adapter.oauth.requests.post")
     post.return_value.json.return_value = {"access_token": "at"}
     with pytest.raises(AuthenticationException):
-        SsoOauthProvider(_request(), "oidc", code="c", nonce="n1", code_verifier="v").authenticate()
+        _auth("oidc")
 
 
 @pytest.mark.unit
-def test_azure_uses_tenant_issuer_and_preferred_username(db, mocker, make_id_token):
-    tenant_iss = "https://login.microsoftonline.com/tid/v2.0"
-    _configure("azure_ad", TENANT_ID="tid")
-    mocker.patch("plane.ee.sso.oidc.requests.get").return_value.json.return_value = {
-        **META,
-        "issuer": tenant_iss,
-    }
-    _token_response(mocker, make_id_token(iss=tenant_iss, email=None, preferred_username="u@corp.com"))
-    user = SsoOauthProvider(_request(), "azure_ad", code="c", nonce="n1", code_verifier="v").authenticate()
-    assert user.email == "u@corp.com"
+def test_azure_identity_is_tid_plus_oid_and_never_calls_userinfo(db, mocker, make_id_token):
+    iss = _azure(mocker)
+    get = mocker.patch("plane.authentication.adapter.oauth.requests.get")
+    _token_response(mocker, make_id_token(iss=iss, tid=GUID, oid="OID-1", preferred_username="an@corp.com", name="An Nguyen"))
+    user = _auth("azure_ad")
     assert Account.objects.get(user=user).provider == "sso-azure_ad"
+    assert Account.objects.get(user=user).provider_account_id == f"{GUID}:oid-1"
+    assert user.email.endswith("@sso.invalid")  # UPN is display data only, never the e-mail
+    get.assert_not_called()
 
 
 @pytest.mark.unit
-def test_oauth2_generic_uses_userinfo(db, mocker):
+def test_azure_upn_change_does_not_change_the_account(db, mocker, make_id_token):
+    iss = _azure(mocker)
+    _token_response(mocker, make_id_token(iss=iss, tid=GUID, oid="o1", preferred_username="old@corp.com"))
+    first = _auth("azure_ad")
+    _token_response(mocker, make_id_token(iss=iss, tid=GUID, oid="o1", preferred_username="renamed@corp.com"))
+    assert _auth("azure_ad").id == first.id
+
+
+@pytest.mark.unit
+def test_azure_reassigned_upn_with_a_new_oid_is_a_different_user(db, mocker, make_id_token):
+    iss = _azure(mocker)
+    _token_response(mocker, make_id_token(iss=iss, tid=GUID, oid="leaver", preferred_username="an@corp.com"))
+    leaver = _auth("azure_ad")
+    _token_response(mocker, make_id_token(iss=iss, tid=GUID, oid="newhire", preferred_username="an@corp.com"))
+    assert _auth("azure_ad").id != leaver.id
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("claims", [{"tid": OTHER_GUID, "oid": "o"}, {"tid": GUID}, {"oid": "o"}])
+def test_azure_requires_matching_tid_and_an_oid(db, mocker, make_id_token, claims):
+    iss = _azure(mocker)
+    _token_response(mocker, make_id_token(iss=iss, **claims))
+    with pytest.raises(AuthenticationException) as exc:
+        _auth("azure_ad")
+    assert exc.value.error_code == 6001
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "extra",
+    [
+        {"acct": 1},
+        {"idp": "https://sts.example.com/"},
+        {"preferred_username": "bob_partner.com#EXT#@corp.onmicrosoft.com"},
+    ],
+)
+def test_azure_guest_signals_are_rejected(db, mocker, make_id_token, extra):
+    iss = _azure(mocker)
+    _token_response(mocker, make_id_token(iss=iss, tid=GUID, oid="o", **extra))
+    with pytest.raises(AuthenticationException) as exc:
+        _auth("azure_ad")
+    assert exc.value.error_code == 6001
+
+
+@pytest.mark.unit
+def test_azure_uppercase_tenant_guid_is_normalised_for_discovery(db, mocker):
+    _configure("azure_ad", TENANT_ID=GUID.upper())
+    lower_iss = f"https://login.microsoftonline.com/{GUID}/v2.0"
+    mocker.patch("plane.ee.sso.oidc._fetch_json", return_value={**META, "issuer": lower_iss})
+    assert SsoOauthProvider(_request(), "azure_ad", state="s", nonce="n", code_challenge="c").issuer == lower_iss
+
+
+@pytest.mark.unit
+def test_azure_issuer_override_is_used_for_discovery(db, mocker):
+    override = "https://login.microsoftonline.com/custom/v2.0"
+    iss = _azure(mocker, ISSUER=override, iss=override)
+    p = SsoOauthProvider(_request(), "azure_ad", state="s", nonce="n", code_challenge="c")
+    assert p.issuer == iss and p.token_issuer == iss
+
+
+@pytest.mark.unit
+def test_oauth2_identity_is_the_userinfo_id(db, mocker):
     _configure(
         "oauth2",
         AUTH_URL="https://o.example.com/auth",
@@ -778,15 +1129,141 @@ def test_oauth2_generic_uses_userinfo(db, mocker):
     post = mocker.patch("plane.authentication.adapter.oauth.requests.post")
     post.return_value.json.return_value = {"access_token": "at"}
     get = mocker.patch("plane.authentication.adapter.oauth.requests.get")
-    get.return_value.json.return_value = {"id": 42, "email": "o@x.com", "name": "Bao Tran"}
+    get.return_value.json.return_value = {"id": 42, "name": "Bao Tran"}
     user = SsoOauthProvider(_request(), "oauth2", code="c").authenticate()
-    assert (user.email, user.first_name, user.last_name) == ("o@x.com", "Bao", "Tran")
-    assert Account.objects.get(user=user).provider_account_id == "42"
+    assert (user.first_name, user.last_name) == ("Bao", "Tran")
+    assert Account.objects.get(user=user).provider_account_id == subject_key("https://o.example.com/token", "42")
+
+
+@pytest.mark.unit
+def test_oauth2_without_a_stable_id_is_rejected(db, mocker):
+    _configure(
+        "oauth2",
+        AUTH_URL="https://o.example.com/auth",
+        TOKEN_URL="https://o.example.com/token",
+        USERINFO_URL="https://o.example.com/me",
+    )
+    post = mocker.patch("plane.authentication.adapter.oauth.requests.post")
+    post.return_value.json.return_value = {"access_token": "at"}
+    mocker.patch("plane.authentication.adapter.oauth.requests.get").return_value.json.return_value = {"name": "x"}
+    with pytest.raises(AuthenticationException):
+        SsoOauthProvider(_request(), "oauth2", code="c").authenticate()
 ```
 
-- [ ] **Step 2: Run, expect FAIL** (`ModuleNotFoundError: plane.ee.sso.adapter`).
+(The `make_id_token` fixture in `conftest.py` still emits an `email` claim by default: that is deliberate, it proves the claim is ignored.)
 
-- [ ] **Step 3: Implement** `adapter.py`
+- [ ] **Step 2: Run, expect FAIL** (`ModuleNotFoundError: plane.ee.sso.identity`).
+
+Run: `docker compose -f docker-compose-test.yml run --rm api-tests pytest --ds=plane.settings.ee_test plane/tests/unit/ee/sso/test_identity.py plane/tests/unit/ee/sso/test_adapter.py`
+
+- [ ] **Step 3: Implement.** First create `flow.py` exactly as in Task 5 Step 3 (it is needed here). Then `identity.py`:
+
+```python
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+import hashlib
+import os
+import uuid
+
+from django.db import IntegrityError, transaction
+from django.utils import timezone
+
+from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
+from plane.db.models import Account, Profile, User
+from plane.ee.sso.flow import provider_error
+from plane.license.utils.instance_value import get_configuration_value
+
+# RFC 2606 reserved TLD: can never be a real mailbox (see the Task 4 decision text).
+PLACEHOLDER_DOMAIN = "sso.invalid"
+
+
+def issuer_fingerprint(issuer):
+    # a trailing "/" is not significant (Auth0 publishes it, admins often omit it)
+    return hashlib.sha256(issuer.rstrip("/").encode()).hexdigest()[:12]
+
+
+def subject_key(issuer, subject):
+    """`sub` is only unique per issuer (OIDC Core 2): namespace it. Never built from an e-mail."""
+    subject = "" if subject is None else str(subject)
+    key = f"{issuer_fingerprint(issuer)}:{subject}"
+    if not subject or len(key) > 255:  # Account.provider_account_id is 255 chars
+        raise provider_error("SSO_PROVIDER_ERROR: missing or oversized subject")
+    return key
+
+
+def placeholder_email(provider, key):
+    return f"{hashlib.sha256(f'{provider}|{key}'.encode()).hexdigest()[:32]}@{PLACEHOLDER_DOMAIN}"
+
+
+def _clip(value):
+    return str(value or "").strip()[:255]
+
+
+def _reject(code):
+    return AuthenticationException(error_code=AUTHENTICATION_ERROR_CODES[code], error_message=code)
+
+
+class SubjectLoginMixin:
+    """For core `Adapter` subclasses: log in through (provider, stable subject), never through e-mail."""
+
+    def login_by_subject(self, key, profile, allow_signup):
+        account = Account.objects.select_related("user").filter(provider=self.provider, provider_account_id=key).first()
+        is_signup = account is None
+        if account is not None:
+            user = account.user
+        else:
+            self._check_signup(allow_signup)
+            try:
+                with transaction.atomic():
+                    user = self._provision(key, profile)
+                    Account.objects.create(user=user, provider=self.provider, provider_account_id=key, access_token="")
+            except IntegrityError:
+                # concurrent first login for the same subject (the other request won), or a placeholder user whose
+                # link was removed (`sso_link --unlink`): re-use that user and (re)create the link
+                account = Account.objects.select_related("user").filter(provider=self.provider, provider_account_id=key).first()
+                user = account.user if account else User.objects.get(email=placeholder_email(self.provider, key))
+                if account is None:
+                    Account.objects.get_or_create(
+                        provider=self.provider, provider_account_id=key, defaults={"user": user, "access_token": ""}
+                    )
+                is_signup = False
+        if not user.is_active and user.last_logout_time is not None:
+            raise _reject("USER_ACCOUNT_DEACTIVATED")  # explicitly deactivated (same rule as core)
+        if user.is_bot:
+            raise _reject("BOT_USER_LOGIN_FORBIDDEN")
+        Account.objects.filter(provider=self.provider, provider_account_id=key).update(last_connected_at=timezone.now())
+        user = self.save_user_data(user)
+        if self.callback:
+            self.callback(user, is_signup, self.request)
+        return user
+
+    def _check_signup(self, allow_signup):
+        (enable_signup,) = get_configuration_value(
+            [{"key": "ENABLE_SIGNUP", "default": os.environ.get("ENABLE_SIGNUP", "1")}]
+        )
+        if allow_signup != "1" or enable_signup == "0":
+            raise _reject("SIGNUP_DISABLED")
+
+    def _provision(self, key, profile):
+        email = placeholder_email(self.provider, key)
+        user = User(
+            email=email,
+            username=uuid.uuid4().hex,
+            first_name=_clip(profile.get("first_name")),
+            last_name=_clip(profile.get("last_name")),
+            display_name=_clip(profile.get("display_name")) or email.split("@")[0][:12],
+        )
+        user.set_password(uuid.uuid4().hex)
+        user.is_password_autoset = True
+        user.is_email_verified = False  # the placeholder is not a mailbox
+        user.save()
+        Profile.objects.create(user=user)
+        return user
+```
+
+`adapter.py`:
 
 ```python
 # Copyright (c) 2023-present Plane Software, Inc. and contributors
@@ -801,19 +1278,18 @@ import pytz
 from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
 from plane.authentication.adapter.oauth import OauthAdapter
 from plane.ee.sso import errors  # noqa: F401
-from plane.ee.sso.config import get_sso_config
+from plane.ee.sso.config import PROVIDERS, callback_url, get_sso_config
+from plane.ee.sso.identity import SubjectLoginMixin, subject_key
 from plane.ee.sso.oidc import discover, verify_id_token
 
 AZURE_ISSUER = "https://login.microsoftonline.com/{tenant}/v2.0"
 
 
 def _error(code, message=None):
-    return AuthenticationException(
-        error_code=AUTHENTICATION_ERROR_CODES[code], error_message=message or code
-    )
+    return AuthenticationException(error_code=AUTHENTICATION_ERROR_CODES[code], error_message=message or code)
 
 
-class SsoOauthProvider(OauthAdapter):
+class SsoOauthProvider(SubjectLoginMixin, OauthAdapter):
     def __init__(
         self,
         request,
@@ -826,14 +1302,18 @@ class SsoOauthProvider(OauthAdapter):
         callback=None,
     ):
         cfg = get_sso_config(provider_id)
-        if not cfg:
+        if not cfg or PROVIDERS[provider_id]["protocol"] not in ("oidc", "oauth2"):
             raise _error("SSO_NOT_CONFIGURED")
         self.provider_id = provider_id
+        self.cfg = cfg
         self.nonce = nonce
         self.code_verifier = code_verifier
+        self.id_claims = {}
         self.issuer = self._issuer(provider_id, cfg)
         if self.issuer:
             meta = discover(self.issuer)
+            # token `iss` must equal the discovery document's issuer string exactly (may end in "/")
+            self.token_issuer = meta["issuer"]
             auth_url = meta.get("authorization_endpoint")
             token_url = meta.get("token_endpoint")
             userinfo_url = meta.get("userinfo_endpoint")
@@ -843,9 +1323,7 @@ class SsoOauthProvider(OauthAdapter):
         else:
             auth_url, token_url, userinfo_url = cfg["AUTH_URL"], cfg["TOKEN_URL"], cfg["USERINFO_URL"]
 
-        redirect_uri = (
-            f"{'https' if request.is_secure() else 'http'}://{request.get_host()}/auth/sso/{provider_id}/callback/"
-        )
+        redirect_uri = callback_url(request, provider_id, cfg)
         params = {
             "client_id": cfg["CLIENT_ID"],
             "response_type": "code",
@@ -862,7 +1340,7 @@ class SsoOauthProvider(OauthAdapter):
             cfg["CLIENT_ID"],
             cfg["SCOPE"],
             redirect_uri,
-            f"{auth_url}?{urlencode(params)}",
+            f"{auth_url}{'&' if '?' in auth_url else '?'}{urlencode(params)}",
             token_url,
             userinfo_url,
             cfg["CLIENT_SECRET"],
@@ -873,9 +1351,10 @@ class SsoOauthProvider(OauthAdapter):
     @staticmethod
     def _issuer(provider_id, cfg):
         if provider_id == "oidc":
-            return cfg["ISSUER"].rstrip("/")
+            return cfg["ISSUER"].strip().rstrip("/")
         if provider_id == "azure_ad":
-            return AZURE_ISSUER.format(tenant=cfg["TENANT_ID"].strip())
+            # single tenant, v2.0 endpoint; ISSUER is an optional override (must also be a v2.0 issuer)
+            return (cfg.get("ISSUER") or AZURE_ISSUER.format(tenant=cfg["TENANT_ID"].strip().lower())).strip().rstrip("/")
         return None
 
     def authentication_error_code(self):
@@ -894,13 +1373,10 @@ class SsoOauthProvider(OauthAdapter):
         token = self.get_user_token(data=data, headers={"Accept": "application/json"})
         if not token.get("access_token") and not token.get("id_token"):
             raise _error("SSO_PROVIDER_ERROR")
-        self.id_claims = {}
         if self.issuer:
             if not token.get("id_token"):
                 raise _error("SSO_PROVIDER_ERROR", "SSO_PROVIDER_ERROR: id_token missing")
-            self.id_claims = verify_id_token(
-                token["id_token"], self.jwks_uri, self.issuer, self.client_id, self.nonce
-            )
+            self.id_claims = verify_id_token(token["id_token"], self.jwks_uri, self.token_issuer, self.client_id, self.nonce)
         expires_in = token.get("expires_in")
         super().set_token_data(
             {
@@ -914,50 +1390,60 @@ class SsoOauthProvider(OauthAdapter):
             }
         )
 
+    def _azure_subject(self, claims):
+        """Entra best practice: identify by `oid` within the tenant `tid` (sub is per-app; UPN/e-mail are mutable)."""
+        tenant = self.cfg["TENANT_ID"].strip().lower()  # get_sso_config guarantees a GUID
+        if str(claims.get("tid", "")).lower() != tenant:
+            raise _error("SSO_PROVIDER_ERROR", "SSO_PROVIDER_ERROR: tenant mismatch")
+        oid = str(claims.get("oid") or "").strip().lower()
+        if not oid:
+            raise _error("SSO_PROVIDER_ERROR", "SSO_PROVIDER_ERROR: oid missing")
+        # B2B guests: federated from another IdP (idp != iss), acct == 1, or a `#EXT#` UPN when one is present
+        if (
+            (claims.get("idp") and claims.get("idp") != claims.get("iss"))
+            or str(claims.get("acct")) == "1"
+            or "#EXT#" in str(claims.get("preferred_username") or "").upper()
+        ):
+            raise _error("SSO_PROVIDER_ERROR", "SSO_PROVIDER_ERROR: guest accounts are not allowed")
+        return f"{tenant}:{oid}"
+
     def set_user_data(self):
-        claims = dict(self.id_claims)
-        needs_userinfo = not self.issuer or not (claims.get("email") or claims.get("preferred_username"))
-        if needs_userinfo and self.userinfo_url and self.token_data.get("access_token"):
-            claims = {**self.get_user_response(), **claims}
-
-        verified = claims.get("email_verified")
-        if verified is not None and str(verified).lower() != "true":
-            raise _error("SSO_PROVIDER_UNVERIFIED_EMAIL")
-
-        email = claims.get("email") or claims.get("preferred_username")
-        subject = claims.get("sub") or claims.get("id")
-        if not email or subject in (None, ""):
-            raise _error("SSO_PROVIDER_ERROR", "SSO_PROVIDER_ERROR: missing email or subject")
-
-        first, last = claims.get("given_name"), claims.get("family_name")
+        claims = self.id_claims if self.issuer else self.get_user_response()  # OIDC: the verified id_token
+        if self.provider_id == "azure_ad":
+            key = self._azure_subject(claims)
+        elif self.issuer:
+            key = subject_key(self.token_issuer, claims.get("sub"))
+        else:
+            key = subject_key(self.token_url, claims.get("sub") or claims.get("id"))
+        first = claims.get("given_name") or claims.get("first_name")
+        last = claims.get("family_name") or claims.get("last_name")
         if not (first or last) and claims.get("name"):
             first, _, last = str(claims["name"]).partition(" ")
-        super().set_user_data(
-            {
-                "email": email,
-                "user": {
-                    "provider_id": str(subject),
-                    "first_name": first or "",
-                    "last_name": last or "",
-                    "avatar": "",
-                    "is_password_autoset": True,
-                },
-            }
-        )
+        self.subject_key = key
+        self.profile = {
+            "first_name": first,
+            "last_name": last,
+            "display_name": claims.get("name") or claims.get("preferred_username"),  # display only
+        }
+
+    def authenticate(self):
+        self.set_token_data()
+        self.set_user_data()
+        return self.login_by_subject(self.subject_key, self.profile, self.cfg["ALLOW_SIGNUP"])
 ```
 
-Note: core `OauthAdapter.set_user_data(self, data)` takes `data`; our override has no param, so the `super().set_user_data(data)` call passes the dict. This mirrors how `GiteaOAuthProvider` is built.
+Note: `set_user_data()` here takes no argument (it overrides core's `set_user_data(self, data)`); nothing calls the base version because `authenticate()` is overridden.
 
 - [ ] **Step 4: Run, expect PASS**
 
-Run: `docker compose -f docker-compose-test.yml run --rm api-tests pytest --ds=plane.settings.ee_test plane/tests/unit/ee/sso/test_adapter.py`
-If `RequestFactory` requests fail in `save_user_data` (needs `HTTP_USER_AGENT`/IP) the fixture already sets `HTTP_USER_AGENT`; keep `REMOTE_ADDR` default.
+Run: `docker compose -f docker-compose-test.yml run --rm api-tests pytest --ds=plane.settings.ee_test plane/tests/unit/ee/sso/test_identity.py plane/tests/unit/ee/sso/test_adapter.py`
+If `Account` creation fails on a NOT NULL column other than `access_token`, add that field (empty string / `None`) to the `Account.objects.create` call; do not store tokens. If `user.save()` rejects the placeholder (`.invalid`) in some validator, check `plane/db/models/user.py` for an email validator and report instead of changing the domain.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/api/plane/ee/sso/adapter.py apps/api/plane/tests/unit/ee/sso/test_adapter.py
-git commit -m "feat(ee): SSO OAuth adapter for OIDC, Azure AD and OAuth2"
+git add apps/api/plane/ee/sso/flow.py apps/api/plane/ee/sso/identity.py apps/api/plane/ee/sso/adapter.py apps/api/plane/tests/unit/ee/sso/test_identity.py apps/api/plane/tests/unit/ee/sso/test_adapter.py
+git commit -m "feat(ee): subject-keyed SSO login (OIDC, Entra single tenant, OAuth2)"
 ```
 
 ---
@@ -966,7 +1452,7 @@ git commit -m "feat(ee): SSO OAuth adapter for OIDC, Azure AD and OAuth2"
 
 **Files:**
 
-- Create: `apps/api/plane/ee/sso/flow.py`, `apps/api/plane/ee/sso/views.py`, `apps/api/plane/ee/sso/urls.py`
+- Create: `apps/api/plane/ee/sso/views.py`, `apps/api/plane/ee/sso/urls.py` (`flow.py` already exists from Task 4)
 - Modify: `apps/api/plane/ee/urls.py`
 - Test: `apps/api/plane/tests/unit/ee/sso/test_views.py`
 
@@ -990,7 +1476,7 @@ import pytest
 from django.test import Client
 from django.utils import timezone
 
-from plane.db.models import User
+from plane.db.models import Account
 from plane.ee.sso.config import config_key, seed_config
 from plane.license.models import Instance, InstanceConfiguration
 from plane.license.utils.encryption import encrypt_data
@@ -1024,7 +1510,7 @@ def setup(db, mocker):
         row = InstanceConfiguration.objects.get(key=config_key("oidc", field))
         row.value = encrypt_data(value) if field == "CLIENT_SECRET" else value
         row.save()
-    mocker.patch("plane.ee.sso.oidc.requests.get").return_value.json.return_value = META
+    mocker.patch("plane.ee.sso.oidc._fetch_json", return_value=META)
 
 
 def _error_code(response):
@@ -1073,7 +1559,7 @@ def test_callback_success_logs_user_in(setup, mocker, make_id_token):
     }
     response = client.get(f"/auth/sso/oidc/callback/?code=c&state={q['state'][0]}")
     assert response.status_code == 302 and _error_code(response) is None
-    assert User.objects.filter(email="new@corp.com").exists()
+    assert Account.objects.filter(provider="sso-oidc").count() == 1
     # state is single-use
     again = client.get(f"/auth/sso/oidc/callback/?code=c&state={q['state'][0]}")
     assert _error_code(again) == "6001"
@@ -1182,15 +1668,15 @@ class SsoInitiateEndpoint(View):
 
 class SsoCallbackEndpoint(View):
     def get(self, request, provider_id):
-        host = request.session.get("host") or base_host(request=request, is_app=True)
-        next_path = request.session.get("next_path")
+        host = request.session.pop("host", None) or base_host(request=request, is_app=True)
+        next_path = request.session.pop("next_path", None)
         # one-time use: pop so a replayed callback fails the state check
         expected_state = request.session.pop("sso_state", None)
         nonce = request.session.pop("sso_nonce", None)
         verifier = request.session.pop("sso_verifier", None)
         code, state = request.GET.get("code"), request.GET.get("state")
 
-        if not code or not expected_state or state != expected_state:
+        if not code or not expected_state or not secrets.compare_digest(str(state or ""), expected_state):
             return redirect_error(host, provider_error(), next_path)
         try:
             provider = SsoOauthProvider(
@@ -1240,6 +1726,7 @@ urlpatterns = [path("auth/sso/", include("plane.ee.sso.urls")), *core_urlpattern
 - [ ] **Step 4: Run all EE tests, expect PASS**
 
 Run: `docker compose -f docker-compose-test.yml run --rm api-tests pytest --ds=plane.settings.ee_test plane/tests/unit/ee`
+These view tests rely on `WEB_URL` / `APP_BASE_URL` being set (they come from `apps/api/.env`, created by `./setup.sh`); with neither, core's `base_host` returns `None` and redirects break.
 If `test_callback_success_logs_user_in` fails on session cookies set by core's custom `SessionMiddleware`, inspect `plane/authentication/middleware/session.py` for the host-dependent cookie name and set the test client's `HTTP_HOST` accordingly (e.g. `Client(HTTP_HOST="localhost")`); do not weaken the production code.
 
 - [ ] **Step 5: Confirm core suite still passes unchanged** (the plugin must not change core behavior)
@@ -1256,9 +1743,319 @@ git commit -m "feat(ee): SSO initiate/callback/providers endpoints"
 
 ---
 
+### Task 6: `sso_link` — explicit linking of existing Plane users
+
+Existing Plane users (created before SSO, by e-mail/password or another provider) are never matched automatically, because no IdP supplies a trustworthy e-mail and e-mail matching is the classic account-pre-hijacking vector. An administrator links them deliberately, once, from the shell.
+
+**Files:**
+
+- Create: `apps/api/plane/ee/management/__init__.py`, `apps/api/plane/ee/management/commands/__init__.py`, `apps/api/plane/ee/management/commands/sso_link.py` (license header on each)
+- Test: `apps/api/plane/tests/unit/ee/sso/test_sso_link.py`
+
+**Interfaces:**
+
+- Consumes: `PROVIDER_IDS`, `subject_key` (Tasks 2 and 4).
+- Produces: `python manage.py sso_link --provider <id> --email <existing Plane e-mail> --subject <subject> [--unlink]`. `--subject` formats: `azure_ad` → `<tenant-guid>:<oid>` (Entra portal → Users → Object ID); `oidc` → `<exact issuer>|<sub>`; `oauth2` → `<token URL>|<id>`; `saml` → `<IdP entity id>|<persistent NameID>`. It creates `Account(provider="sso-<id>", provider_account_id=<key>)` for the user; refuses when that subject is already linked to a different user or when the e-mail is unknown.
+
+- [ ] **Step 1: Failing tests** `test_sso_link.py`
+
+```python
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+import pytest
+from django.core.management import call_command
+from django.core.management.base import CommandError
+
+from plane.db.models import Account, User
+from plane.ee.sso.identity import subject_key
+
+GUID = "11111111-1111-1111-1111-111111111111"
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_links_an_existing_user_to_an_oidc_subject():
+    user = User.objects.create(email="an@corp.com", username="an")
+    call_command("sso_link", provider="oidc", email="AN@corp.com", subject="https://idp.example.com|sub-1")
+    account = Account.objects.get(user=user)
+    assert account.provider == "sso-oidc"
+    assert account.provider_account_id == subject_key("https://idp.example.com", "sub-1")
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_links_an_azure_object_id_lowercased():
+    user = User.objects.create(email="an@corp.com", username="an")
+    call_command("sso_link", provider="azure_ad", email="an@corp.com", subject=f"{GUID.upper()}:OID-1")
+    assert Account.objects.get(user=user).provider_account_id == f"{GUID}:oid-1"
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+@pytest.mark.parametrize("subject", ["oid-only", f"{GUID}:", "not-a-guid:oid-1"])
+def test_azure_subject_must_be_tenant_guid_colon_oid(subject):
+    User.objects.create(email="an@corp.com", username="an")
+    with pytest.raises(CommandError):
+        call_command("sso_link", provider="azure_ad", email="an@corp.com", subject=subject)
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_unknown_email_and_double_linking_are_refused():
+    User.objects.create(email="an@corp.com", username="an")
+    User.objects.create(email="bo@corp.com", username="bo")
+    with pytest.raises(CommandError):
+        call_command("sso_link", provider="oidc", email="nobody@corp.com", subject="https://i|s")
+    call_command("sso_link", provider="oidc", email="an@corp.com", subject="https://i|s")
+    with pytest.raises(CommandError):
+        call_command("sso_link", provider="oidc", email="bo@corp.com", subject="https://i|s")
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_unlink_removes_the_link():
+    user = User.objects.create(email="an@corp.com", username="an")
+    call_command("sso_link", provider="oidc", email="an@corp.com", subject="https://i|s")
+    call_command("sso_link", provider="oidc", email="an@corp.com", subject="https://i|s", unlink=True)
+    assert not Account.objects.filter(user=user).exists()
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_subject_may_contain_pipes_trailing_slash_is_equivalent_and_move_repoints():
+    an = User.objects.create(email="an@corp.com", username="an")
+    bo = User.objects.create(email="bo@corp.com", username="bo")
+    call_command("sso_link", provider="oidc", email="an@corp.com", subject="https://t.auth0.com/|auth0|123")
+    key = subject_key("https://t.auth0.com", "auth0|123")
+    assert subject_key("https://t.auth0.com/", "auth0|123") == key  # trailing slash is normalised
+    assert Account.objects.get(user=an).provider_account_id == key
+    with pytest.raises(CommandError):
+        call_command("sso_link", provider="oidc", email="bo@corp.com", subject="https://t.auth0.com|auth0|123")
+    call_command("sso_link", provider="oidc", email="bo@corp.com", subject="https://t.auth0.com|auth0|123", move=True)
+    assert Account.objects.get(provider_account_id=key).user_id == bo.id
+```
+
+- [ ] **Step 2: Run, expect FAIL** (`Unknown command: 'sso_link'`).
+
+- [ ] **Step 3: Implement** `sso_link.py`
+
+```python
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+from django.core.management.base import BaseCommand, CommandError
+
+from plane.db.models import Account, User
+from plane.ee.sso.config import GUID_RE, PROVIDER_IDS
+from plane.ee.sso.identity import subject_key
+
+
+def _key(provider, subject):
+    if provider == "azure_ad":
+        tenant, _, oid = subject.strip().lower().partition(":")
+        if not GUID_RE.fullmatch(tenant) or not oid:
+            raise CommandError("azure_ad subject must be <tenant-guid>:<object-id>")
+        return f"{tenant}:{oid}"
+    # `sub` may itself contain pipes (Auth0: `auth0|123`); issuers / entity ids / URLs never do
+    issuer, _, sub = subject.partition("|")
+    if not issuer or not sub:
+        raise CommandError("subject must be <issuer / token URL / IdP entity id>|<subject>")
+    try:
+        return subject_key(issuer, sub)
+    except Exception as e:
+        raise CommandError(str(e))
+
+
+class Command(BaseCommand):
+    help = "Link (or --unlink) an EXISTING Plane user to an SSO subject. E-mail is never used to link automatically."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--provider", required=True, choices=PROVIDER_IDS)
+        parser.add_argument("--email", required=True, help="e-mail of the existing Plane user")
+        parser.add_argument(
+            "--subject",
+            required=True,
+            help=(
+                "azure_ad: <tenant-guid>:<oid>; oidc: <issuer>|<sub>; oauth2: <token URL>|<id>; "
+                "saml: <IdP entity id>|<NameID>"
+            ),
+        )
+        parser.add_argument("--unlink", action="store_true")
+        parser.add_argument(
+            "--move",
+            action="store_true",
+            help="re-point a subject that is already linked to another (e.g. auto-created) user",
+        )
+
+    def handle(self, *args, provider, email, subject, unlink=False, move=False, **options):
+        user = User.objects.filter(email=email.strip().lower()).first()
+        if user is None:
+            raise CommandError(f"no Plane user with e-mail {email}")
+        name, key = f"sso-{provider}", _key(provider, subject)
+        if unlink:
+            deleted, _ = Account.objects.filter(user=user, provider=name, provider_account_id=key).delete()
+            self.stdout.write(self.style.SUCCESS("unlinked" if deleted else "nothing to unlink"))
+            return
+        account, created = Account.objects.get_or_create(
+            provider=name, provider_account_id=key, defaults={"user": user, "access_token": ""}
+        )
+        if account.user_id != user.id:
+            if not move:
+                raise CommandError(
+                    "that subject is already linked to a different Plane user (it logged in before being linked? "
+                    "use --move to re-point it)"
+                )
+            account.user = user
+            account.save(update_fields=["user"])
+            created = None
+        self.stdout.write(self.style.SUCCESS("moved" if created is None else "linked" if created else "already linked"))
+```
+
+(Remove the odd `AuthenticationException` import line above if lint complains: `subject_key` raising is caught by the broad `except Exception` already.)
+
+- [ ] **Step 4: Run, expect PASS**
+
+Run: `docker compose -f docker-compose-test.yml run --rm api-tests pytest --ds=plane.settings.ee_test plane/tests/unit/ee/sso/test_sso_link.py`
+Note: `PROVIDER_IDS` includes `saml` only after Phase 2; the tests above do not use it.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add apps/api/plane/ee/management apps/api/plane/tests/unit/ee/sso/test_sso_link.py
+git commit -m "feat(ee): sso_link command for explicit account linking"
+```
+
+---
+
+### Task 7: `sso_join` — add an SSO user to a workspace
+
+SSO-created users have no real e-mail, so Plane's e-mail workspace invitations cannot reach them (and an invitation to `<hash>@sso.invalid` is not something an admin can reasonably send). An administrator adds them directly.
+
+**Files:**
+
+- Create: `apps/api/plane/ee/management/commands/sso_join.py`
+- Test: `apps/api/plane/tests/unit/ee/sso/test_sso_join.py`
+
+**Interfaces:**
+
+- Consumes: `sso_link._key` (Task 6), core `Workspace`, `WorkspaceMember` (verify the field names `workspace`, `member`, `role` in `apps/api/plane/db/models/workspace.py` before writing).
+- Produces: `python manage.py sso_join --provider <id> --subject <subject> --workspace <slug> [--role 5|15|20]` (default 15 = member; 20 admin, 5 guest). Fails when no user has logged in / been linked with that subject yet or the workspace slug is unknown.
+
+- [ ] **Step 1: Failing test** `test_sso_join.py`
+
+```python
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+import pytest
+from django.core.management import call_command
+from django.core.management.base import CommandError
+
+from plane.db.models import Account, User, Workspace, WorkspaceMember
+from plane.ee.sso.identity import subject_key
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_adds_the_user_behind_a_subject_to_a_workspace_and_updates_the_role():
+    owner = User.objects.create(email="owner@corp.com", username="owner")
+    workspace = Workspace.objects.create(name="W", slug="w", owner=owner)
+    user = User.objects.create(email="x@sso.invalid", username="x")
+    Account.objects.create(
+        user=user, provider="sso-oidc", provider_account_id=subject_key("https://idp", "s1"), access_token=""
+    )
+    call_command("sso_join", provider="oidc", subject="https://idp|s1", workspace="w")
+    assert WorkspaceMember.objects.get(workspace=workspace, member=user).role == 15
+    call_command("sso_join", provider="oidc", subject="https://idp|s1", workspace="w", role=20)
+    assert WorkspaceMember.objects.get(workspace=workspace, member=user).role == 20
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_unknown_subject_or_workspace_is_refused():
+    owner = User.objects.create(email="owner@corp.com", username="owner")
+    Workspace.objects.create(name="W", slug="w", owner=owner)
+    with pytest.raises(CommandError):
+        call_command("sso_join", provider="oidc", subject="https://idp|nobody", workspace="w")
+    with pytest.raises(CommandError):
+        call_command("sso_join", provider="oidc", subject="https://idp|nobody", workspace="missing")
+```
+
+- [ ] **Step 2: Run, expect FAIL** (`Unknown command: 'sso_join'`).
+
+Run: `docker compose -f docker-compose-test.yml run --rm api-tests pytest --ds=plane.settings.ee_test plane/tests/unit/ee/sso/test_sso_join.py`
+
+- [ ] **Step 3: Implement** `sso_join.py`
+
+```python
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
+from django.core.management.base import BaseCommand, CommandError
+
+from plane.db.models import Account, Workspace, WorkspaceMember
+from plane.ee.management.commands.sso_link import _key
+from plane.ee.sso.config import PROVIDER_IDS
+
+
+class Command(BaseCommand):
+    help = "Add the Plane user behind an SSO subject to a workspace (e-mail invitations cannot reach SSO users)."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--provider", required=True, choices=PROVIDER_IDS)
+        parser.add_argument("--subject", required=True, help="same format as sso_link")
+        parser.add_argument("--workspace", required=True, help="workspace slug")
+        parser.add_argument("--role", type=int, choices=[5, 15, 20], default=15, help="5 guest, 15 member, 20 admin")
+
+    def handle(self, *args, provider, subject, workspace, role=15, **options):
+        account = (
+            Account.objects.select_related("user")
+            .filter(provider=f"sso-{provider}", provider_account_id=_key(provider, subject))
+            .first()
+        )
+        if account is None:
+            raise CommandError("no user has logged in or been linked with that subject yet")
+        target = Workspace.objects.filter(slug=workspace).first()
+        if target is None:
+            raise CommandError(f"no workspace with slug {workspace}")
+        member, created = WorkspaceMember.objects.get_or_create(
+            workspace=target, member=account.user, defaults={"role": role}
+        )
+        if not created and member.role != role:
+            member.role = role
+            member.save(update_fields=["role"])
+        self.stdout.write(self.style.SUCCESS("added" if created else "already a member (role updated if it differed)"))
+```
+
+- [ ] **Step 4: Run, expect PASS** (same command).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add apps/api/plane/ee/management/commands/sso_join.py apps/api/plane/tests/unit/ee/sso/test_sso_join.py
+git commit -m "feat(ee): sso_join command to add SSO users to workspaces"
+```
+
+---
+
+## Known limits (carried into later phases)
+
+- **Identity model (best-practice decision).** Identity is `(issuer, subject)`; e-mail/UPN/`preferred_username`/`email_verified` are never used (none of the IdPs send a usable e-mail, and they are mutable or unverified). Consequences: (1) JIT users have a `<hash>@sso.invalid` placeholder e-mail, so Plane e-mail notifications and e-mail workspace invites do not reach them and invites cannot auto-attach; admins add SSO users to workspaces with `sso_join` (Task 7); (2) existing Plane users are linked explicitly with `sso_link`; (3) to capture a real e-mail later, add a profile step (not in scope).
+- **Azure AD (single tenant).** Tenant ID must be the tenant GUID; issuer and `tid` are always checked; identity is `tid:oid` (`sub` is per-application); B2B guests are rejected (`idp` ≠ `iss`, `acct`, `#EXT#`). Authorization belongs in Entra: enable _Assignment required_ on the enterprise application and assign users/groups. `ALLOW_SIGNUP=0` means only pre-linked (`sso_link`) users can log in.
+- Discovery / JWKS / token / userinfo URLs are admin-configured and fetched without SSRF pinning (self-hosted internal IdPs are a legitimate use). Only instance admins can set them.
+- With `SKIP_ENV_VAR=0` core reads configuration from environment variables only, so DB-stored `EE_SSO_*` values are ignored.
+- Azure AD is single-tenant by design (Tenant ID GUID required; Issuer URL optional override, v2.0 only; no `common` / `organizations`). Group sync is out of scope. `public_origin` prefers `WEB_URL`, then `APP_BASE_URL`; if only the frontend origin is configured, set the provider's Callback URL.
+- The seeded-key list is cached by core for 2 h; `seed_config` deletes that cache entry when it creates rows.
+- The callback URL defaults to `<WEB_URL or APP_BASE_URL>/auth/sso/<id>/callback/` (not the Host header). Admins can override it per provider with `EE_SSO_<ID>_CALLBACK_URL` (absolute http(s) URL); the override must still route to `/auth/sso/<id>/callback/` on this API.
+
 ## Self-Review (done against the spec)
 
-- Spec coverage for Phase 1: plugin activation (T1), config in InstanceConfiguration (T2), OIDC with PKCE + JWKS + nonce + iss/aud/exp (T3, T4, T5), Azure AD preset (T4), generic OAuth2 (T4), `/auth/sso/providers/` + initiate/callback (T5), verified-email rule, JIT signup via core `ENABLE_SIGNUP` (inherited from `complete_login_or_signup`), error codes 6xxx (T1). SAML, frontend, admin UI, Docker are deferred to later plans as stated.
-- Known limits to carry forward: Azure is single-tenant only (no `common`/`organizations` issuer templating); sync of profile data on later logins is off (`check_sync_enabled` has no `sso-*` key); discovery cached 1h.
+- Spec coverage for Phase 1 (also: per-provider configurable callback URL; subject-keyed identity with no e-mail anywhere; `sso_link`): plugin activation (T1), config in InstanceConfiguration (T2), OIDC with PKCE + JWKS + nonce + iss/aud/exp (T3, T4, T5), Azure AD preset (T4), generic OAuth2 (T4), `/auth/sso/providers/` + initiate/callback (T5), subject-keyed identity, JIT signup through `SubjectLoginMixin._check_signup` (provider switch + instance `ENABLE_SIGNUP`), error codes 6xxx (T1). SAML, frontend, admin UI, Docker are deferred to later plans as stated.
+- Known limits to carry forward: Azure is single-tenant only (Tenant ID GUID; no `common`/`organizations`); profile data is not re-synced on later logins; discovery is cached 1h; SSO-created users have a placeholder e-mail (no e-mail notifications; use `sso_join` to add them to workspaces); `ALLOW_SIGNUP` defaults to on, so run `sso_link` for existing users **before** announcing SSO (or use `--move`).
 - Type/name consistency checked: `get_sso_config`, `config_key`, `seed_config`, `list_enabled_providers`, `SsoOauthProvider` kwargs (`state`, `nonce`, `code_challenge`, `code`, `code_verifier`, `callback`), session keys `sso_state/sso_nonce/sso_verifier` are identical across tasks.
 - Not verified by running: this plan was written against code reading only; Task 5's session-cookie behavior is the most likely place to need an adjustment (noted in Step 4).

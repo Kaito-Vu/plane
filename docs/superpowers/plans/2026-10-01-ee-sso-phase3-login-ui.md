@@ -9,7 +9,7 @@
 **Tech Stack:** Django (plugin), React Router apps `web` and `space`, SWR, `@plane/blocks/toast`, `@makeplane/propel/icons`.
 
 **Spec:** `docs/superpowers/specs/2026-10-01-ee-sso-plugin-design.md`
-**Depends on:** Phase 1 (and Phase 2 for SAML buttons; the UI works with whatever providers the endpoint returns).
+**Depends on:** Phase 1 **and Phase 2** (hard). Task 1 edits Phase 2's `saml_views.py`, shares `views.py`/`urls.py` edits with it, and uses the `bin/run-ee-tests.sh` runner Phase 2 creates. (Tasks 2-4, the frontend, only need the providers endpoint.)
 
 ## Global Constraints
 
@@ -17,7 +17,7 @@
 - No new workspace packages, no changes to any `package.json` or `pnpm-lock.yaml`.
 - Every new `.ts/.tsx` starts with the 5-line license block comment used in core (`/** Copyright (c) 2023-present Plane Software, Inc. and contributors ... */`).
 - Login-medium ids are exactly `sso-oidc`, `sso-azure_ad`, `sso-oauth2`, `sso-saml` (must match `Account.provider` / `user.last_login_medium` written by the backend).
-- Error codes handled by the UI: `6000`, `6001`, `6002`.
+- Error codes handled by the UI: `6000`, `6001` (a failed sign-in because sign-up is off shows core's own message for `5015`).
 - Imports use the `@/` alias (maps to each app root), `@plane/*` for shared packages, `@makeplane/propel/*` for primitives.
 - Verification commands: `pnpm --filter web check:types`, `pnpm --filter space check:types`, `pnpm --filter web check:lint`, `pnpm --filter space check:lint`, `pnpm --filter web check:format`, `pnpm --filter space check:format`. (The apps have no unit-test runner; behavior is verified by type-checks plus the manual check in Task 5.)
 
@@ -55,7 +55,7 @@ apps/space/hooks/oauth/extended.tsx             # (modify, seam)
   - `flow.host_for(request, target: str) -> str` (`"space"` → `base_host(request, is_space=True)`, else `is_app=True`).
   - `flow.complete_login(request, user, host, next_path, target="app")` — for `target == "space"`: `user_login(..., is_space=True)` and redirect to `f"{host}{validated_next_path_or_empty}"` (same shape as core's space callbacks).
   - Route `GET /auth/sso/spaces/<provider_id>/` → initiate with `target="space"`. The (single) callback URL stays `/auth/sso/<id>/callback/`; the target is remembered in the session (`sso_target`) for OAuth providers and in the relay data (`target`) for SAML.
-  - `saml_start(request, host, next_path, target="app")`.
+  - `saml_start(request, host, next_path, target="app")`. (For SAML the target travels in the relay data; the `sso_target` session key written by the initiate view is simply overwritten on the next login, so it is harmless.)
 
 - [ ] **Step 1: Failing tests** `test_space_target.py`
 
@@ -86,7 +86,7 @@ META = {
 
 @pytest.fixture
 def setup(db, mocker):
-    cache.clear()
+    cache.delete_pattern("ee_sso_*")
     Instance.objects.create(
         instance_name="t", instance_id="i", current_version="1", last_checked_at=timezone.now(), is_setup_done=True
     )
@@ -95,7 +95,7 @@ def setup(db, mocker):
         row = InstanceConfiguration.objects.get(key=config_key("oidc", field))
         row.value = encrypt_data(value) if field == "CLIENT_SECRET" else value
         row.save()
-    mocker.patch("plane.ee.sso.oidc.requests.get").return_value.json.return_value = META
+    mocker.patch("plane.ee.sso.oidc._fetch_json", return_value=META)
 
 
 def _run(client, start_path, mocker, make_id_token):
@@ -103,7 +103,7 @@ def _run(client, start_path, mocker, make_id_token):
     post = mocker.patch("plane.authentication.adapter.oauth.requests.post")
     post.return_value.json.return_value = {
         "access_token": "at",
-        "id_token": make_id_token(nonce=q["nonce"][0], email="sp@corp.com"),
+        "id_token": make_id_token(nonce=q["nonce"][0], sub="sp-user"),
     }
     return client.get(f"/auth/sso/oidc/callback/?code=c&state={q['state'][0]}")
 
@@ -163,7 +163,7 @@ def complete_login(request, user, host, next_path, target="app"):
 
 - import `host_for` from `plane.ee.sso.flow`.
 - `SsoInitiateEndpoint.get(self, request, provider_id, target="app")`: replace `host = base_host(request=request, is_app=True)` with `host = host_for(request, target)`; after `request.session["host"] = host` add `request.session["sso_target"] = target`; change the SAML dispatch to `return saml_start(request, host, next_path, target)`.
-- `SsoCallbackEndpoint.get`: after reading `next_path`, add `target = request.session.pop("sso_target", "app")`; fallback host becomes `host_for(request, target)`; `callback=post_user_auth_workflow if target == "app" else None` (core's space callbacks pass no workflow); final line `return complete_login(request, user, host, next_path, target)`.
+- `SsoCallbackEndpoint.get`: make the first two lines `target = request.session.pop("sso_target", "app")` and `host = request.session.pop("host", None) or host_for(request, target)` (target must be popped **before** the host fallback is computed); then `callback=post_user_auth_workflow if target == "app" else None` (core's space callbacks pass no workflow) and `return complete_login(request, user, host, next_path, target)`.
 - Remove the now-unused `base_host` import from `views.py` if nothing else uses it.
 
 `saml_views.py`:
@@ -171,7 +171,7 @@ def complete_login(request, user, host, next_path, target="app"):
 - `def saml_start(request, host, next_path, target="app")`: relay data becomes `{"request_id": ..., "host": host, "next_path": next_path, "target": target}`.
 - `SamlAcsEndpoint.post`: `target = relay.get("target", "app")`; `SamlProvider(request, callback=post_user_auth_workflow if target == "app" else None)`; `return complete_login(request, user, host, next_path, target)`. The early error redirect for a missing relay keeps using the app host.
 
-`urls.py` — add before the `<str:provider_id>/` routes:
+`urls.py` — insert after the `saml/*` routes added by Phase 2 and before `<str:provider_id>/` (the only collision is a provider literally named `spaces`, which cannot exist):
 
 ```python
     path("spaces/<str:provider_id>/", SsoInitiateEndpoint.as_view(), {"target": "space"}, name="ee-sso-space-initiate"),
@@ -280,13 +280,13 @@ type TSsoProvider = { id: string; label: string; protocol: "oidc" | "oauth2" | "
 const SSO_ERROR_MESSAGES: Record<string, string> = {
   "6000": "Single sign-on is not configured. Contact your administrator.",
   "6001": "Sign-in with your identity provider failed. Please try again.",
-  "6002": "Your identity provider did not verify your email address.",
 };
 
 const fetchProviders = async (): Promise<TSsoProvider[]> => {
   const response = await fetch(`${API_BASE_URL}/auth/sso/providers/`, { credentials: "include" });
   if (!response.ok) return [];
-  return (await response.json()) as TSsoProvider[];
+  const data: unknown = await response.json();
+  return Array.isArray(data) ? (data as TSsoProvider[]) : [];
 };
 
 export const useSsoOAuthConfig = (oauthActionText: string, basePath: string = "/auth/sso/"): TOAuthConfigs => {
@@ -392,12 +392,12 @@ git commit -m "feat(ee): SSO login buttons on space"
 No automated frontend runner exists, so this task is a recorded manual check. Skip only if the Docker dev stack cannot be started; say so in the PR instead of claiming it passed.
 
 - [ ] **Step 1: Start the stack with the plugin** (needs Phase 5 compose override; if Phase 5 is not done yet, set `DJANGO_SETTINGS_MODULE=plane.settings.ee` on the api/worker/migrator services of the local compose and run `docker compose -f docker-compose-local.yml up --build`, then `python manage.py migrate` in the migrator).
-- [ ] **Step 2: Start a mock OIDC IdP** (e.g. `docker run --rm -p 8080:8080 ghcr.io/navikt/mock-oauth2-server`; confirm the current image tag first). Its issuer is `http://localhost:8080/default`.
-- [ ] **Step 3: Configure** through the core admin configuration API (the admin UI arrives in Phase 4). With an instance-admin session cookie:
+- [ ] **Step 2: Start the mock IdPs** from the Phase 5 overlay (`deployments/ee/docker-compose-mock-idp.yml`, merged into the local compose command; confirm the image tags first) and add `127.0.0.1 mock-idp` to your hosts file. The API container must resolve the same name as the browser, which is why `localhost` does not work. The OIDC issuer is `http://mock-idp:8080/default`.
+- [ ] **Step 3: Configure** through the core admin configuration API (the admin UI arrives in Phase 4). The endpoint needs an instance-admin session and a CSRF token: log in at God Mode in the browser, copy the `admin-session-id` cookie and the `csrftoken` value, and pass them as `-b 'admin-session-id=...; csrftoken=...' -H 'X-CSRFToken: ...'` (or use the Phase 4 admin pages instead if they are already built):
 
 ```bash
 curl -X PATCH http://localhost:8000/api/instances/configurations/ -H 'Content-Type: application/json' \
-  -d '{"EE_SSO_OIDC_ENABLED":"1","EE_SSO_OIDC_LABEL":"Mock IdP","EE_SSO_OIDC_CLIENT_ID":"plane","EE_SSO_OIDC_CLIENT_SECRET":"secret","EE_SSO_OIDC_ISSUER":"http://localhost:8080/default"}'
+  -d '{"EE_SSO_OIDC_ENABLED":"1","EE_SSO_OIDC_LABEL":"Mock IdP","EE_SSO_OIDC_CLIENT_ID":"plane","EE_SSO_OIDC_CLIENT_SECRET":"secret","EE_SSO_OIDC_ISSUER":"http://mock-idp:8080/default"}'
 ```
 
 - [ ] **Step 4: Verify** — open the web login page: a "Sign in with Mock IdP" button shows below the core providers; clicking it goes through the mock IdP and lands logged in. Repeat on a space (public) page. Break it on purpose (wrong secret) and confirm the "Single sign-on failed" toast appears. Check the workspace member list shows "Mock IdP"-medium label as "OpenID Connect".
