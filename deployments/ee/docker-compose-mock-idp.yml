@@ -1,0 +1,23 @@
+# Mock identity providers for manual smoke tests. Merge with the local compose files so they share the network:
+#   docker compose -f docker-compose-local.yml -f docker-compose-ee-local.yml -f deployments/ee/docker-compose-mock-idp.yml up
+# Add "127.0.0.1 mock-idp" to your hosts file so the browser and the API container resolve the same name.
+services:
+  mock-idp:
+    image: ghcr.io/navikt/mock-oauth2-server:latest # OIDC issuer: http://mock-idp:8080/default (pin a tag when you run it)
+    environment:
+      SERVER_PORT: "8080"
+      JSON_CONFIG: '{"interactiveLogin": true}'
+    ports:
+      - "8080:8080"
+    networks:
+      - dev_env
+
+  mock-saml-idp:
+    image: kristophjunge/test-saml-idp:latest # SimpleSAMLphp test IdP; users user1/user1pass, user2/user2pass
+    environment:
+      SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost/auth/sso/saml/metadata/
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost/auth/sso/saml/acs/
+    ports:
+      - "8081:8080"
+    networks:
+      - dev_env
