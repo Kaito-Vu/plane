@@ -20,4 +20,6 @@ class EeConfig(AppConfig):
     def ready(self):
         from plane.ee.sso import errors  # noqa: F401  (registers error codes)
 
+        from plane.ee.work_item_types import signals  # noqa: F401
+
         post_migrate.connect(_seed_on_license_migrate, dispatch_uid="ee_sso_seed")
