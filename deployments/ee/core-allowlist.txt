@@ -38,3 +38,6 @@ pnpm-lock.yaml
 packages/types/src/work-item-types.ts
 packages/types/src/index.ts
 packages/i18n/src/locales/*/work-item-type.json
+apps/web/components/issues/issue-modal/provider.tsx
+apps/web/components/issues/issue-modal/components/default-properties.tsx
+apps/web/components/issues/parent-issues-list-modal.tsx

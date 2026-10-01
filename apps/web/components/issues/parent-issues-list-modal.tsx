@@ -35,6 +35,7 @@ type Props = {
   projectId: string | undefined;
   issueId?: string;
   searchEpic?: boolean;
+  filterIssue?: (issue: ISearchIssueResponse) => boolean;
 };
 
 // services
@@ -48,6 +49,7 @@ export function ParentIssuesListModal({
   projectId,
   issueId,
   searchEpic = false,
+  filterIssue,
 }: Props) {
   // i18n
   const { t } = useTranslation();
@@ -84,11 +86,13 @@ export function ParentIssuesListModal({
         workspace_search: false,
         epic: searchEpic ? true : undefined,
       })
-      .then((res) => setIssues(res))
+      // filterIssue is read at fetch time on purpose
+      .then((res) => setIssues(filterIssue ? res.filter(filterIssue) : res))
       .finally(() => {
         setIsSearching(false);
         setIsLoading(false);
       });
+    // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
   }, [debouncedSearchTerm, isOpen, issueId, projectId, searchEpic, workspaceSlug]);
 
   return (

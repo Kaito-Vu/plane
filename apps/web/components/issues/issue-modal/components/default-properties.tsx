@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { observer } from "mobx-react";
 import type { Control } from "react-hook-form";
-import { Controller } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 import { Icon as PropelIcon } from "@makeplane/propel/components/icon";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@makeplane/propel/components/menu";
 import { Pill } from "@makeplane/propel/components/pill";
@@ -36,6 +36,10 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUserProfile } from "@/hooks/store/user";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+// plugin
+import { IssueTypeFormField } from "@/ee/work-item-types/components/issue-type-form-field";
+import { useParentIssueFilter } from "@/ee/work-item-types/hooks";
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 
 type TIssueDefaultPropertiesProps = {
   control: Control<TIssue>;
@@ -76,6 +80,11 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
   const { data: userProfile } = useUserProfile();
   // derived values
   const projectDetails = getProjectById(projectId);
+  const typeId = useWatch({ control, name: "type_id" });
+  const parentIssueFilter = useParentIssueFilter(projectId, typeId);
+  const {
+    issue: { getIssueById },
+  } = useIssueDetail();
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
 
@@ -87,6 +96,16 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <IssueTypeFormField
+        workspaceSlug={workspaceSlug}
+        projectId={projectId}
+        hasParent={!!parentId}
+        // preloaded parents may carry an empty type_id: fall back to the store
+        parentTypeId={
+          selectedParentIssue ? selectedParentIssue.type_id || getIssueById(selectedParentIssue.id)?.type_id : undefined
+        }
+        onUserChange={handleFormChange}
+      />
       <Controller
         control={control}
         name="state_id"
@@ -318,6 +337,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
             }}
             projectId={projectId ?? undefined}
             issueId={isDraft ? undefined : id}
+            filterIssue={parentIssueFilter}
           />
         )}
       />
