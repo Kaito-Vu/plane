@@ -5,4 +5,4 @@
 from django.conf import settings
 
 # EE tests only make sense under plane.settings.ee_test (--ds). Otherwise do not collect them.
-collect_ignore_glob = [] if "plane.ee" in settings.INSTALLED_APPS else ["sso/*", "test_*.py"]
+collect_ignore_glob = [] if "plane.ee" in settings.INSTALLED_APPS else ["sso/*", "test_*.py", "work_item_types/*"]
