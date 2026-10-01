@@ -6,4 +6,8 @@ from django.urls import include, path
 
 from plane.urls import handler404, urlpatterns as core_urlpatterns  # noqa: F401
 
-urlpatterns = [path("auth/sso/", include("plane.ee.sso.urls")), *core_urlpatterns]
+urlpatterns = [
+    path("auth/sso/", include("plane.ee.sso.urls")),
+    path("api/workspaces/<str:slug>/work-item-types/", include("plane.ee.work_item_types.urls")),
+    *core_urlpatterns,
+]
