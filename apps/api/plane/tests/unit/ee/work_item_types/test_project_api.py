@@ -144,3 +144,73 @@ def test_set_default_unassigned_keeps_old(session_client, workspace, project):
     r = session_client.post(url(workspace, project, "default/"), {"type_id": str(t.id)}, format="json")
     assert r.status_code == 400
     assert ProjectIssueType.objects.get(project=project, is_default=True).issue_type_id == old
+
+
+@pytest.mark.contract
+def test_workspace_admin_not_in_project_forbidden(api_client, workspace, project):
+    apply_process(project, "scrum")
+    t = IssueType.objects.create(workspace=workspace, name="Spike", level=1)
+    a = member(workspace, project, "wsadmin@plane.so", role=20, in_project=False)
+    api_client.force_authenticate(user=a)
+    body = {"type_id": str(t.id)}
+    assert api_client.get(url(workspace, project)).status_code == 403
+    assert api_client.post(url(workspace, project), {"process": "agile"}, format="json").status_code == 403
+    assert api_client.post(url(workspace, project, "assign/"), body, format="json").status_code == 403
+    assert api_client.delete(url(workspace, project, f"assign/{t.id}/")).status_code == 403
+    assert api_client.post(url(workspace, project, "default/"), body, format="json").status_code == 403
+
+
+@pytest.mark.contract
+def test_project_idor_cross_workspace(session_client, workspace, project, create_user):
+    from plane.db.models import Project
+
+    other = Workspace.objects.create(name="B", owner=create_user, slug="ws-b")
+    WorkspaceMember.objects.create(workspace=other, member=create_user, role=20)
+    p2 = Project.objects.create(name="P2", identifier="P2", workspace=other, created_by=create_user)
+    ProjectMember.objects.create(project=p2, member=create_user, workspace=other, role=20)
+    apply_process(p2, "scrum")
+    base = f"/api/workspaces/{workspace.slug}/projects/{p2.id}/work-item-types/"
+    r = session_client.get(base)
+    assert r.status_code in (403, 404) and "types" not in r.json()
+    assert session_client.post(base, {"process": "agile"}, format="json").status_code in (403, 404)
+    assert ProjectIssueType.objects.filter(project=p2, issue_type__external_id="product_backlog_item").exists()
+
+
+@pytest.mark.contract
+def test_single_default_after_switch_and_set_default(session_client, workspace, project):
+    apply_process(project, "scrum")
+    apply_process(project, "agile")
+    t = IssueType.objects.get(workspace=workspace, external_id="user_story")
+    assert session_client.post(url(workspace, project, "default/"), {"type_id": str(t.id)}, format="json").status_code == 200
+    rows = ProjectIssueType.objects.filter(project=project, is_default=True)
+    assert rows.count() == 1 and rows[0].issue_type_id == t.id
+
+
+@pytest.mark.contract
+def test_cannot_unassign_type_used_by_archived_issue(session_client, workspace, project, create_user):
+    from django.utils import timezone
+
+    apply_process(project, "scrum")
+    task = IssueType.objects.get(workspace=workspace, external_id="task")
+    state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
+    Issue.objects.create(
+        name="i", workspace=workspace, project=project, state=state, type=task,
+        created_by=create_user, archived_at=timezone.now().date(),
+    )
+    assert session_client.delete(url(workspace, project, f"assign/{task.id}/")).status_code == 409
+
+
+@pytest.mark.contract
+def test_non_object_body_is_400(session_client, workspace, project):
+    for tail in ("", "assign/", "default/"):
+        for body in ([], "x", [1]):
+            r = session_client.post(url(workspace, project, tail), body, format="json")
+            assert r.status_code == 400, (tail, body, r.content)
+
+
+@pytest.mark.contract
+def test_project_admin_via_api_client_can_write(api_client, workspace, project):
+    a = member(workspace, project, "padmin@plane.so", role=20)
+    api_client.force_authenticate(user=a)
+    assert api_client.post(url(workspace, project), {"process": "scrum"}, format="json").status_code == 200
+    assert api_client.get(url(workspace, project)).status_code == 200

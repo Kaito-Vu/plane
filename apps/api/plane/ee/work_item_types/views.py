@@ -104,6 +104,15 @@ def _parse_uuid(raw):
         return None
 
 
+def _body(request):
+    return request.data if hasattr(request.data, "get") else {}
+
+
+def _lock_project(project):
+    # serialize project-level writes; must be called inside transaction.atomic()
+    return Project.objects.select_for_update().get(pk=project.pk)
+
+
 _INVALID_TYPE = {"error": "Invalid work item type"}
 
 
@@ -131,11 +140,13 @@ class ProjectWorkItemTypesEndpoint(_ProjectTypeBase):
 
     def post(self, request, slug, project_id):
         project = self.project_obj(slug, project_id)
-        process = request.data.get("process")
+        process = _body(request).get("process")
         if not isinstance(process, str) or process not in PROCESSES:
             return Response({"error": "process must be scrum or agile"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            apply_process(project, process)
+            with transaction.atomic():
+                project = _lock_project(project)
+                apply_process(project, process)
         except ProcessChangeBlocked as e:
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
         return Response({"process": process}, status=status.HTTP_200_OK)
@@ -144,30 +155,36 @@ class ProjectWorkItemTypesEndpoint(_ProjectTypeBase):
 class ProjectWorkItemTypeAssignEndpoint(_ProjectTypeBase):
     def post(self, request, slug, project_id):
         project = self.project_obj(slug, project_id)
-        type_id = _parse_uuid(request.data.get("type_id"))
-        obj = type_id and IssueType.objects.filter(pk=type_id, workspace__slug=slug, is_active=True).first()
-        if not obj:
-            return Response(_INVALID_TYPE, status=status.HTTP_400_BAD_REQUEST)
-        ProjectIssueType.objects.get_or_create(project=project, issue_type=obj, defaults={"level": int(obj.level)})
+        type_id = _parse_uuid(_body(request).get("type_id"))
+        with transaction.atomic():
+            _lock_project(project)
+            obj = type_id and IssueType.objects.filter(pk=type_id, workspace__slug=slug, is_active=True).first()
+            if not obj:
+                return Response(_INVALID_TYPE, status=status.HTTP_400_BAD_REQUEST)
+            ProjectIssueType.objects.get_or_create(project=project, issue_type=obj, defaults={"level": int(obj.level)})
         return Response({"type_id": str(obj.id)}, status=status.HTTP_200_OK)
 
     def delete(self, request, slug, project_id, type_id):
         project = self.project_obj(slug, project_id)
-        row = get_object_or_404(ProjectIssueType, project=project, issue_type_id=type_id)
-        if row.is_default or Issue.objects.filter(project=project, type_id=type_id).exists():
-            return Response(
-                {"error": "Type is the project default or still used by work items"}, status=status.HTTP_409_CONFLICT
-            )
-        row.delete()
+        with transaction.atomic():
+            _lock_project(project)
+            row = get_object_or_404(ProjectIssueType, project=project, issue_type_id=type_id)
+            if row.is_default or Issue.objects.filter(project=project, type_id=type_id).exists():
+                return Response(
+                    {"error": "Type is the project default or still used by work items"},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            row.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ProjectWorkItemTypeDefaultEndpoint(_ProjectTypeBase):
     def post(self, request, slug, project_id):
         project = self.project_obj(slug, project_id)
-        type_id = _parse_uuid(request.data.get("type_id"))
+        type_id = _parse_uuid(_body(request).get("type_id"))
         with transaction.atomic():
-            row = type_id and ProjectIssueType.objects.select_for_update().filter(
+            _lock_project(project)
+            row = type_id and ProjectIssueType.objects.filter(
                 project=project, issue_type_id=type_id, issue_type__is_active=True
             ).first()
             if not row:
