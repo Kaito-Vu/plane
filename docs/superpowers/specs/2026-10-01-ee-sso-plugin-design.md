@@ -36,7 +36,7 @@ sso/
 Endpoints:
 
 - `GET /auth/sso/providers/` → `[{id,label,protocol}]` for enabled providers (public).
-- `GET /auth/sso/<id>/` initiate; `GET|POST /auth/sso/<id>/callback/` (POST = SAML ACS); `GET /auth/sso/saml/metadata/`.
+- `GET /auth/sso/<id>/` initiate; `GET /auth/sso/<id>/callback/` (OIDC/OAuth2); `POST /auth/sso/saml/acs/` (SAML ACS); `GET /auth/sso/saml/metadata/`.
 - `GET|PUT /api/instances/ee/sso/<id>/` admin-only config (instance admin permission reused from `plane.license`).
 
 Behavior:

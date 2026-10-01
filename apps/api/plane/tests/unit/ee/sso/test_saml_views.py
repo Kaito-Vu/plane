@@ -135,3 +135,27 @@ def test_acs_rejects_bad_signature(setup, keys):
     response = _post_acs(Client(), keys, relay, request_id, sign=False)
     assert _error_code(response) == "6001"
     assert Account.objects.filter(provider="sso-saml").count() == 0
+
+
+@pytest.fixture
+def https_acs(setup):
+    row = InstanceConfiguration.objects.get(key=config_key("saml", "CALLBACK_URL"))
+    row.value = "https://plane.example.com/auth/sso/saml/acs/"
+    row.save()
+
+
+@pytest.mark.unit
+def test_https_flow_binds_relay_to_the_starting_browser(https_acs, keys):
+    browser = Client(HTTP_USER_AGENT="pytest")
+    relay, request_id = _start(browser)
+    cookie = browser.cookies["ee_sso_saml_bind"]
+    assert cookie["samesite"] == "None" and cookie["secure"]
+    assert _error_code(_post_acs(browser, keys, relay, request_id)) is None
+
+
+@pytest.mark.unit
+def test_login_csrf_response_posted_from_another_browser_is_rejected(https_acs, keys):
+    relay, request_id = _start(Client())  # attacker starts the flow ...
+    victim = Client(HTTP_USER_AGENT="pytest")  # ... victim's browser posts it without the bind cookie
+    assert _error_code(_post_acs(victim, keys, relay, request_id)) == "6001"
+    assert Account.objects.filter(provider="sso-saml").count() == 0
