@@ -1,0 +1,5 @@
+# EE-only dependencies (installed by Dockerfile.ee and bin/run-ee-tests.sh).
+# Pinned against the Alpine / Python 3.14 image with lxml==6.1.0 from base.txt; lxml and xmlsec must be
+# built from source together (see bin/run-ee-tests.sh).
+python3-saml==1.16.0
+xmlsec==1.3.17
