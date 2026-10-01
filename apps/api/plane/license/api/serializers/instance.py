@@ -14,4 +14,4 @@ class InstanceSerializer(BaseSerializer):
     class Meta:
         model = Instance
         fields = "__all__"
-        read_only_fields = ["id", "email", "last_checked_at", "is_setup_done"]
+        read_only_fields = ["id", "email", "last_checked_at", "is_setup_done", "is_telemetry_enabled"]

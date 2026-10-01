@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM python:3.14.7-alpine AS backend
 
 # set environment variables
@@ -28,7 +29,7 @@ COPY requirements.txt ./requirements.txt
 ADD requirements ./requirements
 
 # Install the local development settings
-RUN pip install -r requirements/local.txt --compile --no-cache-dir
+RUN --mount=type=cache,id=pip-cache,target=/root/.cache/pip pip install -r requirements/local.txt --compile
 
 
 COPY . .

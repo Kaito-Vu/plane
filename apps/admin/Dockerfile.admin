@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM node:24.21.0-alpine AS base
 
 WORKDIR /app
@@ -26,6 +27,22 @@ FROM base AS installer
 
 # Build in production mode; we still install dev deps explicitly below
 ENV NODE_ENV=production
+
+COPY .gitignore .gitignore
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Fetch dependencies to cache store, then install offline with dev deps
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch --store-dir=/pnpm/store
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store CI=true pnpm install --offline --frozen-lockfile --store-dir=/pnpm/store --prod=false
+
+# Copy the sources only after dependencies are installed so code edits do not invalidate the install layers
+COPY --from=builder /app/out/full/ .
+COPY turbo.json turbo.json
+
+# packages/i18n/locales is a git symlink to src/locales; checkouts without symlink support (Windows)
+# turn it into a plain text file, which leaves the i18n glob empty and the UI showing raw keys.
+RUN [ -L packages/i18n/locales ] || (rm -f packages/i18n/locales && ln -s src/locales packages/i18n/locales)
 
 # Public envs required at build time (pick up via process.env)
 ARG VITE_API_BASE_URL=""
@@ -57,22 +74,6 @@ ARG VITE_WEBSITE_URL="https://plane.so"
 ENV VITE_WEBSITE_URL=$VITE_WEBSITE_URL
 ARG VITE_SUPPORT_EMAIL="support@plane.so"
 ENV VITE_SUPPORT_EMAIL=$VITE_SUPPORT_EMAIL
-
-COPY .gitignore .gitignore
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-
-# Copy full directory structure before fetch to ensure all package.json files are available
-COPY --from=builder /app/out/full/ .
-COPY turbo.json turbo.json
-
-# packages/i18n/locales is a git symlink to src/locales; checkouts without symlink support (Windows)
-# turn it into a plain text file, which leaves the i18n glob empty and the UI showing raw keys.
-RUN [ -L packages/i18n/locales ] || (rm -f packages/i18n/locales && ln -s src/locales packages/i18n/locales)
-
-# Fetch dependencies to cache store, then install offline with dev deps
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch --store-dir=/pnpm/store
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store CI=true pnpm install --offline --frozen-lockfile --store-dir=/pnpm/store --prod=false
 
 # Build only the admin package
 RUN pnpm turbo run build --filter=admin
