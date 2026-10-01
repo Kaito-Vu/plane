@@ -46,3 +46,7 @@ apps/web/components/issues/issue-type-switcher.tsx
 packages/types/src/view-props.ts
 packages/constants/src/issue/filter.ts
 apps/web/hooks/work-item-filters/use-work-item-filters-config.tsx
+apps/web/app/routes/extended.ts
+packages/types/src/settings.ts
+packages/constants/src/settings/workspace.ts
+apps/web/components/settings/workspace/sidebar/item-icon.tsx
