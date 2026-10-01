@@ -66,7 +66,10 @@ class SubjectLoginMixin:
                     .filter(provider=self.provider, provider_account_id=key)
                     .first()
                 )
-                user = account.user if account else User.objects.get(email=placeholder_email(self.provider, key))
+                placeholder = placeholder_email(self.provider, key)
+                user = account.user if account else User.objects.filter(email=placeholder).first()
+                if user is None:
+                    raise provider_error("SSO_PROVIDER_ERROR: could not provision user")
                 if account is None:
                     Account.objects.get_or_create(
                         provider=self.provider, provider_account_id=key, defaults={"user": user, "access_token": ""}

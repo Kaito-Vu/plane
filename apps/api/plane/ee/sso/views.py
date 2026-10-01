@@ -48,6 +48,7 @@ class SsoInitiateEndpoint(View):
             verifier = secrets.token_urlsafe(48)
             challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
             provider = SsoOauthProvider(request, provider_id, state=state, nonce=nonce, code_challenge=challenge)
+            request.session["sso_provider"] = provider_id
             request.session["sso_state"] = state
             request.session["sso_nonce"] = nonce
             request.session["sso_verifier"] = verifier
@@ -61,12 +62,19 @@ class SsoCallbackEndpoint(View):
         host = request.session.pop("host", None) or base_host(request=request, is_app=True)
         next_path = request.session.pop("next_path", None)
         # one-time use: pop so a replayed callback fails the state check
+        expected_provider = request.session.pop("sso_provider", None)
         expected_state = request.session.pop("sso_state", None)
         nonce = request.session.pop("sso_nonce", None)
         verifier = request.session.pop("sso_verifier", None)
         code, state = request.GET.get("code"), request.GET.get("state")
 
-        if not code or not expected_state or not secrets.compare_digest(str(state or ""), expected_state):
+        # the flow must finish on the provider that started it
+        if (
+            not code
+            or expected_provider != provider_id
+            or not expected_state
+            or not secrets.compare_digest(str(state or ""), expected_state)
+        ):
             return redirect_error(host, provider_error(), next_path)
         try:
             provider = SsoOauthProvider(

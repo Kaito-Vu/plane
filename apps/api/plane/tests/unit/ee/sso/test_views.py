@@ -95,3 +95,11 @@ def test_callback_success_logs_user_in(setup, mocker, make_id_token):
     # state is single-use
     again = client.get(f"/auth/sso/oidc/callback/?code=c&state={q['state'][0]}")
     assert _error_code(again) == "6001"
+
+
+@pytest.mark.unit
+def test_callback_must_finish_on_the_provider_that_started_the_flow(setup):
+    client = Client(HTTP_USER_AGENT="pytest")
+    state = parse_qs(urlparse(client.get("/auth/sso/oidc/")["Location"]).query)["state"][0]
+    response = client.get(f"/auth/sso/azure_ad/callback/?code=c&state={state}")
+    assert _error_code(response) == "6001"
