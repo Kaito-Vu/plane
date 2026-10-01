@@ -33,9 +33,13 @@ def test_create_with_type_id_and_default(session_client, workspace, project, env
 @pytest.mark.contract
 def test_create_invalid_hierarchy_is_400(session_client, workspace, project, env):
     state, t = env
-    epic = session_client.post(issues_url(workspace, project), {"name": "e", "type_id": str(t["epic"].id)}, format="json").json()
+    epic = session_client.post(
+        issues_url(workspace, project), {"name": "e", "type_id": str(t["epic"].id)}, format="json"
+    ).json()
     r = session_client.post(
-        issues_url(workspace, project), {"name": "s", "type_id": str(t["sub_task"].id), "parent_id": epic["id"]}, format="json"
+        issues_url(workspace, project),
+        {"name": "s", "type_id": str(t["sub_task"].id), "parent_id": epic["id"]},
+        format="json",
     )
     assert r.status_code == 400
 
@@ -45,9 +49,13 @@ def test_patch_change_type_validated(session_client, workspace, project, env):
     state, t = env
     pbi = session_client.post(issues_url(workspace, project), {"name": "p"}, format="json").json()
     session_client.post(
-        issues_url(workspace, project), {"name": "t", "type_id": str(t["task"].id), "parent_id": pbi["id"]}, format="json"
+        issues_url(workspace, project),
+        {"name": "t", "type_id": str(t["task"].id), "parent_id": pbi["id"]},
+        format="json",
     )
-    r = session_client.patch(issues_url(workspace, project, f"{pbi['id']}/"), {"type_id": str(t["task"].id)}, format="json")
+    r = session_client.patch(
+        issues_url(workspace, project, f"{pbi['id']}/"), {"type_id": str(t["task"].id)}, format="json"
+    )
     assert r.status_code == 400
 
 
@@ -64,7 +72,9 @@ def test_foreign_type_id_rejected(session_client, workspace, project, env, creat
 @pytest.mark.contract
 def test_issue_list_and_detail_return_type_id(session_client, workspace, project, env):
     state, t = env
-    created = session_client.post(issues_url(workspace, project), {"name": "a", "type_id": str(t["bug"].id)}, format="json").json()
+    created = session_client.post(
+        issues_url(workspace, project), {"name": "a", "type_id": str(t["bug"].id)}, format="json"
+    ).json()
     detail = session_client.get(issues_url(workspace, project, f"{created['id']}/")).json()
     assert detail["type_id"] == str(t["bug"].id)
     listed = session_client.get(issues_url(workspace, project) + "?per_page=50").json()
@@ -77,8 +87,12 @@ def test_issue_list_and_detail_return_type_id(session_client, workspace, project
 @pytest.mark.contract
 def test_sub_issue_bulk_assign_validated(session_client, workspace, project, env, create_user):
     state, t = env
-    epic = Issue.objects.create(name="e", workspace=workspace, project=project, state=state, type=t["epic"], created_by=create_user)
-    task = Issue.objects.create(name="t", workspace=workspace, project=project, state=state, type=t["task"], created_by=create_user)
+    epic = Issue.objects.create(
+        name="e", workspace=workspace, project=project, state=state, type=t["epic"], created_by=create_user
+    )
+    task = Issue.objects.create(
+        name="t", workspace=workspace, project=project, state=state, type=t["task"], created_by=create_user
+    )
     r = session_client.post(
         issues_url(workspace, project, f"{task.id}/sub-issues/"), {"sub_issue_ids": [str(epic.id)]}, format="json"
     )
@@ -187,14 +201,24 @@ def test_draft_to_issue_carries_type(session_client, workspace, project, env, cr
 @pytest.mark.contract
 def test_epic_with_children_cannot_become_non_epic(session_client, workspace, project, env):
     state, t = env
-    epic = session_client.post(issues_url(workspace, project), {"name": "e", "type_id": str(t["epic"].id)}, format="json").json()
-    lone = session_client.post(issues_url(workspace, project), {"name": "l", "type_id": str(t["epic"].id)}, format="json").json()
+    epic = session_client.post(
+        issues_url(workspace, project), {"name": "e", "type_id": str(t["epic"].id)}, format="json"
+    ).json()
+    lone = session_client.post(
+        issues_url(workspace, project), {"name": "l", "type_id": str(t["epic"].id)}, format="json"
+    ).json()
     r = session_client.post(
-        issues_url(workspace, project), {"name": "f", "type_id": str(t["feature"].id), "parent_id": epic["id"]}, format="json"
+        issues_url(workspace, project),
+        {"name": "f", "type_id": str(t["feature"].id), "parent_id": epic["id"]},
+        format="json",
     )
     assert r.status_code == 201, r.content
-    r = session_client.patch(issues_url(workspace, project, f"{epic['id']}/"), {"type_id": str(t["bug"].id)}, format="json")
+    r = session_client.patch(
+        issues_url(workspace, project, f"{epic['id']}/"), {"type_id": str(t["bug"].id)}, format="json"
+    )
     assert r.status_code == 400
     assert "epic with sub-items" in str(r.json())
-    r = session_client.patch(issues_url(workspace, project, f"{lone['id']}/"), {"type_id": str(t["bug"].id)}, format="json")
+    r = session_client.patch(
+        issues_url(workspace, project, f"{lone['id']}/"), {"type_id": str(t["bug"].id)}, format="json"
+    )
     assert r.status_code == 204, r.content

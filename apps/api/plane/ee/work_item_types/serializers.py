@@ -48,7 +48,19 @@ class IssueTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IssueType
-        fields = ["id", "name", "description", "logo_props", "is_epic", "is_default", "is_active", "level", "is_preset", "low_contrast", "external_id"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "logo_props",
+            "is_epic",
+            "is_default",
+            "is_active",
+            "level",
+            "is_preset",
+            "low_contrast",
+            "external_id",
+        ]
         read_only_fields = ["id", "is_default", "is_preset", "low_contrast", "external_id"]
 
     def get_is_preset(self, obj):
@@ -72,6 +84,11 @@ class IssueTypeSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        def get(key, default):
+            return attrs.get(key, getattr(self.instance, key, default))
+
+        if get("is_epic", False) and get("level", 0) < 1:
+            raise serializers.ValidationError({"is_epic": "An epic must have level 1 or higher"})
         if not self.instance:
             cap = getattr(settings, "WORK_ITEM_TYPES_MAX", 50)
             if IssueType.objects.filter(workspace=self.context["workspace"]).count() >= cap:

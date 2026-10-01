@@ -28,7 +28,11 @@ def test_list(session_client, workspace, seeded):
 
 @pytest.mark.contract
 def test_create_custom_type(session_client, workspace, seeded):
-    body = {"name": "Spike", "level": 1, "logo_props": {"in_use": "icon", "icon": {"name": "Zap", "color": "#fff000", "background_color": "#123456"}}}
+    body = {
+        "name": "Spike",
+        "level": 1,
+        "logo_props": {"in_use": "icon", "icon": {"name": "Zap", "color": "#fff000", "background_color": "#123456"}},
+    }
     r = session_client.post(base(workspace), body, format="json")
     assert r.status_code == 201, r.content
     assert IssueType.objects.filter(workspace=workspace, name="Spike").exists()
@@ -81,7 +85,9 @@ def test_preset_level_is_locked_and_not_deletable(session_client, workspace, see
 def test_delete_in_use_requires_migrate_to(session_client, workspace, project, seeded, create_user):
     custom = IssueType.objects.create(workspace=workspace, name="Spike", level=1)
     state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
-    issue = Issue.objects.create(name="i", workspace=workspace, project=project, state=state, type=custom, created_by=create_user)
+    issue = Issue.objects.create(
+        name="i", workspace=workspace, project=project, state=state, type=custom, created_by=create_user
+    )
     ProjectIssueType.objects.create(project=project, issue_type=seeded["task"], level=1)
     url = f"{base(workspace)}{custom.id}/"
     r = session_client.delete(url)
@@ -103,14 +109,18 @@ def test_type_cap(session_client, workspace, seeded, settings):
 def test_migrate_to_must_match_level(session_client, workspace, project, seeded, create_user):
     custom = IssueType.objects.create(workspace=workspace, name="Spike", level=1)
     state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
-    Issue.objects.create(name="i", workspace=workspace, project=project, state=state, type=custom, created_by=create_user)
+    Issue.objects.create(
+        name="i", workspace=workspace, project=project, state=state, type=custom, created_by=create_user
+    )
     r = session_client.delete(f"{base(workspace)}{custom.id}/?migrate_to={seeded['epic'].id}")
     assert r.status_code == 400
 
 
 def _issue(workspace, project, create_user, t, **kw):
     state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
-    return Issue.objects.create(name="i", workspace=workspace, project=project, state=state, type=t, created_by=create_user, **kw)
+    return Issue.objects.create(
+        name="i", workspace=workspace, project=project, state=state, type=t, created_by=create_user, **kw
+    )
 
 
 @pytest.mark.contract
@@ -266,7 +276,9 @@ def test_form_encoded_is_active_false_on_project_default_is_409(session_client, 
 @pytest.mark.contract
 def test_form_encoded_same_level_on_preset_ok(session_client, workspace, seeded):
     t = seeded["task"]
-    r = session_client.patch(f"{base(workspace)}{t.id}/", {"level": str(t.level), "is_epic": "false"}, format="multipart")
+    r = session_client.patch(
+        f"{base(workspace)}{t.id}/", {"level": str(t.level), "is_epic": "false"}, format="multipart"
+    )
     assert r.status_code == 200, r.content
 
 

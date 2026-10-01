@@ -4,13 +4,23 @@
 
 from django.db import transaction
 
-from plane.db.models import Issue, IssueType, Project
+from plane.db.models import DraftIssue, Issue, IssueType, Project
 from plane.db.models.issue_type import ProjectIssueType
 from plane.ee.work_item_types.presets import EXCLUSIVE, PRESETS, PROCESSES, SHARED, SOURCE
 
 
 class ProcessChangeBlocked(Exception):
-    pass
+    def __init__(self, message, count=0):
+        super().__init__(message)
+        self.count = count
+
+
+def type_usage(type_id, project=None):
+    """(issues, drafts) querysets using a type, including archived and soft-deleted (restorable) rows."""
+    issues, drafts = Issue.all_objects.filter(type_id=type_id), DraftIssue.all_objects.filter(type_id=type_id)
+    if project is not None:
+        issues, drafts = issues.filter(project=project), drafts.filter(project=project)
+    return issues, drafts
 
 
 def seed_types(workspace) -> dict:
@@ -49,15 +59,21 @@ def project_process(project) -> str | None:
 
 
 @transaction.atomic
-def apply_process(project, process: str) -> None:
+def apply_process(project, process: str, migrate: bool = False) -> None:
     if process not in PROCESSES:
         raise ValueError(process)
     types = seed_types(project.workspace)
     current = project_process(project)
     if current and current != process:
         old = types[EXCLUSIVE[current]]
-        if Issue.objects.filter(project=project, type=old).exists():
-            raise ProcessChangeBlocked(f"{old.name} is still used by work items in this project")
+        count = Issue.objects.filter(project=project, type=old).count()
+        count += DraftIssue.objects.filter(project=project, type=old).count()
+        if count and not migrate:
+            raise ProcessChangeBlocked(f"{old.name} is still used by work items in this project", count)
+        if count:
+            new = types[EXCLUSIVE[process]]  # same level (2) as the old exclusive type
+            Issue.all_objects.filter(project=project, type=old).update(type=new)
+            DraftIssue.all_objects.filter(project=project, type=old).update(type=new)
         ProjectIssueType.objects.filter(project=project, issue_type=old).delete()
     wanted = [*SHARED, EXCLUSIVE[process]]
     ProjectIssueType.objects.filter(project=project, is_default=True).update(is_default=False)

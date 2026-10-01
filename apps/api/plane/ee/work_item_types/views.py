@@ -10,11 +10,17 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from plane.app.views.base import BaseAPIView
-from plane.db.models import DraftIssue, Issue, IssueType, Project, Workspace
+from plane.db.models import Issue, IssueType, Project, Workspace
 from plane.db.models.issue_type import ProjectIssueType
 from plane.ee.work_item_types.serializers import IssueTypeSerializer
-from plane.ee.work_item_types.presets import PROCESSES
-from plane.ee.work_item_types.seed import ProcessChangeBlocked, apply_process, project_process
+from plane.ee.work_item_types.presets import EXCLUSIVE, PROCESSES, SOURCE
+from plane.ee.work_item_types.seed import (
+    ProcessChangeBlocked,
+    apply_process,
+    project_process,
+    seed_types,
+    type_usage,
+)
 from plane.utils.permissions.project import ProjectAdminPermission, ProjectEntityPermission
 from plane.utils.permissions.workspace import WorkspaceOwnerPermission, WorkspaceViewerPermission
 
@@ -60,6 +66,30 @@ class WorkItemTypeListEndpoint(_WorkspaceTypeBase):
             serializer.is_valid(raise_exception=True)
             serializer.save(workspace=ws)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class WorkItemTypeSeedEndpoint(_WorkspaceTypeBase):
+    def post(self, request, slug):
+        seed_types(self.workspace(slug))
+        qs = IssueType.objects.filter(workspace__slug=slug).order_by("-level", "name")
+        return Response(IssueTypeSerializer(qs, many=True).data)
+
+
+class WorkItemTypeUsageEndpoint(_WorkspaceTypeBase):
+    def get(self, request, slug, pk):
+        obj = get_object_or_404(IssueType, pk=pk, workspace__slug=slug)
+        issues, drafts = type_usage(obj.pk)
+        projects = set(issues.values_list("project_id", flat=True)) | set(drafts.values_list("project_id", flat=True))
+        projects.discard(None)
+        n_issues, n_drafts = issues.count(), drafts.count()
+        return Response(
+            {
+                "issues": n_issues,
+                "drafts": n_drafts,
+                "count": n_issues + n_drafts,
+                "projects": sorted(str(p) for p in projects),
+            }
+        )
 
 
 class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
@@ -118,8 +148,7 @@ class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
                 or ProjectIssueType.objects.filter(issue_type=obj, is_default=True).exists()
             ):
                 return Response({"error": "This type cannot be deleted"}, status=status.HTTP_409_CONFLICT)
-            in_use = Issue.objects.filter(type=obj)
-            drafts = DraftIssue.objects.filter(type=obj)
+            in_use, drafts = type_usage(obj.pk)
             count = in_use.count() + drafts.count()
             if count:
                 if not target_id:
@@ -135,7 +164,8 @@ class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
                         {"error": "migrate_to must have the same level and epic flag"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-                using = set(in_use.values_list("project_id", flat=True)) | set(drafts.values_list("project_id", flat=True))
+                using = set(in_use.values_list("project_id", flat=True))
+                using |= set(drafts.values_list("project_id", flat=True))
                 using.discard(None)
                 assigned = set(
                     ProjectIssueType.objects.filter(issue_type=target, project_id__in=using).values_list(
@@ -193,15 +223,18 @@ class ProjectWorkItemTypesEndpoint(_ProjectTypeBase):
 
     def post(self, request, slug, project_id):
         project = self.project_obj(slug, project_id)
-        process = _body(request).get("process")
+        body = _body(request)
+        process = body.get("process")
         if not isinstance(process, str) or process not in PROCESSES:
             return Response({"error": "process must be scrum or agile"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             with transaction.atomic():
                 project = _lock_project(project)
-                apply_process(project, process)
+                apply_process(project, process, migrate=_as_bool(body.get("migrate")) is True)
         except ProcessChangeBlocked as e:
-            return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
+            return Response(
+                {"error": str(e), "code": "process_change_blocked", "count": e.count}, status=status.HTTP_409_CONFLICT
+            )
         return Response({"process": process}, status=status.HTTP_200_OK)
 
 
@@ -214,6 +247,17 @@ class ProjectWorkItemTypeAssignEndpoint(_ProjectTypeBase):
             obj = type_id and IssueType.objects.filter(pk=type_id, workspace__slug=slug, is_active=True).first()
             if not obj:
                 return Response(_INVALID_TYPE, status=status.HTTP_400_BAD_REQUEST)
+            current = project_process(project)
+            if (
+                current
+                and obj.external_source == SOURCE
+                and obj.external_id in EXCLUSIVE.values()
+                and obj.external_id != EXCLUSIVE[current]
+            ):
+                return Response(
+                    {"error": "This type belongs to a different process", "code": "process_conflict"},
+                    status=status.HTTP_409_CONFLICT,
+                )
             ProjectIssueType.objects.get_or_create(project=project, issue_type=obj, defaults={"level": int(obj.level)})
         return Response({"type_id": str(obj.id)}, status=status.HTTP_200_OK)
 
@@ -222,9 +266,11 @@ class ProjectWorkItemTypeAssignEndpoint(_ProjectTypeBase):
         with transaction.atomic():
             _lock_project(project)
             row = get_object_or_404(ProjectIssueType, project=project, issue_type_id=type_id)
-            if row.is_default or Issue.objects.filter(project=project, type_id=type_id).exists():
+            issues, drafts = type_usage(type_id, project)
+            count = issues.count() + drafts.count()
+            if row.is_default or count:
                 return Response(
-                    {"error": "Type is the project default or still used by work items"},
+                    {"error": "Type is the project default or still used by work items", "count": count},
                     status=status.HTTP_409_CONFLICT,
                 )
             row.delete()

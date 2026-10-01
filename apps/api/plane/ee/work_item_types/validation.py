@@ -53,35 +53,40 @@ def validate_issue_write(issue) -> None:
         if not allowed:
             raise ValidationError({"type_id": ["Invalid work item type"]})
 
-    child = _type_info(issue.type_id, issue.project_id)
-    if child is None:
-        return
+    # Legacy (untyped) rows are never constrained: on non-create writes an untyped side skips that edge's check.
+    child = _type_info(issue.type_id, issue.project_id) if issue.type_id or adding else None
     parent = None
+    skip_edge = child is None
     if issue.parent_id:
         parent_row = Issue.objects.filter(pk=issue.parent_id, project_id=issue.project_id).first()
         if parent_row is None:
             raise ValidationError({"parent_id": "Invalid parent"})
-        parent = _type_info(parent_row.type_id, issue.project_id)
-    if type_changed or parent_changed:
+        if parent_row.type_id is None and not adding:
+            skip_edge = True
+        else:
+            parent = _type_info(parent_row.type_id, issue.project_id)
+    if not skip_edge and (type_changed or parent_changed):
         message = hierarchy_error(child, parent)
         if message:
             raise ValidationError({"parent_id": message})
     if parent_changed and issue.parent_id and not adding:
+
         def parent_of(i):
             return Issue.objects.filter(pk=i).values_list("parent_id", flat=True).first()
 
         # ponytail: check-then-write is not locked; TOCTOU on concurrent reparent
         if creates_cycle(issue.pk, issue.parent_id, parent_of):
             raise ValidationError({"parent_id": "Parent would create a loop"})
+    if child is None:
+        return
     if type_changed and not adding and old[0] is not None and not child.is_epic:
         old_type = IssueType.objects.filter(pk=old[0]).first()
         if old_type and old_type.is_epic and Issue.objects.filter(parent_id=issue.pk).exists():
             raise ValidationError({"type_id": "An epic with sub-items cannot change to a non-epic type"})
     if type_changed and not adding:
         conflicts = []
-        for sub in Issue.objects.filter(parent_id=issue.pk).select_related("type"):
-            sub_info = _info(sub.type) if sub.type_id else _type_info(None, issue.project_id)
-            if sub_info and hierarchy_error(sub_info, child):
-                conflicts.append(sub.name)
+        for sub_issue in Issue.objects.filter(parent_id=issue.pk, type__isnull=False).select_related("type"):
+            if hierarchy_error(_info(sub_issue.type), child):
+                conflicts.append(sub_issue.name)
         if conflicts:
             raise ValidationError({"type_id": f"Conflicts with sub-items: {', '.join(conflicts[:5])}"})

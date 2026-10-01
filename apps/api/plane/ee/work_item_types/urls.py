@@ -10,10 +10,14 @@ from .views import (
     ProjectWorkItemTypesEndpoint,
     WorkItemTypeDetailEndpoint,
     WorkItemTypeListEndpoint,
+    WorkItemTypeSeedEndpoint,
+    WorkItemTypeUsageEndpoint,
 )
 
 urlpatterns = [
     path("", WorkItemTypeListEndpoint.as_view(), name="ee-work-item-types"),
+    path("seed/", WorkItemTypeSeedEndpoint.as_view(), name="ee-work-item-types-seed"),
+    path("<uuid:pk>/usage/", WorkItemTypeUsageEndpoint.as_view(), name="ee-work-item-type-usage"),
     path("<uuid:pk>/", WorkItemTypeDetailEndpoint.as_view(), name="ee-work-item-type"),
 ]
 

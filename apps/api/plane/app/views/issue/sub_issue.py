@@ -245,7 +245,7 @@ class SubIssuesEndpoint(BaseAPIView):
                 try:
                     validate_issue_write(sub_issue)
                 except ValidationError as e:
-                    return Response({"error": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
         _ = Issue.objects.bulk_update(sub_issues, ["parent"], batch_size=10)
 

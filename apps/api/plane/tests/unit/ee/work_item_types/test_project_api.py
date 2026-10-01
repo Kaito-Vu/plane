@@ -78,7 +78,9 @@ def test_non_project_member_cannot_read(api_client, workspace, project):
 def test_assign_and_unassign_custom_type(session_client, workspace, project):
     apply_process(project, "scrum")
     custom = IssueType.objects.create(workspace=workspace, name="Spike", level=1)
-    assert session_client.post(url(workspace, project, "assign/"), {"type_id": str(custom.id)}, format="json").status_code == 200
+    assert session_client.post(
+        url(workspace, project, "assign/"), {"type_id": str(custom.id)}, format="json"
+    ).status_code == 200
     assert ProjectIssueType.objects.filter(project=project, issue_type=custom).exists()
     assert session_client.delete(url(workspace, project, f"assign/{custom.id}/")).status_code == 204
 
@@ -122,9 +124,13 @@ def test_unassign_not_assigned_is_404(session_client, workspace, project):
 def test_cannot_unassign_default_or_in_use(session_client, workspace, project, create_user):
     apply_process(project, "scrum")
     types = {t.external_id: t for t in IssueType.objects.filter(workspace=workspace)}
-    assert session_client.delete(url(workspace, project, f"assign/{types['product_backlog_item'].id}/")).status_code == 409
+    assert session_client.delete(
+        url(workspace, project, f"assign/{types['product_backlog_item'].id}/")
+    ).status_code == 409
     state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
-    Issue.objects.create(name="i", workspace=workspace, project=project, state=state, type=types["task"], created_by=create_user)
+    Issue.objects.create(
+        name="i", workspace=workspace, project=project, state=state, type=types["task"], created_by=create_user
+    )
     assert session_client.delete(url(workspace, project, f"assign/{types['task'].id}/")).status_code == 409
 
 
@@ -132,7 +138,9 @@ def test_cannot_unassign_default_or_in_use(session_client, workspace, project, c
 def test_set_default(session_client, workspace, project):
     apply_process(project, "scrum")
     task = IssueType.objects.get(workspace=workspace, external_id="task")
-    assert session_client.post(url(workspace, project, "default/"), {"type_id": str(task.id)}, format="json").status_code == 200
+    assert session_client.post(
+        url(workspace, project, "default/"), {"type_id": str(task.id)}, format="json"
+    ).status_code == 200
     assert ProjectIssueType.objects.get(project=project, is_default=True).issue_type_id == task.id
 
 
@@ -181,7 +189,9 @@ def test_single_default_after_switch_and_set_default(session_client, workspace, 
     apply_process(project, "scrum")
     apply_process(project, "agile")
     t = IssueType.objects.get(workspace=workspace, external_id="user_story")
-    assert session_client.post(url(workspace, project, "default/"), {"type_id": str(t.id)}, format="json").status_code == 200
+    assert session_client.post(
+        url(workspace, project, "default/"), {"type_id": str(t.id)}, format="json"
+    ).status_code == 200
     rows = ProjectIssueType.objects.filter(project=project, is_default=True)
     assert rows.count() == 1 and rows[0].issue_type_id == t.id
 

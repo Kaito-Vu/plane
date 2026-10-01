@@ -17,7 +17,18 @@ SUB = TypeInfo("sub", 0)
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "child,parent",
-    [(FEATURE, EPIC), (STORY, FEATURE), (STORY, EPIC), (TASK, STORY), (TASK, BUG), (SUB, TASK), (SUB, STORY), (EPIC, None), (STORY, None), (TASK, None)],
+    [
+        (FEATURE, EPIC),
+        (STORY, FEATURE),
+        (STORY, EPIC),
+        (TASK, STORY),
+        (TASK, BUG),
+        (SUB, TASK),
+        (SUB, STORY),
+        (EPIC, None),
+        (STORY, None),
+        (TASK, None),
+    ],
 )
 def test_allowed(child, parent):
     assert hierarchy_error(child, parent) is None
@@ -26,7 +37,16 @@ def test_allowed(child, parent):
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "child,parent",
-    [(EPIC, FEATURE), (STORY, STORY), (STORY, TASK), (TASK, TASK), (SUB, EPIC), (SUB, FEATURE), (SUB, SUB), (SUB, None)],
+    [
+        (EPIC, FEATURE),
+        (STORY, STORY),
+        (STORY, TASK),
+        (TASK, TASK),
+        (SUB, EPIC),
+        (SUB, FEATURE),
+        (SUB, SUB),
+        (SUB, None),
+    ],
 )
 def test_rejected(child, parent):
     assert hierarchy_error(child, parent) is not None

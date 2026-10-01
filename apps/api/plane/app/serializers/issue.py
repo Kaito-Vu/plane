@@ -134,7 +134,9 @@ class IssueCreateSerializer(BaseSerializer):
         issue_type = attrs.get("type")
         if issue_type is not None and issue_type.workspace_id != (
             self.context.get("workspace_id")
-            or ProjectModel.objects.filter(pk=self.context.get("project_id")).values_list("workspace_id", flat=True).first()
+            or ProjectModel.objects.filter(pk=self.context.get("project_id"))
+            .values_list("workspace_id", flat=True)
+            .first()
         ):
             raise serializers.ValidationError({"type_id": ["Invalid work item type"]})
 

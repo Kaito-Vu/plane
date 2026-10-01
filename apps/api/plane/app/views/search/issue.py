@@ -152,6 +152,7 @@ class IssueSearchEndpoint(BaseAPIView):
                 "project__name",
                 "project__identifier",
                 "project_id",
+                "type_id",
                 "workspace__slug",
                 "state__name",
                 "state__group",
