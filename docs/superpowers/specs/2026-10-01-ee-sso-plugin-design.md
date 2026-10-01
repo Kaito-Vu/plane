@@ -50,7 +50,7 @@ Behavior:
 
 ## Frontend
 
-- New package `packages/ee-sso`: provider-list service, login-button hook, admin config pages/forms.
+- No new package (see Decisions): `apps/{web,space}/ee/sso/` hold the provider-list fetch and login-button hook; admin pages live under `apps/admin/`.
 - web + space: fill existing seam `hooks/oauth/extended.tsx` (only change to core files there).
 - admin: no seam exists. Minimal edits: `app/routes.ts` (add routes) and `hooks/oauth/index.ts` (add modes). These two files are the only expected merge-conflict points with upstream.
 

@@ -159,3 +159,16 @@ def test_login_csrf_response_posted_from_another_browser_is_rejected(https_acs, 
     victim = Client(HTTP_USER_AGENT="pytest")  # ... victim's browser posts it without the bind cookie
     assert _error_code(_post_acs(victim, keys, relay, request_id)) == "6001"
     assert Account.objects.filter(provider="sso-saml").count() == 0
+
+
+@pytest.mark.unit
+def test_space_target_travels_through_saml_relay_and_logs_in_as_space_user(setup, keys, mocker):
+    spy = mocker.patch("plane.ee.sso.flow.user_login")
+    client = Client(HTTP_USER_AGENT="pytest")
+    response = client.get("/auth/sso/spaces/saml/?next_path=/issues/abc")
+    relay = parse_qs(urlparse(response["Location"]).query)["RelayState"][0]
+    data = cache.get(f"ee_sso_saml_relay:{relay}")
+    assert data["target"] == "space"
+    result = _post_acs(client, keys, relay, data["request_id"])
+    assert spy.call_args.kwargs["is_space"] is True
+    assert result["Location"].endswith("/issues/abc")
