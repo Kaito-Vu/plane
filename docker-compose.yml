@@ -7,6 +7,8 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     restart: always
+    environment:
+      STATIC_RATE_LIMIT: ${STATIC_RATE_LIMIT:-3000}
     depends_on:
       - api
 
@@ -18,6 +20,8 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     restart: always
+    environment:
+      STATIC_RATE_LIMIT: ${STATIC_RATE_LIMIT:-3000}
     depends_on:
       - api
       - web
@@ -30,6 +34,8 @@ services:
       args:
         DOCKER_BUILDKIT: 1
     restart: always
+    environment:
+      STATIC_RATE_LIMIT: ${STATIC_RATE_LIMIT:-3000}
     depends_on:
       - api
       - web
