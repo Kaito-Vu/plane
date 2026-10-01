@@ -4,7 +4,8 @@
 
 import pytest
 
-from plane.db.models import Issue, IssueType, ProjectIssueType, State
+from plane.db.models import Issue, IssueType, State
+from plane.db.models.issue_type import ProjectIssueType
 from plane.ee.work_item_types.seed import ProcessChangeBlocked, apply_process, project_process, seed_types
 
 

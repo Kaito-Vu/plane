@@ -4,7 +4,8 @@
 
 from django.db import transaction
 
-from plane.db.models import Issue, IssueType, Project, ProjectIssueType
+from plane.db.models import Issue, IssueType, Project
+from plane.db.models.issue_type import ProjectIssueType
 from plane.ee.work_item_types.presets import EXCLUSIVE, PRESETS, PROCESSES, SHARED, SOURCE
 
 
