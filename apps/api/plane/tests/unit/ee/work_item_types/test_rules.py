@@ -1,3 +1,7 @@
+# Copyright (c) 2023-present Plane Software, Inc. and contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+# See the LICENSE file for details.
+
 import pytest
 
 from plane.ee.work_item_types.rules import TypeInfo, creates_cycle, hierarchy_error
@@ -25,7 +29,7 @@ def test_allowed(child, parent):
     [(EPIC, FEATURE), (STORY, STORY), (STORY, TASK), (TASK, TASK), (SUB, EPIC), (SUB, FEATURE), (SUB, SUB), (SUB, None)],
 )
 def test_rejected(child, parent):
-    assert hierarchy_error(child, parent)
+    assert hierarchy_error(child, parent) is not None
 
 
 @pytest.mark.unit
