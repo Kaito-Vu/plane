@@ -1,0 +1,40 @@
+name: EE SSO tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/api/plane/ee/**"
+      - "apps/api/plane/tests/unit/ee/**"
+      - "apps/api/plane/settings/ee*.py"
+      - "apps/api/requirements/**"
+      - "apps/api/bin/run-ee-tests.sh"
+      - "apps/api/Dockerfile.ee"
+      - "docker-compose-test.yml"
+      - "docker-compose-ee*.yml"
+      - ".github/workflows/ee-sso.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-tests:
+    name: EE API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Prepare API env file
+        # ./setup.sh is non-interactive but also runs `pnpm install` for the whole monorepo (slow); the API only needs this
+        run: |
+          cp apps/api/.env.example apps/api/.env
+          echo "SECRET_KEY=\"$(tr -dc a-z0-9 </dev/urandom | head -c50)\"" >> apps/api/.env
+      - name: Run EE tests
+        run: docker compose -f docker-compose-test.yml run --rm --build api-tests sh bin/run-ee-tests.sh plane/tests/unit/ee
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose-test.yml down -v

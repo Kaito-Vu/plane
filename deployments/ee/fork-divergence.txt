@@ -1,0 +1,24 @@
+# Edits this fork keeps against upstream OUTSIDE the SSO plugin. Same glob format as core-allowlist.txt.
+# Every entry is a future upstream-merge conflict: keep the list short and remove entries when they are dropped.
+# --- Docker / Caddy / compose hardening and caching (fork-wide) ---
+apps/*/Dockerfile.*
+apps/*/caddy/Caddyfile
+apps/proxy/Caddyfile.ce
+deployments/aio/community/Dockerfile
+deployments/cli/community/*
+deployments/swarm/community/swarm.sh
+docker-compose.yml
+docker-compose-local.yml
+.env.example
+apps/api/.env.example
+# --- test stack fixes (postgres 18 tmpfs, IPv4 healthcheck, httpx pin for Python 3.14) ---
+docker-compose-test.yml
+apps/api/requirements/test.txt
+apps/api/tests/RUNNING_TESTS.md
+apps/api/docs/django-5.2-migration-plan.md
+# --- telemetry removal ---
+apps/admin/app/(all)/(dashboard)/general/*
+apps/admin/components/instance/setup-form.tsx
+apps/api/plane/license/*
+# --- tooling ---
+.codegraph/*

@@ -1,0 +1,25 @@
+name: EE core guard
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-untouched:
+    name: Core files untouched
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Check allowlist
+        env:
+          BASE: origin/${{ github.base_ref || 'preview' }}
+        run: sh deployments/ee/check-core-untouched.sh

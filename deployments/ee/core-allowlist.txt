@@ -1,0 +1,28 @@
+# Paths this project may change relative to upstream. One glob per line.
+# --- plugin-owned (new files) ---
+apps/api/plane/ee/*
+apps/api/plane/settings/ee.py
+apps/api/plane/settings/ee_test.py
+apps/api/plane/settings/ee_local.py
+apps/api/plane/tests/unit/ee/*
+apps/api/requirements/ee.txt
+apps/api/bin/run-ee-tests.sh
+apps/api/Dockerfile.ee
+apps/web/ee/*
+apps/space/ee/*
+apps/admin/ee/*
+apps/admin/app/ee/*
+docker-compose-ee.yml
+docker-compose-ee-local.yml
+deployments/ee/*
+docs/ee/*
+docs/superpowers/*
+.github/workflows/ee-sso.yml
+.github/workflows/ee-guard.yml
+# --- the known core seam edits (keep this list as short as possible) ---
+apps/web/hooks/oauth/extended.tsx
+apps/space/hooks/oauth/extended.tsx
+packages/types/src/instance/auth-ee.ts
+packages/constants/src/auth/extended.ts
+apps/admin/app/routes.ts
+apps/admin/hooks/oauth/index.ts
