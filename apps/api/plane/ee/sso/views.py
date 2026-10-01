@@ -11,11 +11,10 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.views import View
 
 from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
-from plane.authentication.utils.host import base_host
 from plane.authentication.utils.user_auth_workflow import post_user_auth_workflow
 from plane.ee.sso.adapter import SsoOauthProvider
 from plane.ee.sso.config import list_enabled_providers
-from plane.ee.sso.flow import complete_login, provider_error, redirect_error
+from plane.ee.sso.flow import complete_login, host_for, provider_error, redirect_error
 from plane.ee.sso.saml_views import saml_start
 from plane.license.models import Instance
 from plane.utils.path_validator import validate_next_path
@@ -27,9 +26,10 @@ class SsoProvidersEndpoint(View):
 
 
 class SsoInitiateEndpoint(View):
-    def get(self, request, provider_id):
-        host = base_host(request=request, is_app=True)
+    def get(self, request, provider_id, target="app"):
+        host = host_for(request, target)
         request.session["host"] = host
+        request.session["sso_target"] = target
         next_path = request.GET.get("next_path")
         if next_path:
             request.session["next_path"] = str(validate_next_path(next_path))
@@ -45,7 +45,7 @@ class SsoInitiateEndpoint(View):
                 next_path,
             )
         if provider_id == "saml":
-            return saml_start(request, host, next_path)
+            return saml_start(request, host, next_path, target)
         try:
             state, nonce = uuid.uuid4().hex, secrets.token_urlsafe(24)
             verifier = secrets.token_urlsafe(48)
@@ -62,7 +62,8 @@ class SsoInitiateEndpoint(View):
 
 class SsoCallbackEndpoint(View):
     def get(self, request, provider_id):
-        host = request.session.pop("host", None) or base_host(request=request, is_app=True)
+        target = request.session.pop("sso_target", "app")
+        host = request.session.pop("host", None) or host_for(request, target)
         next_path = request.session.pop("next_path", None)
         # one-time use: pop so a replayed callback fails the state check
         expected_provider = request.session.pop("sso_provider", None)
@@ -86,9 +87,9 @@ class SsoCallbackEndpoint(View):
                 code=code,
                 nonce=nonce,
                 code_verifier=verifier,
-                callback=post_user_auth_workflow,
+                callback=post_user_auth_workflow if target == "app" else None,
             )
             user = provider.authenticate()
-            return complete_login(request, user, host, next_path)
+            return complete_login(request, user, host, next_path, target)
         except AuthenticationException as e:
             return redirect_error(host, e, next_path)

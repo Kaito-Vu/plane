@@ -7,6 +7,7 @@ from urllib.parse import urlencode, urljoin
 from django.http import HttpResponseRedirect
 
 from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
+from plane.authentication.utils.host import base_host
 from plane.authentication.utils.login import user_login
 from plane.authentication.utils.redirection_path import get_redirection_path
 from plane.ee.sso import errors  # noqa: F401
@@ -24,8 +25,19 @@ def provider_error(message="SSO_PROVIDER_ERROR"):
     return AuthenticationException(error_code=AUTHENTICATION_ERROR_CODES["SSO_PROVIDER_ERROR"], error_message=message)
 
 
-def complete_login(request, user, host, next_path):
-    """Log the user in and redirect into the app (Phase 3 adds the space target here)."""
+def host_for(request, target="app"):
+    if target == "space":
+        return base_host(request=request, is_space=True)
+    return base_host(request=request, is_app=True)
+
+
+def complete_login(request, user, host, next_path, target="app"):
+    """Log the user in and redirect. Mirrors core: app users get the redirection path, space users
+    land on the space host (+ validated next_path)."""
+    if target == "space":
+        user_login(request=request, user=user, is_space=True)
+        path = str(validate_next_path(next_path)) if next_path else ""
+        return HttpResponseRedirect(f"{host}{path}")
     user_login(request=request, user=user, is_app=True)
     path = str(validate_next_path(next_path)) if next_path else get_redirection_path(user=user)
     return HttpResponseRedirect(urljoin(host, path))

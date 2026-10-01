@@ -19,12 +19,12 @@ from plane.ee.sso.saml import RELAY_TTL, SamlProvider, acs_url, new_relay_token,
 BIND_COOKIE = "ee_sso_saml_bind"
 
 
-def saml_start(request, host, next_path):
+def saml_start(request, host, next_path, target="app"):
     try:
         provider = SamlProvider(request)
         token = new_relay_token()
         url = provider.login_url(token)
-        data = {"request_id": provider.request_id(), "host": host, "next_path": next_path}
+        data = {"request_id": provider.request_id(), "host": host, "next_path": next_path, "target": target}
         response = HttpResponseRedirect(url)
         # Login-CSRF defence: bind the relay to the browser that started the flow. The IdP's POST is cross-site, so the
         # cookie must be SameSite=None (which browsers only accept with Secure). Plain-http (dev) cannot be bound.
@@ -49,13 +49,14 @@ class SamlAcsEndpoint(View):
         if not relay:
             return redirect_error(base_host(request=request, is_app=True), provider_error())
         host, next_path = relay["host"], relay.get("next_path")
+        target = relay.get("target", "app")
         try:
             bind = relay.get("bind")
             if bind and not secrets.compare_digest(request.COOKIES.get(BIND_COOKIE, ""), bind):
                 raise provider_error("SSO_PROVIDER_ERROR: relay not bound to this browser")
-            provider = SamlProvider(request, callback=post_user_auth_workflow)
+            provider = SamlProvider(request, callback=post_user_auth_workflow if target == "app" else None)
             user = provider.authenticate(relay["request_id"])
-            response = complete_login(request, user, host, next_path)
+            response = complete_login(request, user, host, next_path, target)
         except AuthenticationException as e:
             response = redirect_error(host, e, next_path)
         response.delete_cookie(BIND_COOKIE, samesite="None")
