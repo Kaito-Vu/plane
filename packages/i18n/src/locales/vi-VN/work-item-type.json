@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Loại mục công việc",
     "label_lowercase": "loại mục công việc",
+    "ee": {
+      "field_label": "Loại mục công việc",
+      "placeholder": "Loại",
+      "disabled_suffix": "Đã tắt",
+      "filter_label": "Loại",
+      "change_failed": "Không đổi được loại mục công việc. Đã giữ loại cũ.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Tính năng",
+        "bug": "Lỗi",
+        "task": "Nhiệm vụ",
+        "sub_task": "Nhiệm vụ con",
+        "product_backlog_item": "Mục Product Backlog",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "Nhiệm vụ con cần có mục cha.",
+        "epic_no_parent": "Epic không được có mục cha.",
+        "parent_level": "Hãy chọn loại có cấp thấp hơn mục cha.",
+        "subtask_parent": "Nhiệm vụ con chỉ nằm dưới mục cấp nhiệm vụ, lỗi hoặc story."
+      },
+      "workspace": {
+        "description": "Các loại dùng chung cho mọi dự án trong không gian làm việc. Mỗi dự án chọn loại mình dùng.",
+        "empty_title": "Chưa có loại mục công việc",
+        "empty_description": "Chọn Scrum hoặc Agile trong cài đặt dự án để thêm các loại có sẵn, hoặc tự tạo loại tại đây.",
+        "level": "Cấp",
+        "level_hint": "0–9. Mục cha phải có cấp cao hơn mục con; 0 là nhiệm vụ con.",
+        "is_epic": "Epic (không được có mục cha)",
+        "icon": "Biểu tượng",
+        "background": "Nền",
+        "preset_badge": "Có sẵn",
+        "low_contrast": "Màu biểu tượng có độ tương phản thấp so với nền.",
+        "delete_title": "Xoá {name}",
+        "delete_description": "Không thể hoàn tác thao tác này.",
+        "delete_in_use": "{count, plural, one {# mục công việc đang dùng} other {# mục công việc đang dùng}} loại này. Chuyển chúng sang:",
+        "migrate_placeholder": "Chọn một loại",
+        "delete_failed": "Không xoá được loại mục công việc.",
+        "save_failed": "Không lưu được loại mục công việc."
+      },
+      "project": {
+        "description": "Chọn quy trình và các loại mà mục công việc trong dự án này được dùng.",
+        "process": "Quy trình",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Tuỳ chỉnh",
+        "enabled": "Dùng loại mục công việc trong dự án này",
+        "assigned": "Đang dùng trong dự án",
+        "available": "Các loại khác của không gian làm việc",
+        "assign": "Thêm",
+        "unassign": "Gỡ",
+        "default_badge": "Mặc định",
+        "action_failed": "Không cập nhật được loại mục công việc của dự án."
+      }
+    },
     "settings": {
       "description": "Tùy chỉnh và thêm thuộc tính riêng của bạn để điều chỉnh theo nhu cầu của nhóm.",
       "cant_delete_default_message": "Không thể xóa loại hạng mục công việc này vì nó đang được liên kết với các hạng mục công việc hiện có.",

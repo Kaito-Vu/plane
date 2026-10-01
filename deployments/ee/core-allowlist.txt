@@ -37,3 +37,4 @@ apps/web/package.json
 pnpm-lock.yaml
 packages/types/src/work-item-types.ts
 packages/types/src/index.ts
+packages/i18n/src/locales/*/work-item-type.json

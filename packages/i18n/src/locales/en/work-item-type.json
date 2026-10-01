@@ -2,6 +2,60 @@
   "work_item_types": {
     "label": "Work item Types",
     "label_lowercase": "work item types",
+    "ee": {
+      "field_label": "Work item type",
+      "placeholder": "Type",
+      "disabled_suffix": "Disabled",
+      "filter_label": "Type",
+      "change_failed": "Couldn't change the work item type. The previous type was kept.",
+      "preset": {
+        "epic": "Epic",
+        "feature": "Feature",
+        "bug": "Bug",
+        "task": "Task",
+        "sub_task": "Sub-task",
+        "product_backlog_item": "Product Backlog Item",
+        "user_story": "User Story"
+      },
+      "reason": {
+        "needs_parent": "A sub-task needs a parent.",
+        "epic_no_parent": "An epic can't have a parent.",
+        "parent_level": "Pick a type below the parent's level.",
+        "subtask_parent": "A sub-task can only sit under a task, bug or story level item."
+      },
+      "workspace": {
+        "description": "Types are shared by every project in this workspace. Projects pick the ones they use.",
+        "empty_title": "No work item types yet",
+        "empty_description": "Choose Scrum or Agile in a project's settings to add the preset types, or create your own type here.",
+        "level": "Level",
+        "level_hint": "0–9. A parent must have a higher level than its child; 0 is a sub-task.",
+        "is_epic": "Epic (can't have a parent)",
+        "icon": "Icon",
+        "background": "Background",
+        "preset_badge": "Preset",
+        "low_contrast": "The icon colour has low contrast against its background.",
+        "delete_title": "Delete {name}",
+        "delete_description": "This can't be undone.",
+        "delete_in_use": "{count, plural, one {# work item uses} other {# work items use}} this type. Move them to:",
+        "migrate_placeholder": "Pick a type",
+        "delete_failed": "Couldn't delete the work item type.",
+        "save_failed": "Couldn't save the work item type."
+      },
+      "project": {
+        "description": "Choose a process and the types work items in this project can use.",
+        "process": "Process",
+        "scrum": "Scrum",
+        "agile": "Agile",
+        "custom": "Custom",
+        "enabled": "Use work item types in this project",
+        "assigned": "Used in this project",
+        "available": "Other workspace types",
+        "assign": "Add",
+        "unassign": "Remove",
+        "default_badge": "Default",
+        "action_failed": "Couldn't update the project's work item types."
+      }
+    },
     "settings": {
       "description": "Customize and add your own properties to tailor it to your team's needs.",
       "cant_delete_default_message": "This work item type cannot be deleted because it's set as the default for this project",
