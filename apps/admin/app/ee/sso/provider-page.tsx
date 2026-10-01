@@ -9,18 +9,21 @@ import { observer } from "mobx-react";
 import { useLocation } from "react-router";
 import useSWR from "swr";
 // plane internal packages
-import { setPromiseToast } from "@plane/blocks/toast";
+import { setPromiseToast, setToast } from "@plane/blocks/toast";
 import { Switch } from "@makeplane/propel/components/switch";
 // components
 import { AuthenticationMethodCard } from "@/components/authentication/authentication-method-card";
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Skeleton } from "@/components/common/skeleton";
+// helpers
+import { canDisableAuthMethod } from "@/helpers/authentication";
 // hooks
+import { useAuthenticationModes } from "@/hooks/oauth";
 import { useInstance } from "@/hooks/store";
 // ee
-import { hasConfigKey, readConfig, toConfigPayload } from "@/ee/sso/core-bridge";
+import { asMethodKey, hasConfigKey, readConfig, toConfigPayload } from "@/ee/sso/core-bridge";
 import { SsoProviderForm } from "@/ee/sso/provider-form";
-import { SSO_PROVIDERS, providerIdFromPath, ssoConfigKey } from "@/ee/sso/provider-fields";
+import { SSO_PROVIDERS, isSsoConfigured, providerIdFromPath, ssoConfigKey } from "@/ee/sso/provider-fields";
 import { SsoProviderIcon } from "@/ee/sso/provider-icon";
 
 const SsoProviderPage = observer(function SsoProviderPage() {
@@ -31,12 +34,19 @@ const SsoProviderPage = observer(function SsoProviderPage() {
   // state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   useSWR("INSTANCE_CONFIGURATIONS", () => fetchInstanceConfigurations());
+  // the same mode list core inspects on the Authentication page, so the "keep one method enabled" rule applies here too
+  const authenticationModes = useAuthenticationModes({
+    disabled: false,
+    updateConfig: () => undefined,
+    resolvedTheme: undefined,
+  });
 
   if (!providerId) return <PageWrapper header={{ title: "Unknown provider", description: "" }}>{null}</PageWrapper>;
 
   const def = SSO_PROVIDERS[providerId];
   const enabledKey = ssoConfigKey(providerId, "ENABLED");
   const isEnabled = readConfig(formattedConfig, enabledKey) === "1";
+  const isConfigured = isSsoConfigured(def, formattedConfig);
 
   if (formattedConfig && !hasConfigKey(formattedConfig, enabledKey)) {
     return (
@@ -53,6 +63,15 @@ const SsoProviderPage = observer(function SsoProviderPage() {
   }
 
   const updateEnabled = async (value: string) => {
+    if (value === "0" && !canDisableAuthMethod(asMethodKey(enabledKey), authenticationModes, formattedConfig)) {
+      setToast({
+        type: "error",
+        title: "Cannot disable authentication",
+        message:
+          "At least one authentication method must remain enabled. Please enable another method before disabling this one.",
+      });
+      return;
+    }
     setIsSubmitting(true);
     const updateConfigPromise = updateInstanceConfigurations(toConfigPayload({ [enabledKey]: value })).then(
       (response) => {
@@ -86,7 +105,7 @@ const SsoProviderPage = observer(function SsoProviderPage() {
               checked={isEnabled}
               onCheckedChange={() => void updateEnabled(isEnabled ? "0" : "1")}
               size="sm"
-              disabled={isSubmitting || !formattedConfig}
+              disabled={isSubmitting || !formattedConfig || (!isEnabled && !isConfigured)}
             />
           }
           disabled={isSubmitting || !formattedConfig}
