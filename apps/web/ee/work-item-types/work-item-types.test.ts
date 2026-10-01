@@ -17,6 +17,7 @@ import {
   typeOptionsForParent,
   writeLastTypeId,
 } from "./rules";
+import { WorkItemTypeStore } from "./store";
 
 export const mkType = (o: Partial<TProjectIssueType> & Pick<TProjectIssueType, "id" | "level">): TProjectIssueType => ({
   name: o.id,
@@ -137,5 +138,41 @@ describe("labels and errors", () => {
     expect(firstErrorMessage({ type_id: ["Invalid work item type"] })).toBe("Invalid work item type");
     expect(firstErrorMessage({ error: "This type cannot be deleted", count: 3 })).toBe("This type cannot be deleted");
     expect(firstErrorMessage(undefined)).toBeNull();
+  });
+});
+
+describe("WorkItemTypeStore", () => {
+  const payload = { process: "agile" as const, enabled: true, types: ALL };
+  const fakeService = () => ({
+    getProject: async () => payload,
+    setProcess: async () => ({ process: "agile" }),
+  });
+  type TService = ConstructorParameters<typeof WorkItemTypeStore>[0];
+
+  it("resolves null type_id to the project default and knows epics", async () => {
+    const store = new WorkItemTypeStore(fakeService() as unknown as TService);
+    await store.fetchProject("ws", "p1");
+    expect(store.resolveType("p1", null)?.id).toBe("user_story");
+    expect(store.resolveType("p1", "bug")?.id).toBe("bug");
+    expect(store.isEpic("p1", "epic")).toBe(true);
+    expect(store.isEpic("p1", "task")).toBe(false);
+  });
+
+  it("returns no types for a disabled or unknown project", async () => {
+    const svc = { getProject: async () => ({ ...payload, enabled: false }) };
+    const store = new WorkItemTypeStore(svc as unknown as TService);
+    await store.fetchProject("ws", "p1");
+    expect(store.getProjectTypes("p1")).toEqual([]);
+    expect(store.getProjectTypes("nope")).toEqual([]);
+    expect(store.resolveType("p1", null)).toBeUndefined();
+  });
+
+  it("refetches the project after changing its process", async () => {
+    let calls = 0;
+    const svc = { ...fakeService(), getProject: async () => (calls++, payload) };
+    const store = new WorkItemTypeStore(svc as unknown as TService);
+    await store.setProcess("ws", "p1", "agile");
+    expect(calls).toBe(1);
+    expect(store.getProject("p1")?.process).toBe("agile");
   });
 });
