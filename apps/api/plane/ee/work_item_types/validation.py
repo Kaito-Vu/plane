@@ -32,7 +32,7 @@ def validate_issue_write(issue) -> None:
     if not Project.objects.filter(pk=issue.project_id, is_issue_type_enabled=True).exists():
         return
     adding = issue._state.adding
-    old = (None, None) if adding else Issue.objects.filter(pk=issue.pk).values_list("type_id", "parent_id").first()
+    old = (None, None) if adding else Issue.all_objects.filter(pk=issue.pk).values_list("type_id", "parent_id").first()
     if not adding and issue.type_id is None and old and old[0] is not None:
         issue.type_id = old[0]  # None means "keep the old type", never a silent downgrade
     if adding and issue.type_id is None:

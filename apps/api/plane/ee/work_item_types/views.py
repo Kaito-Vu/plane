@@ -19,6 +19,20 @@ from plane.utils.permissions.project import ProjectAdminPermission, ProjectEntit
 from plane.utils.permissions.workspace import WorkspaceOwnerPermission, WorkspaceViewerPermission
 
 
+_TRUE, _FALSE = (True, "true", "1", 1), (False, "false", "0", 0)
+
+
+def _as_bool(value):
+    """Booleans from JSON or form-encoded bodies; None when not a recognisable boolean."""
+    if isinstance(value, str):
+        value = value.strip().lower()
+    if value in _TRUE:
+        return True
+    if value in _FALSE:
+        return False
+    return None
+
+
 def _body(request):
     return request.data if hasattr(request.data, "get") else {}
 
@@ -39,9 +53,12 @@ class WorkItemTypeListEndpoint(_WorkspaceTypeBase):
 
     def post(self, request, slug):
         ws = self.workspace(slug)
-        serializer = IssueTypeSerializer(data=_body(request), context={"workspace": ws})
-        serializer.is_valid(raise_exception=True)
-        serializer.save(workspace=ws)
+        with transaction.atomic():
+            # serialize creates per workspace so the cap and unique-name checks cannot race
+            Workspace.objects.select_for_update().get(pk=ws.pk)
+            serializer = IssueTypeSerializer(data=_body(request), context={"workspace": ws})
+            serializer.is_valid(raise_exception=True)
+            serializer.save(workspace=ws)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -57,17 +74,30 @@ class WorkItemTypeDetailEndpoint(_WorkspaceTypeBase):
         data = _body(request)
         if data is not request.data:
             return Response({"error": "Invalid body"}, status=status.HTTP_400_BAD_REQUEST)
-        changed = any(k in data and data[k] != getattr(obj, k) for k in ("level", "is_epic"))
-        if changed and (IssueTypeSerializer().get_is_preset(obj) or Issue.objects.filter(type=obj).exists()):
+        try:
+            level_changed = "level" in data and int(data["level"]) != obj.level
+        except (TypeError, ValueError):
+            return Response({"error": "Invalid level"}, status=status.HTTP_400_BAD_REQUEST)
+        epic_changed = "is_epic" in data and _as_bool(data["is_epic"]) is not obj.is_epic
+        if (level_changed or epic_changed) and (
+            IssueTypeSerializer().get_is_preset(obj) or Issue.objects.filter(type=obj).exists()
+        ):
             return Response(
                 {"error": "level and epic flag cannot change for preset types or types in use"},
                 status=status.HTTP_409_CONFLICT,
             )
-        if data.get("is_active") is False and ProjectIssueType.objects.filter(issue_type=obj, is_default=True).exists():
-            return Response({"error": "A project default type cannot be deactivated"}, status=status.HTTP_409_CONFLICT)
-        serializer = IssueTypeSerializer(obj, data=data, partial=True, context={"workspace": self.workspace(slug)})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        with transaction.atomic():
+            ws = Workspace.objects.select_for_update().get(slug=slug)  # serialize renames per workspace
+            if (
+                _as_bool(data.get("is_active")) is False
+                and ProjectIssueType.objects.filter(issue_type=obj, is_default=True).exists()
+            ):
+                return Response(
+                    {"error": "A project default type cannot be deactivated"}, status=status.HTTP_409_CONFLICT
+                )
+            serializer = IssueTypeSerializer(obj, data=data, partial=True, context={"workspace": ws})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
         return Response(serializer.data)
 
     def delete(self, request, slug, pk):

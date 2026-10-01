@@ -8,13 +8,15 @@ from django.conf import settings
 from rest_framework import serializers
 
 from plane.db.models import IssueType
+from plane.ee.work_item_types.contrast import contrast_ratio
 
 ICON_NAME = re.compile(r"^[A-Za-z0-9]{1,64}$")
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 def validate_logo_props(value):
-    # ponytail: icon names are checked by shape only; the full whitelist lives in the frontend picker
+    """Shape validation only. Icon names are deliberately NOT whitelisted: the frontend renders only names it
+    knows and ignores the rest, so an unknown name is harmless."""
     if value in (None, {}):
         return {}
     if not isinstance(value, dict) or set(value) - {"in_use", "icon", "emoji"}:
@@ -42,14 +44,20 @@ def validate_logo_props(value):
 class IssueTypeSerializer(serializers.ModelSerializer):
     level = serializers.IntegerField(min_value=0, max_value=9)
     is_preset = serializers.SerializerMethodField()
+    low_contrast = serializers.SerializerMethodField()
 
     class Meta:
         model = IssueType
-        fields = ["id", "name", "description", "logo_props", "is_epic", "is_default", "is_active", "level", "is_preset"]
-        read_only_fields = ["id", "is_default", "is_preset"]
+        fields = ["id", "name", "description", "logo_props", "is_epic", "is_default", "is_active", "level", "is_preset", "low_contrast"]
+        read_only_fields = ["id", "is_default", "is_preset", "low_contrast"]
 
     def get_is_preset(self, obj):
         return obj.external_source == "plane-work-item-types"
+
+    def get_low_contrast(self, obj):
+        icon = (obj.logo_props or {}).get("icon") or {}
+        fg, bg = icon.get("color"), icon.get("background_color")
+        return bool(fg and bg and contrast_ratio(fg, bg) < 4.5)  # warning only, never rejected
 
     def validate_logo_props(self, value):
         return validate_logo_props(value)

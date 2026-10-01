@@ -246,3 +246,31 @@ def test_drafts_counted_and_migrated(session_client, workspace, project, seeded,
     assert session_client.delete(f"{url}?migrate_to={b.id}").status_code == 204
     d.refresh_from_db()
     assert d.type_id == b.id
+
+
+@pytest.mark.contract
+def test_second_create_differing_only_in_case_is_400(session_client, workspace, seeded):
+    assert session_client.post(base(workspace), {"name": "Spike", "level": 1}, format="json").status_code == 201
+    assert session_client.post(base(workspace), {"name": "SPIKE", "level": 1}, format="json").status_code == 400
+
+
+@pytest.mark.contract
+@pytest.mark.parametrize("fmt", ["multipart"])  # only multipart is enabled in the test client
+def test_form_encoded_is_active_false_on_project_default_is_409(session_client, workspace, project, seeded, fmt):
+    custom = IssueType.objects.create(workspace=workspace, name="Spike", level=1)
+    ProjectIssueType.objects.create(project=project, issue_type=custom, level=1, is_default=True)
+    r = session_client.patch(f"{base(workspace)}{custom.id}/", {"is_active": "false"}, format=fmt)
+    assert r.status_code == 409
+
+
+@pytest.mark.contract
+def test_form_encoded_same_level_on_preset_ok(session_client, workspace, seeded):
+    t = seeded["task"]
+    r = session_client.patch(f"{base(workspace)}{t.id}/", {"level": str(t.level), "is_epic": "false"}, format="multipart")
+    assert r.status_code == 200, r.content
+
+
+@pytest.mark.contract
+def test_non_numeric_level_is_400(session_client, workspace, seeded):
+    t = seeded["task"]
+    assert session_client.patch(f"{base(workspace)}{t.id}/", {"level": "abc"}, format="json").status_code == 400

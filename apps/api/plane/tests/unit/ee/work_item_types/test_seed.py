@@ -51,3 +51,58 @@ def test_switch_blocked_when_exclusive_type_in_use(workspace, project, create_us
 @pytest.mark.unit
 def test_project_process_none_when_unset(project):
     assert project_process(project) is None
+
+
+@pytest.mark.unit
+def test_scrum_agile_scrum_round_trip(workspace, project):
+    apply_process(project, "scrum")
+    apply_process(project, "agile")
+    apply_process(project, "scrum")
+    assert project_process(project) == "scrum"
+    assert names(project) == {"Epic", "Feature", "Bug", "Task", "Sub-task", "Product Backlog Item"}
+
+
+@pytest.mark.unit
+def test_agile_default_is_user_story_and_enabled(workspace, project):
+    apply_process(project, "scrum")
+    apply_process(project, "agile")
+    assert ProjectIssueType.objects.get(project=project, is_default=True).issue_type.name == "User Story"
+    assert ProjectIssueType.objects.filter(project=project, is_default=True).count() == 1
+    project.refresh_from_db()
+    assert project.is_issue_type_enabled is True
+
+
+@pytest.mark.unit
+def test_state_unchanged_after_blocked_switch(workspace, project, create_user):
+    apply_process(project, "scrum")
+    pbi = IssueType.objects.get(workspace=workspace, external_id="product_backlog_item")
+    state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
+    Issue.objects.create(name="I", workspace=workspace, project=project, state=state, type=pbi, created_by=create_user)
+    with pytest.raises(ProcessChangeBlocked):
+        apply_process(project, "agile")
+    assert ProjectIssueType.objects.filter(project=project, issue_type=pbi).exists()
+    assert ProjectIssueType.objects.get(project=project, is_default=True).issue_type_id == pbi.id
+    assert project_process(project) == "scrum"
+
+
+@pytest.mark.unit
+def test_reapply_creates_no_duplicates(workspace, project):
+    apply_process(project, "scrum")
+    count = ProjectIssueType.objects.filter(project=project).count()
+    apply_process(project, "scrum")
+    assert ProjectIssueType.objects.filter(project=project).count() == count == 6
+
+
+@pytest.mark.unit
+def test_apply_invalid_process_raises(workspace, project):
+    with pytest.raises(ValueError):
+        apply_process(project, "kanban")
+
+
+@pytest.mark.unit
+def test_seeded_rows_have_external_ids_and_levels(workspace, project):
+    apply_process(project, "agile")
+    for pit in ProjectIssueType.objects.filter(project=project).select_related("issue_type"):
+        assert pit.issue_type.external_source == "plane-work-item-types"
+        assert pit.issue_type.external_id
+        assert pit.level == pit.issue_type.level
