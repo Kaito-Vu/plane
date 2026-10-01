@@ -6,10 +6,7 @@
 
 // plane imports
 import type { TOAuthConfigs } from "@plane/types";
+// ee imports
+import { useSsoOAuthConfig } from "@/ee/sso/use-sso-oauth-config";
 
-export const useExtendedOAuthConfig = (_oauthActionText: string): TOAuthConfigs => {
-  return {
-    isOAuthEnabled: false,
-    oAuthOptions: [],
-  };
-};
+export const useExtendedOAuthConfig = (oauthActionText: string): TOAuthConfigs => useSsoOAuthConfig(oauthActionText);
