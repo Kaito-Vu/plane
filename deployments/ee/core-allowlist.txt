@@ -32,3 +32,4 @@ apps/api/plane/api/serializers/issue.py
 apps/api/plane/app/views/issue/base.py
 apps/api/plane/app/views/issue/sub_issue.py
 apps/api/plane/utils/grouper.py
+apps/api/plane/utils/filters/filterset.py

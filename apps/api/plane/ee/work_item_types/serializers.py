@@ -48,8 +48,8 @@ class IssueTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IssueType
-        fields = ["id", "name", "description", "logo_props", "is_epic", "is_default", "is_active", "level", "is_preset", "low_contrast"]
-        read_only_fields = ["id", "is_default", "is_preset", "low_contrast"]
+        fields = ["id", "name", "description", "logo_props", "is_epic", "is_default", "is_active", "level", "is_preset", "low_contrast", "external_id"]
+        read_only_fields = ["id", "is_default", "is_preset", "low_contrast", "external_id"]
 
     def get_is_preset(self, obj):
         return obj.external_source == "plane-work-item-types"
