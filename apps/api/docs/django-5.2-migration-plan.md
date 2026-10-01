@@ -25,7 +25,7 @@ The migration is therefore **almost entirely a coordinated third-party dependenc
 
 ## Execution status — verified ✅
 
-Executed on branch `chore/django-5.2-upgrade` and verified in the containerized test harness (`docker-compose-test.yml`: `python:3.12.5-alpine`, Postgres 15.7, Valkey, RabbitMQ, MinIO).
+Executed on branch `chore/django-5.2-upgrade` and verified in the containerized test harness (`docker-compose-test.yml`: `python:3.14.7-alpine`, Postgres 15.7, Valkey, RabbitMQ, MinIO).
 
 **Verification results (Django 5.2.15):**
 

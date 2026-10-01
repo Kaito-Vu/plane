@@ -15,7 +15,7 @@
 #   docker compose -f docker-compose-test.yml down -v
 #
 # Notes:
-# - Postgres / Valkey / RabbitMQ / MinIO start with health checks; the test
+# - Postgres / Valkey / RabbitMQ / SeaweedFS start with health checks; the test
 #   runner only starts once each dependency is healthy.
 # - Data dirs are tmpfs so every run begins from a clean state.
 # - Env vars come from apps/api/.env (the same file the local stack uses); tests
@@ -24,7 +24,7 @@
 
 services:
   test-db:
-    image: postgres:15.7-alpine
+    image: postgres:18.6-alpine
     networks:
       - test_env
     env_file:
@@ -42,7 +42,7 @@ services:
       retries: 10
 
   test-redis:
-    image: valkey/valkey:7.2.11-alpine
+    image: valkey/valkey:9.1.2-alpine
     networks:
       - test_env
     tmpfs:
@@ -54,7 +54,7 @@ services:
       retries: 10
 
   test-mq:
-    image: rabbitmq:3.13.6-management-alpine
+    image: rabbitmq:4.3.6-management-alpine
     networks:
       - test_env
     env_file:
@@ -71,28 +71,18 @@ services:
       timeout: 10s
       retries: 10
 
-  test-minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+  test-seaweedfs:
+    image: chrislusf/seaweedfs:4.48
     networks:
       - test_env
-    env_file:
-      - ./apps/api/.env
+    command: server -dir=/data -s3 -s3.port=8333 -master.volumeSizeLimitMB=64
     environment:
-      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-access-key}
-      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-secret-key}
-    entrypoint: >
-      /bin/sh -c "
-      mkdir -p /export/${AWS_S3_BUCKET_NAME:-uploads} &&
-      minio server /export --console-address ':9090' &
-      sleep 3 &&
-      mc alias set local http://localhost:9000 ${AWS_ACCESS_KEY_ID:-access-key} ${AWS_SECRET_ACCESS_KEY:-secret-key} &&
-      mc mb local/${AWS_S3_BUCKET_NAME:-uploads} -p || true &&
-      tail -f /dev/null
-      "
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-access-key}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-secret-key}
     tmpfs:
-      - /export
+      - /data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9333/cluster/status"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -115,7 +105,7 @@ services:
       REDIS_HOST: test-redis
       REDIS_URL: redis://test-redis:6379/
       RABBITMQ_HOST: test-mq
-      AWS_S3_ENDPOINT_URL: http://test-minio:9000
+      AWS_S3_ENDPOINT_URL: http://test-seaweedfs:8333
       # Magic-link tests mock the celery delay but the view first checks that
       # EMAIL_HOST is configured. Set a placeholder so the check passes.
       EMAIL_HOST: test-smtp.invalid
@@ -129,7 +119,7 @@ services:
         condition: service_healthy
       test-mq:
         condition: service_healthy
-      test-minio:
+      test-seaweedfs:
         condition: service_healthy
     # Install test-only requirements (not in local.txt) then exec pytest.
     # Any args passed via `docker compose run api-tests <args>` replace the default command.

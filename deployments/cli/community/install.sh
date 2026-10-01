@@ -489,7 +489,7 @@ function viewLogs(){
         echo "   7) Proxy"
         echo "   8) Redis"
         echo "   9) Postgres"
-        echo "   10) Minio"
+        echo "   10) SeaweedFS"
         echo "   11) RabbitMQ"
         echo "   0) Back to Main Menu"
         echo 
@@ -514,7 +514,7 @@ function viewLogs(){
                 7) viewSpecificLogs "proxy";;
                 8) viewSpecificLogs "plane-redis";;
                 9) viewSpecificLogs "plane-db";;
-                10) viewSpecificLogs "plane-minio";;
+                10) viewSpecificLogs "plane-seaweedfs";;
                 11) viewSpecificLogs "plane-mq";;
                 0) askForAction;;
                 *) echo "INVALID SERVICE NAME SUPPLIED";;
@@ -533,7 +533,7 @@ function viewLogs(){
             proxy) viewSpecificLogs "proxy";;
             redis) viewSpecificLogs "plane-redis";;
             postgres) viewSpecificLogs "plane-db";;
-            minio) viewSpecificLogs "plane-minio";;
+            seaweedfs) viewSpecificLogs "plane-seaweedfs";;
             rabbitmq) viewSpecificLogs "plane-mq";;
             *) echo "INVALID SERVICE NAME SUPPLIED";;
         esac
@@ -597,7 +597,7 @@ function backupData() {
     fi
 
     backup_container_dir "$BACKUP_FOLDER" "plane-db" "/var/lib/postgresql/data" "pgdata" || exit 1
-    backup_container_dir "$BACKUP_FOLDER" "plane-minio" "/export" "uploads" || exit 1
+    backup_container_dir "$BACKUP_FOLDER" "plane-seaweedfs" "/data" "uploads" || exit 1
     backup_container_dir "$BACKUP_FOLDER" "plane-mq" "/var/lib/rabbitmq" "rabbitmq_data" || exit 1
     backup_container_dir "$BACKUP_FOLDER" "plane-redis" "/data" "redisdata" || exit 1
 

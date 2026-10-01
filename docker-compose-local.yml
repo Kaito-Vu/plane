@@ -1,6 +1,6 @@
 services:
   plane-redis:
-    image: valkey/valkey:7.2.11-alpine
+    image: valkey/valkey:9.1.2-alpine
     restart: unless-stopped
     networks:
       - dev_env
@@ -10,7 +10,7 @@ services:
       - "6379:6379"
 
   plane-mq:
-    image: rabbitmq:3.13.6-management-alpine
+    image: rabbitmq:4.3.6-management-alpine
     restart: unless-stopped
     networks:
       - dev_env
@@ -23,33 +23,22 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
 
-  plane-minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+  plane-seaweedfs:
+    image: chrislusf/seaweedfs:4.48
     restart: unless-stopped
     networks:
       - dev_env
-    entrypoint: >
-      /bin/sh -c "
-      mkdir -p /export/${AWS_S3_BUCKET_NAME} &&
-      minio server /export --console-address ':9090' &
-      sleep 5 &&
-      mc alias set myminio http://localhost:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} &&
-      mc mb myminio/${AWS_S3_BUCKET_NAME} -p || true
-      && tail -f /dev/null
-      "
+    command: server -dir=/data -s3 -s3.port=8333 -master.volumeSizeLimitMB=1024
     volumes:
-      - uploads:/export
+      - uploads:/data
     env_file:
       - .env
-    environment:
-      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
-      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
     ports:
-      - "9000:9000"
-      - "9090:9090"
+      - "8333:8333"
+      - "9333:9333"
 
   plane-db:
-    image: postgres:15.7-alpine
+    image: postgres:18.6-alpine
     restart: unless-stopped
     networks:
       - dev_env
@@ -139,6 +128,77 @@ services:
     depends_on:
       - plane-db
       - plane-redis
+
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile.web
+    restart: unless-stopped
+    networks:
+      - dev_env
+    depends_on:
+      - api
+
+  admin:
+    build:
+      context: .
+      dockerfile: ./apps/admin/Dockerfile.admin
+    restart: unless-stopped
+    networks:
+      - dev_env
+    depends_on:
+      - api
+
+  space:
+    build:
+      context: .
+      dockerfile: ./apps/space/Dockerfile.space
+    restart: unless-stopped
+    networks:
+      - dev_env
+    depends_on:
+      - api
+
+  live:
+    
+    build:
+      context: .
+      dockerfile: ./apps/live/Dockerfile.live
+      args:
+        DOCKER_BUILDKIT: 1
+    restart: unless-stopped
+    env_file:
+      - ./apps/api/.env
+    environment:
+      API_BASE_URL: http://api:8000
+      REDIS_URL: redis://plane-redis:6379/
+      PORT: "3000"
+    depends_on:
+      - api
+      - plane-redis
+    networks:
+      - dev_env
+
+  proxy:
+    build:
+      context: ./apps/proxy
+      dockerfile: Dockerfile.ce
+    restart: unless-stopped
+    networks:
+      - dev_env
+    ports:
+      - "80:80"
+    environment:
+      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
+      BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
+      SITE_ADDRESS: ":80"
+    depends_on:
+      - web
+      - admin
+      - space
+      - live
+      - api
+      - plane-seaweedfs
 
 volumes:
   redisdata:

@@ -1,4 +1,4 @@
-FROM python:3.12.5-alpine AS backend
+FROM python:3.14.7-alpine AS backend
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -7,13 +7,12 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV INSTANCE_CHANGELOG_URL https://sites.plane.so/pages/691ef037bcfe416a902e48cb55f59891/
 
 RUN apk --no-cache add \
-    "bash~=5.2" \
+    "bash~=5.3" \
     "libpq" \
     "libxslt" \
     "nodejs-current" \
     "xmlsec" \
     "libffi-dev" \
-    "bash~=5.2" \
     "g++" \
     "gcc" \
     "cargo" \
