@@ -222,3 +222,39 @@ def test_epic_with_children_cannot_become_non_epic(session_client, workspace, pr
         issues_url(workspace, project, f"{lone['id']}/"), {"type_id": str(t["bug"].id)}, format="json"
     )
     assert r.status_code == 204, r.content
+
+
+@pytest.mark.contract
+def test_issue_patch_workspace_fallback_feature_off(session_client, workspace, project, create_user):
+    # PATCH context carries only project_id: the project's workspace scopes type_id
+    from plane.db.models import Workspace
+
+    assert not project.is_issue_type_enabled
+    state = State.objects.create(name="Todo", project=project, group="backlog", default=True)
+    issue = Issue.objects.create(name="i", workspace=workspace, project=project, state=state, created_by=create_user)
+    url = issues_url(workspace, project, f"{issue.id}/")
+    other = Workspace.objects.create(name="O", owner=create_user, slug="other")
+    foreign = IssueType.objects.create(workspace=other, name="F", level=2)
+    r = session_client.patch(url, {"type_id": str(foreign.id)}, format="json")
+    assert r.status_code == 400 and r.json() == GENERIC
+    own = IssueType.objects.create(workspace=workspace, name="Own", level=2)
+    r = session_client.patch(url, {"type_id": str(own.id)}, format="json")
+    assert r.status_code == 204, r.content
+    assert Issue.objects.get(pk=issue.pk).type_id == own.id
+
+
+@pytest.mark.contract
+def test_draft_patch_instance_workspace_fallback(session_client, workspace, project, create_user):
+    from plane.db.models import DraftIssue, Workspace
+
+    draft = DraftIssue.objects.create(name="d", workspace=workspace, project=project, created_by=create_user)
+    DraftIssue.objects.filter(pk=draft.pk).update(created_by=create_user)
+    url = f"/api/workspaces/{workspace.slug}/draft-issues/{draft.id}/"
+    other = Workspace.objects.create(name="O", owner=create_user, slug="other")
+    foreign = IssueType.objects.create(workspace=other, name="F", level=2)
+    r = session_client.patch(url, {"type_id": str(foreign.id)}, format="json")
+    assert r.status_code == 400 and r.json() == GENERIC
+    own = IssueType.objects.create(workspace=workspace, name="Own", level=2)
+    r = session_client.patch(url, {"type_id": str(own.id)}, format="json")
+    assert r.status_code == 204, r.content
+    assert DraftIssue.objects.get(pk=draft.pk).type_id == own.id

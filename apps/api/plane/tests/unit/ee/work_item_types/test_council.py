@@ -316,3 +316,59 @@ def test_usage_projects_only_for_admins(session_client, api_client, workspace, p
     api_client.force_authenticate(user=member)
     body = api_client.get(url).json()
     assert body["projects"] == [] and body["count"] == 1
+
+
+@pytest.mark.unit
+def test_typed_epic_under_legacy_untyped_parent_allowed(env):
+    # legacy-untyped skip rule: an untyped parent never constrains the edge on non-create writes
+    make, t = env
+    epic, legacy = make("e", "epic"), make("l", legacy=True)
+    epic.parent = legacy
+    epic.save()
+    assert Issue.objects.get(pk=epic.pk).parent_id == legacy.pk
+
+
+@pytest.mark.unit
+def test_child_of_soft_deleted_parent_changing_type_is_rejected_invalid_parent(env):
+    # current behaviour: Issue.objects hides soft-deleted rows, so the parent lookup fails and the write is refused
+    make, t = env
+    parent = make("p", "product_backlog_item")
+    child = make("c", "task", parent=parent)
+    Issue.all_objects.filter(pk=parent.pk).update(deleted_at="2026-01-01T00:00:00Z")
+    child.type = t["bug"]
+    with pytest.raises(ValidationError) as e:
+        child.save()
+    assert "parent_id" in e.value.detail
+
+
+@pytest.mark.contract
+def test_patch_explicit_null_type_id_keeps_old_type(session_client, workspace, project, env):
+    make, t = env
+    task = make("t", "bug")
+    r = session_client.patch(issues_url(workspace, project, f"{task.id}/"), {"type_id": None}, format="json")
+    assert r.status_code == 204, r.content
+    assert Issue.objects.get(pk=task.pk).type_id == t["bug"].id
+
+
+@pytest.mark.contract
+def test_form_encoded_is_active_false_uppercase_blocked_on_project_default(session_client, workspace, project, env):
+    make, t = env
+    custom = IssueType.objects.create(workspace=workspace, name="Spike3", level=1)
+    ProjectIssueType.objects.create(project=project, issue_type=custom, level=1, is_default=True)
+    r = session_client.patch(ws_url(workspace, f"{custom.id}/"), {"is_active": " FALSE "}, format="multipart")
+    assert r.status_code == 409
+
+
+@pytest.mark.contract
+def test_project_writes_take_the_project_lock(session_client, workspace, project, env, monkeypatch):
+    from plane.ee.work_item_types import views
+
+    make, t = env
+    calls = []
+    real = views._lock_project
+    monkeypatch.setattr(views, "_lock_project", lambda p: calls.append(p.pk) or real(p))
+    session_client.post(p_url(workspace, project), {"process": "scrum"}, format="json")
+    session_client.post(p_url(workspace, project, "assign/"), {"type_id": str(t["bug"].id)}, format="json")
+    session_client.post(p_url(workspace, project, "default/"), {"type_id": str(t["bug"].id)}, format="json")
+    session_client.delete(p_url(workspace, project, f"assign/{t['bug'].id}/"))
+    assert calls == [project.pk] * 4
