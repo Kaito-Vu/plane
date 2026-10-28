@@ -19,6 +19,7 @@ import gitlabLogo from "@/app/assets/logos/gitlab-logo.svg?url";
 import googleLogo from "@/app/assets/logos/google-logo.svg?url";
 // components
 import { EmailCodesConfiguration } from "@/components/authentication/email-config-switch";
+import { EntraConfiguration } from "@/ee/entra-auth/entra-config";
 import { GiteaConfiguration } from "@/components/authentication/gitea-config";
 import { GithubConfiguration } from "@/components/authentication/github-config";
 import { GitlabConfiguration } from "@/components/authentication/gitlab-config";
@@ -88,5 +89,13 @@ export const getCoreAuthenticationModesMap: (
     icon: <img src={giteaLogo} height={20} width={20} alt="Gitea Logo" />,
     config: <GiteaConfiguration disabled={disabled} updateConfig={updateConfig} />,
     enabledConfigKey: "IS_GITEA_ENABLED",
+  },
+  entra: {
+    key: "entra",
+    name: "Microsoft Entra ID",
+    description: "Allow members to log in or sign up to plane with their Microsoft Entra ID accounts.",
+    icon: <KeyOutline className="h-6 w-6 p-0.5 text-tertiary" />,
+    config: <EntraConfiguration disabled={disabled} updateConfig={updateConfig} />,
+    enabledConfigKey: "IS_ENTRA_ENABLED",
   },
 });
