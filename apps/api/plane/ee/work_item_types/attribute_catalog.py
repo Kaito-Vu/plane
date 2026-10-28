@@ -13,7 +13,10 @@ class SystemAttrSpec(NamedTuple):
     options: tuple[str, ...] = ()
 
 
-_AC = lambda req=False: SystemAttrSpec("acceptance_criteria", "Acceptance Criteria", "textarea", req)  # noqa: E731
+def _AC(req: bool = False) -> SystemAttrSpec:
+    return SystemAttrSpec("acceptance_criteria", "Acceptance Criteria", "textarea", req)
+
+
 _PHASE = SystemAttrSpec(
     "project_phase", "Project Phase", "select", False, ("Initiation", "Planning", "Execution", "Closing")
 )

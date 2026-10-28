@@ -13,8 +13,12 @@ class Attribute(ProjectBaseModel):
     field_type = models.CharField(max_length=20, choices=FIELD_TYPES)
     is_required = models.BooleanField(default=False)
     is_system = models.BooleanField(default=False)
+    source_template = models.ForeignKey(
+        "ee.AttributeTemplate", null=True, blank=True, on_delete=models.SET_NULL, related_name="applied_attributes"
+    )
     system_key = models.CharField(max_length=64, null=True, blank=True)
     default_value = models.JSONField(null=True, blank=True)
+    settings = models.JSONField(default=dict, blank=True)
     sort_order = models.FloatField(default=65535)
     is_active = models.BooleanField(default=True)
 
@@ -35,6 +39,8 @@ class AttributeOption(BaseModel):
     name = models.CharField(max_length=255)
     sort_order = models.FloatField(default=65535)
     is_active = models.BooleanField(default=True)
+    color = models.CharField(max_length=20, blank=True, default="")
+    is_default = models.BooleanField(default=False)
 
     class Meta:
         db_table = "attribute_options"

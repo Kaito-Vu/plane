@@ -1,3 +1,5 @@
+import logging
+
 from django.db import connection, transaction
 
 from plane.db.models import IssueType, Project, Workspace
@@ -9,6 +11,7 @@ from .attribute_catalog import ATTRIBUTE_CATALOG
 from .constants import AGILE_SOURCE, TypeKey
 
 T = TypeKey
+logger = logging.getLogger(__name__)
 
 # key -> (name, level)
 SEED_TYPES: dict[TypeKey, tuple[str, int]] = {
@@ -56,6 +59,9 @@ def seed_project(project: Project) -> None:
 
 def _seed_attributes(project: Project, issue_type: IssueType) -> None:
     for order, spec in enumerate(ATTRIBUTE_CATALOG[TypeKey(issue_type.external_id)], start=1):
+        if Attribute.objects.filter(project=project, issue_type=issue_type, name=spec.name, is_system=False).exists():
+            logger.warning("Custom attribute %r shadows system attribute; skipping seed", spec.name)
+            continue
         attr, created = Attribute.objects.get_or_create(
             project=project,
             issue_type=issue_type,

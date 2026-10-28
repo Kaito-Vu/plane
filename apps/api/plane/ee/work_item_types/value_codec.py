@@ -18,6 +18,10 @@ _url_validator = URLValidator(schemes=["http", "https"])
 INTEGER_KEYS = {"business_value"}
 
 
+def _as_uuid(value: Any) -> UUID:
+    return value if isinstance(value, UUID) else UUID(str(value))
+
+
 def _invalid(attribute: Attribute, message: str) -> WorkItemValidationError:
     return WorkItemValidationError("invalid_value", message, {"attribute_id": str(attribute.id)})
 
@@ -48,6 +52,10 @@ def _to_number(attribute: Attribute, raw: Any) -> Decimal:
         raise _invalid(attribute, "Expected a number")
     if num < 0:
         raise _invalid(attribute, "Number must be >= 0")
+    _, digits, exp = num.as_tuple()
+    frac = max(-exp, 0)
+    if frac > 4 or len(digits) + max(exp, 0) - frac > 16:
+        raise _invalid(attribute, "Number out of range (max 16 integer and 4 decimal digits)")
     if attribute.system_key in INTEGER_KEYS and num != num.to_integral_value():
         raise _invalid(attribute, "Expected an integer")
     return num
@@ -56,7 +64,10 @@ def _to_number(attribute: Attribute, raw: Any) -> Decimal:
 def _to_datetime(attribute: Attribute, raw: Any, date_only: bool) -> dt.datetime:
     value = raw
     if isinstance(raw, str):
-        value = parse_date(raw) if date_only else (parse_datetime(raw) or parse_date(raw))
+        try:
+            value = parse_date(raw) if date_only else (parse_datetime(raw) or parse_date(raw))
+        except ValueError:
+            raise _invalid(attribute, "Expected a valid date") from None
     if isinstance(value, dt.datetime):
         pass
     elif isinstance(value, dt.date):
@@ -111,35 +122,43 @@ def coerce_value(attribute: Attribute, raw: Any) -> dict[str, Any]:
 
 
 def write_values(issue, values: dict[UUID, Any], *, project) -> None:
+    keys = {}
+    for k in values:
+        try:
+            keys[k] = _as_uuid(k)
+        except (ValueError, AttributeError, TypeError):
+            raise WorkItemValidationError("invalid_value", "Malformed attribute id", {"attribute_id": str(k)}) from None
     attrs = {
         a.id: a
         for a in Attribute.objects.filter(
-            id__in=list(values), project=project, issue_type_id=issue.type_id, is_active=True
+            id__in=list(keys.values()), project=project, issue_type_id=issue.type_id, is_active=True
         )
     }
-    coerced = {}
-    for attr_id, raw in values.items():
-        attribute = attrs.get(_as_uuid(attr_id))
+    coerced = []
+    for k, raw in values.items():
+        attribute = attrs.get(keys[k])
         if attribute is None:
-            raise WorkItemValidationError(
-                "invalid_value", "Unknown attribute for this type", {"attribute_id": str(attr_id)}
-            )
-        coerced[attribute] = coerce_value(attribute, raw)
+            raise WorkItemValidationError("invalid_value", "Unknown attribute for this type", {"attribute_id": str(k)})
+        coerced.append((attribute, coerce_value(attribute, raw)))
     with transaction.atomic():
-        for attribute, cols in coerced.items():
+        for attribute, cols in coerced:
             # delete + rewrite handles both single and multi_* uniformly
             AttributeValue.objects.filter(issue=issue, attribute=attribute).delete()
             if not cols:
                 continue
             ((col, val),) = cols.items()
-            for item in val if isinstance(val, list) else [val]:
-                AttributeValue.objects.create(
-                    issue=issue, attribute=attribute, project=project, workspace_id=project.workspace_id, **{col: item}
-                )
-
-
-def _as_uuid(value: Any) -> UUID:
-    return value if isinstance(value, UUID) else UUID(str(value))
+            AttributeValue.objects.bulk_create(
+                [
+                    AttributeValue(
+                        issue=issue,
+                        attribute=attribute,
+                        project=project,
+                        workspace_id=project.workspace_id,
+                        **{col: item},
+                    )
+                    for item in (val if isinstance(val, list) else [val])
+                ]
+            )
 
 
 def missing_required(project_id: UUID, issue_type_id: UUID, values: dict[UUID, Any]) -> list[UUID]:
