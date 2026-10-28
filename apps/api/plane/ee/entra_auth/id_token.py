@@ -1,4 +1,5 @@
 import secrets
+from functools import lru_cache
 from typing import Any
 
 import jwt
@@ -8,15 +9,24 @@ class IdTokenError(Exception):
     pass
 
 
+@lru_cache(maxsize=None)
+def _client(jwks_uri: str) -> "jwt.PyJWKClient":
+    # one client per jwks_uri so cache_keys actually caches the JWKS across logins
+    return jwt.PyJWKClient(jwks_uri, cache_keys=True)
+
+
 def get_signing_key(id_token: str, jwks_uri: str) -> Any:
     try:
-        return jwt.PyJWKClient(jwks_uri, cache_keys=True).get_signing_key_from_jwt(id_token).key
+        return _client(jwks_uri).get_signing_key_from_jwt(id_token).key
     except jwt.PyJWTError as e:
         raise IdTokenError(str(e)) from e
 
 
 def _same(a: Any, b: str) -> bool:
-    return isinstance(a, str) and secrets.compare_digest(a.encode(), b.encode())
+    if not (isinstance(a, str) and isinstance(b, str) and b):
+        return False
+    # surrogatepass: a lone surrogate in a claim must not raise UnicodeEncodeError
+    return secrets.compare_digest(a.encode("utf-8", "surrogatepass"), b.encode("utf-8", "surrogatepass"))
 
 
 def verify_id_token(id_token: str, *, signing_key: Any, issuer: str, client_id: str, tenant_id: str, nonce: str) -> dict:
