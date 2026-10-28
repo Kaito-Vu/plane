@@ -555,5 +555,34 @@
       "options_not_allowed": "Only Single select and Multi select attributes have options.",
       "invalid_value": "The default value is not valid for this field type."
     }
+  },
+  "agile_work_item": {
+    "type": "Work item type",
+    "parent": "Parent",
+    "clear": "Clear",
+    "parent_search": "Search {types}…",
+    "no_parent_found": "No matching parent found",
+    "attributes": "Attributes",
+    "ancestors": "Hierarchy",
+    "children": "Child work items",
+    "no_children": "No child work items",
+    "quick_add_choose_type": "Choose a type",
+    "delete_subtree_warning": "This work item has {count} direct child work items. They and all their descendants will be removed too.",
+    "cycle_warning_title": "Cycle warning",
+    "errors": {
+      "fix_fields": "Fix the highlighted fields before saving.",
+      "field_required": "This field is required.",
+      "invalid_value": "This value is not valid.",
+      "type_required": "Choose a work item type.",
+      "type_immutable": "The type of a work item cannot be changed after it is created.",
+      "parent_required": "This work item type needs a parent.",
+      "parent_invalid": "The selected parent is not valid.",
+      "parent_type_invalid": "The parent's type is not allowed for this work item type.",
+      "parent_cycle": "A work item cannot be its own ancestor.",
+      "max_depth_exceeded": "The hierarchy is too deep.",
+      "attribute_required": "Some required attributes are empty.",
+      "open_children": "{count} child work items are still open. Complete them first.",
+      "cycle_type_not_allowed": "This work item type cannot be added to a cycle."
+    }
   }
 }

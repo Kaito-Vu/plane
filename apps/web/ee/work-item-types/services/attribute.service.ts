@@ -101,4 +101,10 @@ export class AttributeService extends APIService {
       this.get(`${this.ws(slug)}/projects/${projectId}/issues/${issueId}/attribute-values/`)
     );
   }
+
+  updateAttributeValues(slug: string, projectId: string, issueId: string, values: TAttributeValues) {
+    return this.req<unknown>(
+      this.patch(`${this.ws(slug)}/projects/${projectId}/issues/${issueId}/`, { attribute_values: values })
+    );
+  }
 }
