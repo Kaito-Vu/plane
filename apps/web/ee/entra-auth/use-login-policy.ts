@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { useLocation } from "react-router";
 import type { TOAuthOption } from "@plane/types";
 import { EAuthenticationErrorCodes as E } from "@/helpers/authentication.helper";
-import { INTERNAL_LOGIN_PATH } from "./constants";
+import { INTERNAL_LOGIN_PATH, isInternalLoginPath } from "./constants";
 import { getEntraLoginUrl } from "./use-entra-oauth-config";
 import { useInstance } from "@/hooks/store/use-instance";
 
@@ -64,7 +64,7 @@ const SHOW_FORM: TLoginPolicy = { hideEmailForm: false, autoRedirectProviderId: 
 
 export const computeLoginPolicy = (i: TLoginPolicyInput): TLoginPolicy => {
   if (!i.ssoOnly) return SHOW_FORM; // 1. flag off: unchanged
-  if (i.pathname === INTERNAL_LOGIN_PATH) return SHOW_FORM; // 2. break-glass page
+  if (isInternalLoginPath(i.pathname)) return SHOW_FORM; // 2. break-glass page
   if (i.enabledProviderIds.length === 0) return SHOW_FORM; // 3. never lock the instance
   const hide = { hideEmailForm: true, autoRedirectProviderId: null, redirectToInternal: false };
   if (i.errorCode) {

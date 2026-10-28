@@ -37,7 +37,7 @@ export const EntraConfiguration = observer(function EntraConfiguration(props: Pr
           <AnchorButton variant="primary" size="sm" render={<Link href="/authentication/entra" />} label="Edit" />
           <Switch
             checked={Boolean(parseInt(EntraConfig))}
-            onCheckedChange={() => updateConfig("IS_ENTRA_ENABLED", Boolean(parseInt(EntraConfig)) ? "0" : "1")}
+            onCheckedChange={() => updateConfig("IS_ENTRA_ENABLED", parseInt(EntraConfig) ? "0" : "1")}
             size="sm"
             aria-label="Enable Entra"
             disabled={disabled}

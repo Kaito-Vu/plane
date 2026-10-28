@@ -52,7 +52,7 @@ const ENTRA_SWITCHES: { name: "ENABLE_ENTRA_SYNC" | "SSO_ONLY_LOGIN_PAGE"; label
   {
     name: "SSO_ONLY_LOGIN_PAGE",
     label: "Show only SSO buttons on the sign-in page",
-    description: "Email and password sign-in moves to /login/internal.",
+    description: "Make sure /login/internal works before enabling — email and password sign-in moves there.",
   },
 ];
 
@@ -67,8 +67,9 @@ export function InstanceEntraConfigForm(props: Props) {
     handleSubmit,
     control,
     reset,
-    formState: { errors, isDirty, isSubmitting },
+    formState: { errors, isDirty, isSubmitting, isValid },
   } = useForm<EntraConfigFormValues>({
+    mode: "onChange",
     defaultValues: {
       ENTRA_TENANT_ID: config["ENTRA_TENANT_ID"],
       ENTRA_CLIENT_ID: config["ENTRA_CLIENT_ID"],
@@ -147,7 +148,11 @@ export function InstanceEntraConfigForm(props: Props) {
   ];
 
   const onSubmit = async (formData: EntraConfigFormValues) => {
-    const payload: Partial<EntraConfigFormValues> = { ...formData };
+    const payload: Partial<EntraConfigFormValues> = {
+      ...formData,
+      ENTRA_TENANT_ID: formData.ENTRA_TENANT_ID.trim(),
+      ENTRA_ALLOWED_EMAIL_DOMAINS: (formData.ENTRA_ALLOWED_EMAIL_DOMAINS ?? "").trim(),
+    };
 
     try {
       const response = await updateInstanceConfigurations(payload);
@@ -193,7 +198,7 @@ export function InstanceEntraConfigForm(props: Props) {
                 name="ENTRA_TENANT_ID"
                 rules={{
                   required: "Tenant ID is required.",
-                  validate: (value) => GUID_REGEX.test(value.trim()) || "Tenant ID must be a valid GUID.",
+                  validate: (value) => GUID_REGEX.test((value ?? "").trim()) || "Tenant ID must be a valid GUID.",
                 }}
                 render={({ field: { value, onChange, ref } }) => (
                   <Input
@@ -231,7 +236,7 @@ export function InstanceEntraConfigForm(props: Props) {
             {ENTRA_SWITCHES.map((sw) => (
               <div key={sw.name} className="flex items-center justify-between gap-4">
                 <div>
-                  <h4 id={`${sw.name}-label`} className="text-sm text-custom-text-300">
+                  <h4 id={`${sw.name}-label`} className="text-13 text-tertiary">
                     {sw.label}
                   </h4>
                   <p className="text-11 text-tertiary">{sw.description}</p>
@@ -258,7 +263,7 @@ export function InstanceEntraConfigForm(props: Props) {
                   stretch="auto"
                   onClick={(e) => void handleSubmit(onSubmit)(e)}
                   loading={isSubmitting}
-                  disabled={!isDirty}
+                  disabled={!isDirty || !isValid}
                   label={isSubmitting ? "Saving" : "Save changes"}
                 />
                 <Button

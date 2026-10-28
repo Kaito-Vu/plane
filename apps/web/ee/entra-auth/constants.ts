@@ -5,3 +5,6 @@
  */
 
 export const INTERNAL_LOGIN_PATH = "/login/internal";
+
+export const isInternalLoginPath = (pathname: string): boolean =>
+  pathname === INTERNAL_LOGIN_PATH || pathname === `${INTERNAL_LOGIN_PATH}/`;
