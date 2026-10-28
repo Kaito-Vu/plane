@@ -1,11 +1,15 @@
 from uuid import UUID
 
-from plane.db.models import Issue, IssueType, Project
+from crum import get_current_user
+from rest_framework.exceptions import PermissionDenied
+
+from plane.db.models import Issue, IssueType, Project, ProjectMember
 from plane.db.models.issue_type import ProjectIssueType
 
 from .exceptions import WorkItemValidationError
 from .hierarchy import assert_no_cycle, validate_parent
 from .registry import type_key_of
+from .value_codec import missing_required
 
 
 def check_hierarchy(
@@ -24,6 +28,15 @@ def check_hierarchy(
             raise WorkItemValidationError("parent_type_invalid", "Parent has no valid work item type")
     validate_parent(type_key, parent_key, triage=triage)
     assert_no_cycle(issue_id, parent)
+
+
+def check_can_write_values(project_id: UUID) -> None:
+    """Attribute values need project role >= member (guests are read-only)."""
+    user = get_current_user()
+    if not ProjectMember.objects.filter(
+        project_id=project_id, member_id=getattr(user, "id", None), role__gte=15, is_active=True
+    ).exists():
+        raise PermissionDenied("Only project members can write attribute values")
 
 
 def validate_work_item(
@@ -53,4 +66,14 @@ def validate_work_item(
         if parent is None:
             raise WorkItemValidationError("parent_invalid", "Parent must be a work item in the same project")
     check_hierarchy(link.issue_type, parent, instance.id if instance else None, project_id, triage=triage)
-    # attribute_values: required-attribute checks are wired in by Task 6.
+    if triage or (instance is not None and attribute_values is None):
+        return
+    values = attribute_values or {}
+    missing = missing_required(project_id, issue_type_id, values)
+    if instance is not None:  # PATCH: only fields being written may not be blanked
+        sent = {str(k) for k in values}
+        missing = [m for m in missing if str(m) in sent]
+    if missing:
+        raise WorkItemValidationError(
+            "attribute_required", "Required attributes are missing", {"missing": [str(m) for m in missing]}
+        )

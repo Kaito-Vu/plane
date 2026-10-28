@@ -10,6 +10,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
+from plane.db.models import ProjectMember
 from plane.ee.models import Attribute, AttributeValue
 
 from .exceptions import WorkItemValidationError
@@ -139,7 +140,13 @@ def write_values(issue, values: dict[UUID, Any], *, project) -> None:
         attribute = attrs.get(keys[k])
         if attribute is None:
             raise WorkItemValidationError("invalid_value", "Unknown attribute for this type", {"attribute_id": str(k)})
-        coerced.append((attribute, coerce_value(attribute, raw)))
+        cols = coerce_value(attribute, raw)
+        if attribute.field_type in ("member", "multi_member") and cols:
+            ids = set(cols["value_uuid"] if isinstance(cols["value_uuid"], list) else [cols["value_uuid"]])
+            members = ProjectMember.objects.filter(project=project, member_id__in=ids, is_active=True).count()
+            if members != len(ids):
+                raise _invalid(attribute, "Member is not part of this project")
+        coerced.append((attribute, cols))
     with transaction.atomic():
         for attribute, cols in coerced:
             # delete + rewrite handles both single and multi_* uniformly
@@ -162,7 +169,12 @@ def write_values(issue, values: dict[UUID, Any], *, project) -> None:
 
 
 def missing_required(project_id: UUID, issue_type_id: UUID, values: dict[UUID, Any]) -> list[UUID]:
-    provided = {_as_uuid(k): v for k, v in values.items()}
+    provided = {}
+    for k, v in values.items():
+        try:
+            provided[_as_uuid(k)] = v
+        except (ValueError, AttributeError, TypeError):
+            continue  # malformed ids are rejected by write_values
     required = Attribute.objects.filter(
         project_id=project_id, issue_type_id=issue_type_id, is_required=True, is_active=True
     ).values_list("id", flat=True)

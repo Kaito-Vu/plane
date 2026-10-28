@@ -6,7 +6,7 @@
 from django.utils import timezone
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 # Third Party imports
 from rest_framework import serializers
@@ -44,7 +44,8 @@ from plane.db.models import (
     EstimatePoint,
     IssueType,
 )
-from plane.ee.work_item_types.validators import validate_work_item
+from plane.ee.work_item_types.validators import check_can_write_values, validate_work_item
+from plane.ee.work_item_types.value_codec import write_values
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
@@ -104,6 +105,7 @@ class IssueCreateSerializer(BaseSerializer):
     )
     project_id = serializers.UUIDField(source="project.id", read_only=True)
     workspace_id = serializers.UUIDField(source="workspace.id", read_only=True)
+    attribute_values = serializers.DictField(write_only=True, required=False)  # EE: {attribute_id: value}
 
     class Meta:
         model = Issue
@@ -210,14 +212,16 @@ class IssueCreateSerializer(BaseSerializer):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
 
         # EE work item types: type required/immutable + parent-child rules
-        if self.instance is None or "type" in attrs or "parent" in attrs:
+        if "attribute_values" in attrs:
+            check_can_write_values(self.context["project_id"])
+        if self.instance is None or "type" in attrs or "parent" in attrs or "attribute_values" in attrs:
             issue_type = attrs.get("type", getattr(self.instance, "type", None))
             parent = attrs.get("parent", getattr(self.instance, "parent", None))
             validate_work_item(
                 project=self.context["project_id"],
                 issue_type_id=issue_type.id if issue_type else None,
                 parent_id=parent.id if parent else None,
-                attribute_values=None,
+                attribute_values=attrs.get("attribute_values"),
                 instance=self.instance,
                 triage=allow_triage,
             )
@@ -231,9 +235,13 @@ class IssueCreateSerializer(BaseSerializer):
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
         default_assignee_id = self.context["default_assignee_id"]
+        attribute_values = validated_data.pop("attribute_values", None)
 
-        # Create Issue
-        issue = Issue.objects.create(**validated_data, project_id=project_id)
+        # Create Issue (+ EE attribute values, all-or-nothing)
+        with transaction.atomic():
+            issue = Issue.objects.create(**validated_data, project_id=project_id)
+            if attribute_values:
+                write_values(issue, attribute_values, project=issue.project)
 
         # Issue Audit Users
         created_by_id = issue.created_by_id
@@ -355,7 +363,12 @@ class IssueCreateSerializer(BaseSerializer):
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
-        return super().update(instance, validated_data)
+        attribute_values = validated_data.pop("attribute_values", None)
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if attribute_values is not None:
+                write_values(instance, attribute_values, project=instance.project)
+        return instance
 
 
 class IssueActivitySerializer(BaseSerializer):

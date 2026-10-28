@@ -15,6 +15,7 @@ from .views.templates import (
     AttributeTemplateOptionEndpoint,
     AttributeTemplateReorderEndpoint,
 )
+from .views.values import IssueAttributeValuesEndpoint
 
 W = "workspaces/<str:slug>/"
 P = W + "projects/<uuid:project_id>/attributes/"
@@ -26,6 +27,10 @@ urlpatterns = [
     path(W + "attribute-templates/<uuid:pk>/options/", AttributeTemplateOptionEndpoint.as_view()),
     path(
         W + "attribute-templates/<uuid:pk>/options/<uuid:option_id>/", AttributeTemplateOptionDetailEndpoint.as_view()
+    ),
+    path(
+        W + "projects/<uuid:project_id>/issues/<uuid:issue_id>/attribute-values/",
+        IssueAttributeValuesEndpoint.as_view(),
     ),
     path(P, AttributeListEndpoint.as_view()),
     path(P + "reorder/", AttributeReorderEndpoint.as_view()),
