@@ -104,7 +104,6 @@ PENDING_BYPASS = {
     "api/views/intake.py": "Task 8 (public API intake)",
     "space/views/intake.py": "Task 7 (space intake)",
     "space/serializer/issue.py": "Task 7 (space issue create)",
-    "api/serializers/issue.py": "Task 8 (public API create)",
     # dev-only dummy data generator; untyped issues are skipped by the signal anyway
     "bgtasks/dummy_data_task.py": "exempt (dev dummy data bulk_update parent)",
 }

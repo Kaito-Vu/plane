@@ -8,6 +8,7 @@ from .views.attributes import (
     AttributeOptionListEndpoint,
     AttributeReorderEndpoint,
 )
+from .views.bulk_tree import BulkTreeEndpoint
 from .views.templates import (
     AttributeTemplateDetailEndpoint,
     AttributeTemplateListEndpoint,
@@ -32,6 +33,7 @@ urlpatterns = [
         W + "projects/<uuid:project_id>/issues/<uuid:issue_id>/attribute-values/",
         IssueAttributeValuesEndpoint.as_view(),
     ),
+    path(W + "projects/<uuid:project_id>/issues/bulk-tree/", BulkTreeEndpoint.as_view()),
     path(P, AttributeListEndpoint.as_view()),
     path(P + "reorder/", AttributeReorderEndpoint.as_view()),
     path(P + "apply-template/", AttributeApplyTemplateEndpoint.as_view()),

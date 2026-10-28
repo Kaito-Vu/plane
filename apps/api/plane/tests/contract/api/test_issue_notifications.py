@@ -8,6 +8,9 @@ import pytest
 from rest_framework import status
 
 from plane.db.models import Issue, Project, ProjectMember, State, User
+from plane.ee.work_item_types.constants import TypeKey
+from plane.ee.work_item_types.registry import get_type
+from plane.ee.work_item_types.seed import seed_project
 
 
 @pytest.fixture
@@ -84,9 +87,12 @@ class TestIssueNotificationContract:
     def test_create_issue_triggers_notification(self, api_key_client, workspace, project):
         """Creating a work item via the external API dispatches a notifying activity."""
         url = self.get_list_url(workspace.slug, project.id)
+        seed_project(project)
 
         with patch("plane.api.views.issue.issue_activity") as mock_issue_activity:
-            response = api_key_client.post(url, {"name": "New Issue"}, format="json")
+            response = api_key_client.post(
+                url, {"name": "New Issue", "type_id": str(get_type(workspace.id, TypeKey.EPIC).id)}, format="json"
+            )
 
         assert response.status_code == status.HTTP_201_CREATED
         assert Issue.objects.filter(name="New Issue").exists()

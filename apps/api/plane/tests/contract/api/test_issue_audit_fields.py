@@ -18,6 +18,9 @@ from django.utils import timezone
 from rest_framework import status
 
 from plane.db.models import APIToken, Issue, IssueComment, IssueLink, Project, ProjectMember, State
+from plane.ee.work_item_types.constants import TypeKey
+from plane.ee.work_item_types.registry import get_type
+from plane.ee.work_item_types.seed import seed_project
 
 BODY_CREATED_AT = timezone.now() - timedelta(days=3650)
 
@@ -115,10 +118,12 @@ class TestIssueCreateAuditFields:
         self, member_api_client, workspace, project, state, admin_user, member_user
     ):
         url = _issues_url(workspace.slug, project.id)
+        seed_project(project)
         response = member_api_client.post(
             url,
             {
                 "name": "New issue",
+                "type_id": str(get_type(workspace.id, TypeKey.EPIC).id),
                 "state": str(state.id),
                 "created_by": str(admin_user.id),
                 "created_at": BODY_CREATED_AT.isoformat(),
