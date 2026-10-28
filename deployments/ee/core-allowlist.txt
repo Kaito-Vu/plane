@@ -24,6 +24,7 @@ packages/types/src/instance/auth.ts
 packages/constants/src/auth/core.ts
 apps/web/helpers/authentication.helper.tsx
 apps/space/helpers/authentication.helper.tsx
+apps/space/hooks/oauth/extended.tsx
 packages/i18n/src/locales/bg/auth.json
 packages/i18n/src/locales/cs/auth.json
 packages/i18n/src/locales/de/auth.json

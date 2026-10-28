@@ -6,8 +6,7 @@
 
 // plane imports
 import type { TOAuthConfigs } from "@plane/types";
+// local imports
+import { useEntraOAuthConfig } from "@/ee/entra-auth/use-entra-oauth-config";
 
-export const useExtendedOAuthConfig = (_oauthActionText: string): TOAuthConfigs => ({
-  isOAuthEnabled: false,
-  oAuthOptions: [],
-});
+export const useExtendedOAuthConfig = (oauthActionText: string): TOAuthConfigs => useEntraOAuthConfig(oauthActionText);
