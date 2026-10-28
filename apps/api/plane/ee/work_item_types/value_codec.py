@@ -1,0 +1,150 @@
+import datetime as dt
+import uuid
+from decimal import Decimal, InvalidOperation
+from typing import Any
+from uuid import UUID
+
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import URLValidator
+from django.db import transaction
+from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
+
+from plane.ee.models import Attribute, AttributeValue
+
+from .exceptions import WorkItemValidationError
+
+_url_validator = URLValidator(schemes=["http", "https"])
+INTEGER_KEYS = {"business_value"}
+
+
+def _invalid(attribute: Attribute, message: str) -> WorkItemValidationError:
+    return WorkItemValidationError("invalid_value", message, {"attribute_id": str(attribute.id)})
+
+
+def _to_uuid(attribute: Attribute, raw: Any) -> UUID:
+    try:
+        return raw if isinstance(raw, UUID) else uuid.UUID(str(raw))
+    except (ValueError, AttributeError, TypeError):
+        raise _invalid(attribute, "Expected a UUID") from None
+
+
+def _to_option(attribute: Attribute, raw: Any):
+    option_id = _to_uuid(attribute, raw)
+    option = attribute.options.filter(id=option_id, is_active=True).first()
+    if option is None:
+        raise _invalid(attribute, "Option does not belong to this attribute")
+    return option
+
+
+def _to_number(attribute: Attribute, raw: Any) -> Decimal:
+    if isinstance(raw, bool):
+        raise _invalid(attribute, "Expected a number")
+    try:
+        num = Decimal(str(raw))
+    except (InvalidOperation, ValueError):
+        raise _invalid(attribute, "Expected a number") from None
+    if not num.is_finite():
+        raise _invalid(attribute, "Expected a number")
+    if num < 0:
+        raise _invalid(attribute, "Number must be >= 0")
+    if attribute.system_key in INTEGER_KEYS and num != num.to_integral_value():
+        raise _invalid(attribute, "Expected an integer")
+    return num
+
+
+def _to_datetime(attribute: Attribute, raw: Any, date_only: bool) -> dt.datetime:
+    value = raw
+    if isinstance(raw, str):
+        value = parse_date(raw) if date_only else (parse_datetime(raw) or parse_date(raw))
+    if isinstance(value, dt.datetime):
+        pass
+    elif isinstance(value, dt.date):
+        value = dt.datetime.combine(value, dt.time.min)
+    else:
+        raise _invalid(attribute, "Expected a date")
+    return timezone.make_aware(value, dt.timezone.utc) if timezone.is_naive(value) else value
+
+
+def _many(attribute: Attribute, raw: Any, one) -> list:
+    if not isinstance(raw, (list, tuple)):
+        raise _invalid(attribute, "Expected a list")
+    return [one(attribute, item) for item in raw]
+
+
+def is_empty(raw: Any) -> bool:
+    return raw is None or raw == "" or raw == [] or raw == ()
+
+
+def coerce_value(attribute: Attribute, raw: Any) -> dict[str, Any]:
+    """Return {typed_column: value}. Multi types return lists (one row each). Empty raw -> {}."""
+    if is_empty(raw):
+        return {}
+    ft = attribute.field_type
+    if ft in ("text", "textarea"):
+        if not isinstance(raw, str):
+            raise _invalid(attribute, "Expected a string")
+        return {"value_text": raw}
+    if ft == "url":
+        try:
+            _url_validator(raw)
+        except (DjangoValidationError, TypeError):
+            raise _invalid(attribute, "Expected a valid URL") from None
+        return {"value_text": raw}
+    if ft == "number":
+        return {"value_number": _to_number(attribute, raw)}
+    if ft == "boolean":
+        if not isinstance(raw, bool):
+            raise _invalid(attribute, "Expected a boolean")
+        return {"value_boolean": raw}
+    if ft in ("date", "datetime"):
+        return {"value_datetime": _to_datetime(attribute, raw, ft == "date")}
+    if ft == "select":
+        return {"value_option": _to_option(attribute, raw)}
+    if ft == "multi_select":
+        return {"value_option": _many(attribute, raw, _to_option)}
+    if ft == "member":
+        return {"value_uuid": _to_uuid(attribute, raw)}
+    if ft == "multi_member":
+        return {"value_uuid": _many(attribute, raw, _to_uuid)}
+    raise _invalid(attribute, f"Unsupported field type {ft}")
+
+
+def write_values(issue, values: dict[UUID, Any], *, project) -> None:
+    attrs = {
+        a.id: a
+        for a in Attribute.objects.filter(
+            id__in=list(values), project=project, issue_type_id=issue.type_id, is_active=True
+        )
+    }
+    coerced = {}
+    for attr_id, raw in values.items():
+        attribute = attrs.get(_as_uuid(attr_id))
+        if attribute is None:
+            raise WorkItemValidationError(
+                "invalid_value", "Unknown attribute for this type", {"attribute_id": str(attr_id)}
+            )
+        coerced[attribute] = coerce_value(attribute, raw)
+    with transaction.atomic():
+        for attribute, cols in coerced.items():
+            # delete + rewrite handles both single and multi_* uniformly
+            AttributeValue.objects.filter(issue=issue, attribute=attribute).delete()
+            if not cols:
+                continue
+            ((col, val),) = cols.items()
+            for item in val if isinstance(val, list) else [val]:
+                AttributeValue.objects.create(
+                    issue=issue, attribute=attribute, project=project, workspace_id=project.workspace_id, **{col: item}
+                )
+
+
+def _as_uuid(value: Any) -> UUID:
+    return value if isinstance(value, UUID) else UUID(str(value))
+
+
+def missing_required(project_id: UUID, issue_type_id: UUID, values: dict[UUID, Any]) -> list[UUID]:
+    provided = {_as_uuid(k): v for k, v in values.items()}
+    required = Attribute.objects.filter(
+        project_id=project_id, issue_type_id=issue_type_id, is_required=True, is_active=True
+    ).values_list("id", flat=True)
+    return [a for a in required if is_empty(provided.get(a))]

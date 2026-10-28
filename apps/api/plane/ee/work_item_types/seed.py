@@ -2,8 +2,10 @@ from django.db import connection, transaction
 
 from plane.db.models import IssueType, Project, Workspace
 from plane.db.models.issue_type import ProjectIssueType
+from plane.ee.models import Attribute, AttributeOption
 from plane.utils.uuid import convert_uuid_to_integer
 
+from .attribute_catalog import ATTRIBUTE_CATALOG
 from .constants import AGILE_SOURCE, TypeKey
 
 T = TypeKey
@@ -49,3 +51,24 @@ def seed_project(project: Project) -> None:
                 issue_type=issue_type,
                 defaults={"workspace_id": project.workspace_id, "level": int(issue_type.level)},
             )
+            _seed_attributes(project, issue_type)
+
+
+def _seed_attributes(project: Project, issue_type: IssueType) -> None:
+    for order, spec in enumerate(ATTRIBUTE_CATALOG[TypeKey(issue_type.external_id)], start=1):
+        attr, created = Attribute.objects.get_or_create(
+            project=project,
+            issue_type=issue_type,
+            is_system=True,
+            system_key=spec.system_key,
+            defaults={
+                "workspace_id": project.workspace_id,
+                "name": spec.name,
+                "field_type": spec.field_type,
+                "is_required": spec.is_required,
+                "sort_order": order * 10000,
+            },
+        )
+        if created:
+            for i, name in enumerate(spec.options, start=1):
+                AttributeOption.objects.create(attribute=attr, name=name, sort_order=i * 10000)
