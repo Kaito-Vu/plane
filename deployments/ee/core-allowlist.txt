@@ -18,3 +18,4 @@ apps/api/plane/space/serializer/issue.py
 apps/api/plane/utils/instance_config_variables/extended.py
 apps/api/plane/authentication/adapter/error.py
 apps/api/plane/authentication/adapter/base.py
+apps/api/plane/license/api/views/instance.py

@@ -61,6 +61,9 @@ class InstanceEndpoint(BaseAPIView):
             SLACK_CLIENT_ID,
             UNSPLASH_ACCESS_KEY,
             LLM_API_KEY,
+            IS_ENTRA_ENABLED,
+            ENTRA_PROVIDER_NAME,
+            SSO_ONLY_LOGIN_PAGE,
         ) = get_configuration_value(
             [
                 {
@@ -112,6 +115,9 @@ class InstanceEndpoint(BaseAPIView):
                     "key": "LLM_API_KEY",
                     "default": os.environ.get("LLM_API_KEY", ""),
                 },
+                {"key": "IS_ENTRA_ENABLED", "default": os.environ.get("IS_ENTRA_ENABLED", "0")},
+                {"key": "ENTRA_PROVIDER_NAME", "default": os.environ.get("ENTRA_PROVIDER_NAME", "Microsoft")},
+                {"key": "SSO_ONLY_LOGIN_PAGE", "default": os.environ.get("SSO_ONLY_LOGIN_PAGE", "0")},
             ]
         )
 
@@ -123,6 +129,9 @@ class InstanceEndpoint(BaseAPIView):
         data["is_github_enabled"] = IS_GITHUB_ENABLED == "1"
         data["is_gitlab_enabled"] = IS_GITLAB_ENABLED == "1"
         data["is_gitea_enabled"] = IS_GITEA_ENABLED == "1"
+        data["is_entra_enabled"] = IS_ENTRA_ENABLED == "1"
+        data["entra_provider_name"] = ENTRA_PROVIDER_NAME or "Microsoft"
+        data["sso_only_login_page"] = SSO_ONLY_LOGIN_PAGE == "1"
         data["is_magic_login_enabled"] = ENABLE_MAGIC_LINK_LOGIN == "1"
         data["is_email_password_enabled"] = ENABLE_EMAIL_PASSWORD == "1"
 
