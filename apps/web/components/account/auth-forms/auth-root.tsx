@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useSearchParams } from "next/navigation";
+import { useNavigate } from "react-router";
 // plane imports
 import { Banner } from "@makeplane/propel/components/banner";
 import { OAuthOptions } from "@plane/blocks/auth";
@@ -20,6 +21,8 @@ import {
   EErrorAlertType,
   authErrorHandler,
 } from "@/helpers/authentication.helper";
+// ee
+import { INTERNAL_LOGIN_PATH, useLoginPolicy } from "@/ee/entra-auth/use-login-policy";
 // hooks
 import { useOAuthConfig } from "@/hooks/oauth";
 import { useInstance } from "@/hooks/store/use-instance";
@@ -56,6 +59,13 @@ export const AuthRoot = observer(function AuthRoot(props: TAuthRoot) {
   const { isOAuthEnabled, oAuthOptions } = useOAuthConfig(oAuthActionText);
   const isEmailBasedAuthEnabled = config?.is_email_password_enabled || config?.is_magic_login_enabled;
   const noAuthMethodsAvailable = !isOAuthEnabled && !isEmailBasedAuthEnabled;
+  const navigate = useNavigate();
+  const { hideEmailForm, autoRedirect, redirectToInternal } = useLoginPolicy(oAuthOptions);
+
+  useEffect(() => {
+    if (redirectToInternal) navigate(`${INTERNAL_LOGIN_PATH}${window.location.search}`, { replace: true });
+    else autoRedirect?.();
+  }, [redirectToInternal, autoRedirect, navigate]);
 
   useEffect(() => {
     if (!authMode && currentAuthMode) setAuthMode(currentAuthMode);
@@ -103,7 +113,7 @@ export const AuthRoot = observer(function AuthRoot(props: TAuthRoot) {
     }
   }, [error_code, authMode]);
 
-  if (!authMode) return <></>;
+  if (!authMode || redirectToInternal || autoRedirect) return <></>;
 
   if (noAuthMethodsAvailable) {
     return (
@@ -139,18 +149,18 @@ export const AuthRoot = observer(function AuthRoot(props: TAuthRoot) {
         <OAuthOptions
           options={oAuthOptions}
           compact={authStep === EAuthSteps.PASSWORD}
-          showDivider={isEmailBasedAuthEnabled}
+          showDivider={isEmailBasedAuthEnabled && !hideEmailForm}
         />
       )}
-      {isEmailBasedAuthEnabled && (
+      {isEmailBasedAuthEnabled && !hideEmailForm && (
         <AuthFormRoot
           authStep={authStep}
           authMode={authMode}
           email={email}
-          setEmail={(email) => setEmail(email)}
-          setAuthMode={(authMode) => setAuthMode(authMode)}
-          setAuthStep={(authStep) => setAuthStep(authStep)}
-          setErrorInfo={(errorInfo) => setErrorInfo(errorInfo)}
+          setEmail={setEmail}
+          setAuthMode={setAuthMode}
+          setAuthStep={setAuthStep}
+          setErrorInfo={setErrorInfo}
           currentAuthMode={currentAuthMode}
         />
       )}
