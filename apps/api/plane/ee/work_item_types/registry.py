@@ -15,6 +15,4 @@ def type_key_of(issue_type: IssueType | None) -> TypeKey | None:
 
 
 def get_type(workspace_id: UUID, key: TypeKey) -> IssueType:
-    return IssueType.objects.get(
-        workspace_id=workspace_id, external_source=AGILE_SOURCE, external_id=key.value
-    )
+    return IssueType.objects.get(workspace_id=workspace_id, external_source=AGILE_SOURCE, external_id=key.value)

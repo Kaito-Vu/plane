@@ -144,3 +144,106 @@ class TestBehavior:
             str(a.id) for a in Attribute.objects.filter(project=project, issue_type=task_type).order_by("sort_order")
         ]
         assert got == ids
+
+
+def _tmpl_url(workspace, suffix=""):
+    return f"/api/workspaces/{workspace.slug}/attribute-templates/{suffix}"
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+class TestFixRound1:
+    def _foreign(self, create_user):
+        from plane.db.models import Workspace, WorkspaceMember
+
+        ws = Workspace.objects.create(name="Other", owner=create_user, slug="other-ws")
+        WorkspaceMember.objects.create(workspace=ws, member=create_user, role=ADMIN)
+        p = Project.objects.create(name="Q", identifier="Q", workspace=ws, created_by=create_user)
+        ProjectMemberFactory(project=p, member=create_user, workspace=ws, role=ADMIN)
+        seed_project(p)
+        return ws, p
+
+    def test_cross_workspace_and_project_ids_404(self, session_client, workspace, project, task_type, create_user):
+        ws2, p2 = self._foreign(create_user)
+        foreign = Attribute.objects.filter(project=p2).first()
+        r = session_client.patch(_base(workspace, project) + f"{foreign.id}/", {"is_required": True}, format="json")
+        assert r.status_code == 404
+        assert session_client.delete(_base(workspace, project) + f"{foreign.id}/").status_code == 404
+        t = AttributeTemplate.objects.create(workspace=ws2, issue_type=foreign.issue_type, name="F", field_type="text")
+        assert session_client.patch(_tmpl_url(workspace, f"{t.id}/"), {"name": "z"}, format="json").status_code == 404
+        r = session_client.post(
+            _base(workspace, project) + "apply-template/",
+            {"template_id": str(t.id), "issue_type_id": str(task_type.id)},
+            format="json",
+        )
+        assert r.status_code == 404
+
+    def test_member_and_guest_forbidden(self, workspace, project, task_type):
+        m = _member_client(workspace, project, MEMBER, MEMBER)
+        assert m.get(_tmpl_url(workspace)).status_code == 403
+        assert m.post(_tmpl_url(workspace), {}, format="json").status_code == 403
+        g = _member_client(workspace, project, 5, 5)
+        assert _create(g, workspace, project, task_type).status_code == 403
+
+    def test_system_option_locked_except_phase(self, session_client, workspace, project):
+        sev = Attribute.objects.filter(project=project, system_key="severity").first()
+        opt = sev.options.first()
+        url = _base(workspace, project) + f"{sev.id}/options/"
+        assert session_client.delete(url + f"{opt.id}/").status_code == 400
+        assert session_client.post(url, {"name": "X"}, format="json").status_code == 400
+        assert session_client.patch(url + f"{opt.id}/", {"name": "X"}, format="json").status_code == 400
+        ph = Attribute.objects.filter(project=project, system_key="project_phase").first()
+        o = ph.options.first()
+        r = session_client.delete(_base(workspace, project) + f"{ph.id}/options/{o.id}/")
+        assert r.status_code == 204
+        o.refresh_from_db()
+        assert o.is_active is False
+
+    def test_reorder_foreign_ids_400(self, session_client, workspace, project, create_user):
+        _, p2 = self._foreign(create_user)
+        foreign = Attribute.objects.filter(project=p2).first()
+        r = session_client.post(_base(workspace, project) + "reorder/", {"ids": [str(foreign.id)]}, format="json")
+        assert r.status_code == 400 and r.data["error_code"] == "invalid_reorder_ids"
+
+    def test_duplicate_name_400(self, session_client, workspace, project, task_type):
+        assert _create(session_client, workspace, project, task_type).status_code == 201
+        r = _create(session_client, workspace, project, task_type)
+        assert r.status_code == 400 and r.data["error_code"] == "duplicate_name"
+
+    def test_system_description_patch_400(self, session_client, workspace, project, task_type):
+        a = Attribute.objects.get(project=project, issue_type=task_type, system_key="acceptance_criteria")
+        url = _base(workspace, project) + f"{a.id}/"
+        r = session_client.patch(url, {"description": "x"}, format="json")
+        assert r.status_code == 400 and r.data["error_code"] == "system_attribute_locked"
+        same = {"name": a.name, "issue_type": str(task_type.id), "is_required": True}
+        assert session_client.patch(url, same, format="json").status_code == 200
+
+    def test_issue_type_not_in_project(self, session_client, workspace, project, create_user):
+        from plane.db.models import IssueType
+        from plane.db.models.issue_type import ProjectIssueType
+
+        it = IssueType.objects.create(workspace=workspace, name="Loose")
+        r = session_client.post(
+            _base(workspace, project), {"issue_type": str(it.id), "name": "A", "field_type": "text"}, format="json"
+        )
+        assert r.status_code == 400 and r.data["error_code"] == "issue_type_not_in_project"
+        assert not ProjectIssueType.objects.filter(project=project, issue_type=it).exists()
+
+    def test_options_only_for_select_and_template_option_ops(self, session_client, workspace, project, task_type):
+        t = session_client.post(
+            _tmpl_url(workspace), {"issue_type": str(task_type.id), "name": "T", "field_type": "text"}, format="json"
+        ).data
+        assert (
+            session_client.post(_tmpl_url(workspace, f"{t['id']}/options/"), {"name": "a"}, format="json").status_code
+            == 400
+        )
+        t2 = session_client.post(
+            _tmpl_url(workspace), {"issue_type": str(task_type.id), "name": "S", "field_type": "select"}, format="json"
+        ).data
+        o = session_client.post(_tmpl_url(workspace, f"{t2['id']}/options/"), {"name": "a"}, format="json").data
+        ou = _tmpl_url(workspace, f"{t2['id']}/options/{o['id']}/")
+        assert session_client.patch(ou, {"name": "b"}, format="json").data["name"] == "b"
+        assert session_client.delete(ou).status_code == 204
+        r = session_client.post(_tmpl_url(workspace, "reorder/"), {"ids": [t["id"], t2["id"]]}, format="json")
+        assert r.status_code == 204
+        assert AttributeTemplate.objects.get(pk=t2["id"]).sort_order == 20000
