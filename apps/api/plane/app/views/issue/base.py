@@ -10,6 +10,7 @@ import json
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 from django.db.models import (
     Count,
     Exists,
@@ -41,6 +42,7 @@ from plane.app.serializers import (
     ProjectUserPropertySerializer,
 )
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.ee.work_item_types.tree_ops import soft_delete_subtree
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.bgtasks.recent_visited_task import recent_visited_task
 from plane.bgtasks.webhook_task import model_activity
@@ -721,7 +723,7 @@ class IssueViewSet(BaseViewSet):
     def destroy(self, request, slug, project_id, pk=None):
         issue = Issue.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
 
-        issue.delete()
+        soft_delete_subtree(issue)  # EE: whole subtree, one deleted_at
         # delete the issue from recent visits
         UserRecentVisit.objects.filter(
             project_id=project_id,
@@ -793,7 +795,8 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
         ModuleIssue.objects.filter(issue__in=issues).delete()
 
         # Finally, delete the issues themselves
-        issues.delete()
+        with transaction.atomic():  # EE: whole subtrees, all or nothing
+            [soft_delete_subtree(issue) for issue in issues]
 
         return Response(
             {"message": f"{total_issues} issues were deleted"},

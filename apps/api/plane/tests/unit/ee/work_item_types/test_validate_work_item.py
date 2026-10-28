@@ -38,7 +38,13 @@ def test_parent_rules(workspace, create_user):
     )
     task_id = get_type(workspace.id, T.TASK).id
     assert _code(project=project, issue_type_id=task_id, parent_id=None) == "parent_required"
-    validate_work_item(project=project, issue_type_id=task_id, parent_id=None, attribute_values=None, triage=True)
+    validate_work_item(
+        project=project,
+        issue_type_id=get_type(workspace.id, T.BUG).id,
+        parent_id=None,
+        attribute_values=None,
+        triage=True,
+    )
 
 
 @pytest.mark.unit

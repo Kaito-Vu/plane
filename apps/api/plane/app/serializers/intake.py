@@ -13,6 +13,7 @@ from .state import StateLiteSerializer
 from .user import UserLiteSerializer
 from plane.db.models import Intake, IntakeIssue, Issue, StateGroup, State
 from plane.utils.timezone_converter import snooze_day_start
+from plane.ee.work_item_types.validators import validate_existing
 
 
 class IntakeSerializer(BaseSerializer):
@@ -73,12 +74,14 @@ class IntakeIssueSerializer(BaseSerializer):
         return attrs
 
     def update(self, instance, validated_data):
+        if validated_data.get("status") == 1:  # EE: accepting leaves triage -> full validation
+            validate_existing(Issue.all_objects.get(pk=instance.issue_id))
         # Update the intake issue
         instance = super().update(instance, validated_data)
 
         # If status is accepted (1), transition the issue state from TRIAGE to default
         if validated_data.get("status") == 1:
-            issue = instance.issue
+            issue = Issue.all_objects.get(pk=instance.issue_id)  # fresh: may have been edited in this request
             if issue.state and issue.state.group == StateGroup.TRIAGE.value:
                 # Get the default project state
                 default_state = State.objects.filter(

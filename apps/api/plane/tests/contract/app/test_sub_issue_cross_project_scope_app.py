@@ -22,6 +22,10 @@ are actually a member of.
 """
 
 import pytest
+
+from plane.ee.work_item_types.constants import TypeKey
+from plane.ee.work_item_types.registry import get_type
+from plane.tests.factories import epic_type_id
 from rest_framework import status
 
 from plane.db.models import (
@@ -212,6 +216,10 @@ class TestSubIssuesCrossProjectScope:
     def test_write_same_project_reparent_allowed(
         self, session_client, workspace, project_a, parent_a, orphan_a
     ):
+        # this fork: re-parenting is validated, so give the pair a valid Epic > Feature typing
+        epic_type_id(project_a)
+        Issue.objects.filter(pk=parent_a.pk).update(type=get_type(workspace.id, TypeKey.EPIC))
+        Issue.objects.filter(pk=orphan_a.pk).update(type=get_type(workspace.id, TypeKey.FEATURE))
         url = SUB_ISSUES_URL.format(
             slug=workspace.slug, project_id=project_a.id, issue_id=parent_a.id
         )

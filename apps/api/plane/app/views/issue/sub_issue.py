@@ -27,6 +27,7 @@ from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.timezone_converter import user_timezone_converter
 from collections import defaultdict
 from plane.utils.host import base_host
+from plane.ee.work_item_types.validators import validate_work_item
 from plane.utils.order_queryset import order_issue_queryset
 
 
@@ -236,6 +237,14 @@ class SubIssuesEndpoint(BaseAPIView):
         for sub_issue in sub_issues:
             sub_issue.parent = parent_issue
 
+        for s in sub_issues:  # EE: re-parenting re-runs full validation
+            validate_work_item(
+                project=project_id,
+                issue_type_id=s.type_id,
+                parent_id=parent_issue.id,
+                attribute_values=None,
+                instance=s,
+            )
         _ = Issue.objects.bulk_update(sub_issues, ["parent"], batch_size=10)
 
         # Only the issues that were actually re-parented — i.e. the project-scoped
