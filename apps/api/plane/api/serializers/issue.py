@@ -5,7 +5,7 @@
 # Django imports
 from django.utils import timezone
 from lxml import html
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 #  Third party imports
 from rest_framework import serializers
@@ -31,6 +31,9 @@ from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
 )
+
+from plane.ee.work_item_types.validators import validate_issue_payload
+from plane.ee.work_item_types.value_codec import write_values
 
 from .base import BaseSerializer
 from .cycle import CycleLiteSerializer, CycleSerializer
@@ -66,6 +69,7 @@ class IssueSerializer(BaseSerializer):
     type_id = serializers.PrimaryKeyRelatedField(
         source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
+    attribute_values = serializers.DictField(write_only=True, required=False)  # EE: {attribute_id: value}
 
     class Meta:
         model = Issue
@@ -181,9 +185,15 @@ class IssueSerializer(BaseSerializer):
 
         return data
 
+    def run_validation(self, data=serializers.empty):
+        attrs = super().run_validation(data)
+        validate_issue_payload(self, attrs)  # EE gate outside validate(): flat error body
+        return attrs
+
     def create(self, validated_data):
         assignees = validated_data.pop("assignees", None)
         labels = validated_data.pop("labels", None)
+        attribute_values = validated_data.pop("attribute_values", None)
 
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
@@ -196,7 +206,10 @@ class IssueSerializer(BaseSerializer):
             issue_type = IssueType.objects.filter(project_issue_types__project_id=project_id, is_default=True).first()
             issue_type = issue_type
 
-        issue = Issue.objects.create(**validated_data, project_id=project_id, type=issue_type)
+        with transaction.atomic():  # EE: issue + attribute values, all-or-nothing
+            issue = Issue.objects.create(**validated_data, project_id=project_id, type=issue_type)
+            if attribute_values:
+                write_values(issue, attribute_values, project=issue.project)
 
         # Issue Audit Users
         created_by_id = issue.created_by_id
@@ -318,7 +331,12 @@ class IssueSerializer(BaseSerializer):
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
-        return super().update(instance, validated_data)
+        attribute_values = validated_data.pop("attribute_values", None)
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if attribute_values is not None:
+                write_values(instance, attribute_values, project=instance.project)
+        return instance
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

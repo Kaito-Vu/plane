@@ -100,8 +100,6 @@ def test_queryset_update_bypass_is_known_ceiling(workspace, project, story):
 # Core views writing Issue rows/parents via direct ORM without routing through validate_work_item.
 # Each entry is a known gap owned by a later task; this set may only shrink.
 PENDING_BYPASS = {
-    "api/views/intake.py": "Task 8 (public API intake)",
-    "api/serializers/issue.py": "Task 8 (public API create)",
     # dev-only dummy data generator; untyped issues are skipped by the signal anyway
     "bgtasks/dummy_data_task.py": "exempt (dev dummy data bulk_update parent)",
 }

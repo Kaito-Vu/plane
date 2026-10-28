@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from crum import get_current_user
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import PermissionDenied
 
 from plane.db.models import Issue, IssueType, Project, ProjectMember
@@ -11,7 +12,7 @@ from plane.ee.models import AttributeValue
 from .constants import TypeKey
 from .exceptions import WorkItemValidationError
 from .hierarchy import assert_no_cycle, validate_parent
-from .registry import type_key_of
+from .registry import get_type, type_key_of
 from .scrum_rules import assert_can_complete
 from .value_codec import missing_required
 
@@ -136,3 +137,15 @@ def validate_work_item(
         raise WorkItemValidationError(
             "attribute_required", "Required attributes are missing", {"missing": [str(m) for m in missing]}
         )
+
+
+def validate_intake_type(project: Project, type_id: UUID | str | None) -> IssueType:
+    """Intake submissions are Bug (default) or User Story, validated in triage mode (spec §7)."""
+    try:
+        issue_type = IssueType.objects.get(pk=type_id) if type_id else get_type(project.workspace_id, TypeKey.BUG)
+    except (IssueType.DoesNotExist, ValueError, DjangoValidationError):
+        issue_type = None
+    if issue_type is None or type_key_of(issue_type) not in (TypeKey.BUG, TypeKey.USER_STORY):
+        raise WorkItemValidationError("type_invalid", "Intake work items must be a Bug or a User Story")
+    validate_work_item(project=project, issue_type_id=issue_type.id, parent_id=None, attribute_values=None, triage=True)
+    return issue_type
