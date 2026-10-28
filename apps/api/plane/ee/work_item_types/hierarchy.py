@@ -1,3 +1,7 @@
+from uuid import UUID
+
+from plane.db.models import Issue
+
 from .constants import MAX_DEPTH, PARENT_RULES, TypeKey
 from .exceptions import WorkItemValidationError
 
@@ -15,7 +19,7 @@ def validate_parent(type_key: TypeKey, parent_type_key: TypeKey | None, *, triag
         )
 
 
-def depth_of(issue) -> int:
+def depth_of(issue: Issue | None) -> int:
     """Nodes from issue up to the root (root = 1); stops once past MAX_DEPTH + 1."""
     depth = 0
     while issue is not None and depth <= MAX_DEPTH:
@@ -24,7 +28,7 @@ def depth_of(issue) -> int:
     return depth
 
 
-def assert_no_cycle(issue_id, parent) -> None:
+def assert_no_cycle(issue_id: UUID | None, parent: Issue | None) -> None:
     node, seen = parent, 0
     while node is not None and seen <= MAX_DEPTH:
         if issue_id is not None and node.id == issue_id:

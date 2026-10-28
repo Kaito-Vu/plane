@@ -76,3 +76,17 @@ def test_registry(workspace):
     it = IssueType.objects.create(workspace=workspace, name="Task", external_source="agile", external_id="task")
     assert type_key_of(it) == T.TASK
     assert get_type(workspace.id, T.TASK) == it
+
+
+@pytest.mark.unit
+def test_depth_exactly_10_allowed():
+    node = Issue(name="0")
+    for i in range(MAX_DEPTH - 2):
+        node = Issue(name=str(i + 1), parent=node)
+    assert depth_of(node) == MAX_DEPTH - 1
+    assert_no_cycle(None, node)
+
+
+@pytest.mark.unit
+def test_unknown_agile_external_id_is_none():
+    assert type_key_of(IssueType(external_source="agile", external_id="nope")) is None
