@@ -44,3 +44,12 @@ apps/api/plane/utils/paginator.py
 
 apps/web/store/root.store.ts
 
+apps/web/app/(all)/[workspaceSlug]/(settings)/settings/(workspace)/attribute-library/page.tsx
+apps/web/app/(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/attributes/page.tsx
+apps/web/app/routes/core.ts
+apps/web/components/settings/project/sidebar/item-icon.tsx
+apps/web/components/settings/workspace/sidebar/item-icon.tsx
+packages/constants/src/settings/project.ts
+packages/constants/src/settings/workspace.ts
+packages/i18n/src/locales/en/work-item-type.json
+packages/types/src/settings.ts

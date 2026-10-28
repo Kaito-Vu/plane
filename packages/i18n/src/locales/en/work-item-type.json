@@ -473,5 +473,87 @@
         "message": "Work item type cannot be updated since it breaks the hierarchy rules."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Attributes",
+    "library_title": "Attribute library",
+    "project_description": "Configure the attributes of each work item type in this project. Drag rows to reorder.",
+    "library_description": "Reusable attribute templates. Applying a template to a project creates an independent copy.",
+    "library_no_project": "Create a project first to manage the attribute library.",
+    "type_select": "Work item type",
+    "empty": "No attributes for this work item type yet.",
+    "delete_confirm": "Delete the attribute \"{name}\"? Existing values will no longer be shown.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Feature",
+      "user_story": "User Story",
+      "task": "Task",
+      "bug": "Bug",
+      "sub_task": "Sub-task"
+    },
+    "field_types": {
+      "text": "Text",
+      "textarea": "Paragraph",
+      "number": "Number",
+      "boolean": "Yes/No",
+      "date": "Date",
+      "datetime": "Date and time",
+      "url": "URL",
+      "select": "Single select",
+      "multi_select": "Multi select",
+      "member": "Member",
+      "multi_member": "Multiple members"
+    },
+    "badges": {
+      "system": "System",
+      "required": "Required",
+      "hidden": "Hidden"
+    },
+    "actions": {
+      "add": "Add attribute",
+      "edit": "Edit",
+      "hide": "Hide",
+      "show": "Show",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "create_title": "New attribute",
+      "edit_title": "Edit attribute",
+      "name": "Name",
+      "description": "Description",
+      "field_type": "Field type",
+      "is_required": "Required",
+      "default_value": "Default value"
+    },
+    "options": {
+      "title": "Options",
+      "name": "Option name",
+      "default": "Default",
+      "add": "Add option",
+      "add_placeholder": "New option",
+      "save_first": "Save the attribute first, then add options."
+    },
+    "apply_template": {
+      "open": "Apply from workspace library",
+      "title": "Apply from workspace library",
+      "template": "Template",
+      "apply": "Apply",
+      "hint": "The attribute is copied into this project. Later changes to the template do not affect the copy."
+    },
+    "errors": {
+      "title": "Could not save",
+      "unknown": "Something went wrong. Please try again.",
+      "duplicate_name": "An attribute with this name already exists for this work item type.",
+      "system_attribute_locked": "System attributes can't be changed this way. Only Required can be toggled.",
+      "attribute_type_immutable": "An attribute can't be moved to another work item type.",
+      "type_change_blocked": "The field type can't change because work items already have values for this attribute.",
+      "invalid_reorder_ids": "The list is out of date. Reload the page and try again.",
+      "invalid_issue_type": "This work item type doesn't belong to the workspace.",
+      "issue_type_not_in_project": "This work item type isn't enabled in this project.",
+      "options_not_allowed": "Only Single select and Multi select attributes have options.",
+      "invalid_value": "The default value is not valid for this field type."
+    }
   }
 }

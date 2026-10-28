@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { SlidersHorizontal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   CyclesOutline,
@@ -34,5 +35,6 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   states: StateOutline,
   labels: LabelsOutline,
   estimates: EstimateOutline,
+  attributes: SlidersHorizontal,
   automations: TriggerOutline,
 };
