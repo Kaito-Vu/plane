@@ -22,6 +22,7 @@ from rest_framework.response import Response
 from .. import BaseViewSet
 from plane.app.serializers import CycleIssueSerializer
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.ee.work_item_types.scrum_rules import cycle_warnings
 from plane.db.models import Cycle, CycleIssue, Issue, FileAsset, IssueLink
 from plane.utils.grouper import (
     issue_group_values,
@@ -235,6 +236,7 @@ class CycleIssueViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        warnings = cycle_warnings(issues, cycle)  # EE: raises for Epic/Feature
         # Get all CycleIssues already created
         # Scope to workspace+project to prevent cross-tenant IDOR: without this
         # scope, foreign-tenant CycleIssue rows matched by issue_id would be
@@ -314,7 +316,7 @@ class CycleIssueViewSet(BaseViewSet):
             notification=True,
             origin=base_host(request=request, is_app=True),
         )
-        return Response({"message": "success"}, status=status.HTTP_201_CREATED)
+        return Response({"message": "success", "warnings": warnings}, status=status.HTTP_201_CREATED)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, cycle_id, issue_id):

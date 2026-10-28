@@ -121,3 +121,18 @@ def epic_type_id(project) -> str:
 
     seed_project(project)
     return str(get_type(project.workspace_id, TypeKey.EPIC).id)
+
+
+def sprint_task_fields(project) -> dict:
+    """type_id/parent_id for a Task (cycle-eligible) under a freshly built Epic > Feature > Story chain."""
+    from plane.db.models import Issue
+    from plane.ee.work_item_types.constants import TypeKey as T
+    from plane.ee.work_item_types.registry import get_type
+
+    epic_type_id(project)
+    parent = None
+    for key in (T.EPIC, T.FEATURE, T.USER_STORY):
+        parent = Issue.objects.create(
+            name=key.value, project=project, type=get_type(project.workspace_id, key), parent=parent
+        )
+    return {"type_id": str(get_type(project.workspace_id, T.TASK).id), "parent_id": str(parent.id)}

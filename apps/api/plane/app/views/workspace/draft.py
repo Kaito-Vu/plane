@@ -43,6 +43,7 @@ from .. import BaseViewSet
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.issue_filters import issue_filters
 from plane.utils.host import base_host
+from plane.ee.work_item_types.scrum_rules import assert_type_can_enter_cycle
 
 
 def can_write_project(user, slug, project_id):
@@ -282,6 +283,8 @@ class WorkspaceDraftIssueViewSet(BaseViewSet):
         )
 
         if serializer.is_valid():
+            if request.data.get("cycle_id"):  # EE: Epic/Feature cannot join a cycle
+                assert_type_can_enter_cycle(serializer.validated_data.get("type"))
             serializer.save()
 
             issue_activity.delay(

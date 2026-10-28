@@ -23,6 +23,8 @@ from unittest import mock
 from uuid import uuid4
 
 import pytest
+
+from plane.tests.factories import epic_type_id
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -446,6 +448,7 @@ class TestSpacesBoardObjectScope:
 
     @pytest.mark.django_db
     def test_can_create_intake_issue_with_own_intake(self, session_client, board):
+        epic_type_id(board["project"])  # this fork: every project has the agile types (intake defaults to Bug)
         response = session_client.post(
             intake_issues_url(board["anchor"], board["intake"].id),
             {"issue": {"name": "legit intake issue"}},

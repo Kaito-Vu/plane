@@ -34,7 +34,7 @@ from plane.db.models import (
     Workspace,
     WorkspaceMember,
 )
-from plane.tests.factories import epic_type_id
+from plane.tests.factories import epic_type_id, sprint_task_fields
 
 
 def drafts_url(slug):
@@ -402,7 +402,7 @@ class TestDraftCycleModuleProjectScope:
                 "name": "Issue",
                 "cycle_id": str(cycle.id),
                 "module_ids": [str(module.id)],
-                "type_id": epic_type_id(own),
+                **sprint_task_fields(own),  # Epic/Feature cannot join a cycle
             },
             format="json",
         )

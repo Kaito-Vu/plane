@@ -19,6 +19,7 @@ from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import IntakeIssue, Issue, Project, State
 from plane.db.models.intake import IntakeIssueStatus
 from plane.utils.exception_logger import log_exception
+from plane.ee.work_item_types.tree_ops import auto_archive_candidates
 
 logger = logging.getLogger("plane.worker")
 
@@ -57,6 +58,7 @@ def archive_old_issues():
                 | Q(issue_intake__isnull=True)
             )
 
+            issues = auto_archive_candidates(issues)  # EE: skip trees with open descendants
             # Check if Issues
             if issues:
                 # Set the archive time to current time
@@ -118,6 +120,7 @@ def close_old_issues():
                 | Q(issue_intake__isnull=True)
             )
 
+            issues = auto_archive_candidates(issues)  # EE: skip trees with open descendants
             # Check if Issues
             if issues:
                 if project.default_state is None:

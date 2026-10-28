@@ -6,3 +6,12 @@ apps/api/plane/app/views/project/base.py
 apps/api/plane/app/views/workspace/base.py
 apps/api/plane/bgtasks/workspace_seed_task.py
 apps/api/plane/bgtasks/issue_activities_task.py
+apps/api/plane/app/views/issue/base.py
+apps/api/plane/app/views/issue/archive.py
+apps/api/plane/app/views/issue/sub_issue.py
+apps/api/plane/app/views/cycle/issue.py
+apps/api/plane/app/views/workspace/draft.py
+apps/api/plane/app/serializers/intake.py
+apps/api/plane/bgtasks/issue_automation_task.py
+apps/api/plane/space/views/intake.py
+apps/api/plane/space/serializer/issue.py

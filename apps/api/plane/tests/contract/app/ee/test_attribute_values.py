@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from plane.bgtasks.issue_activities_task import issue_activity
-from plane.db.models import Issue, IssueActivity, Project
+from plane.db.models import Issue, IssueActivity, Project, State
 from plane.ee.models import Attribute, AttributeValue
 from plane.ee.work_item_types.constants import TypeKey
 from plane.ee.work_item_types.registry import get_type
@@ -185,12 +185,14 @@ def test_create_with_values_records_activity(session_client, workspace, project,
 @pytest.mark.django_db
 def test_triage_create_with_values_skips_required(workspace, project, story):
     steps = _attr(project, T.BUG, "steps_to_reproduce")
+    triage = State.objects.create(name="Triage", group="triage", project=project, workspace=workspace)
     s = IssueCreateSerializer(
         data={
             "name": "b",
             "type_id": str(get_type(workspace.id, T.BUG).id),
             "parent_id": str(story.id),
             "attribute_values": {str(steps.id): "x"},
+            "state_id": str(triage.id),  # triage mode = triage state + intake context
         },
         context={
             "project_id": project.id,
