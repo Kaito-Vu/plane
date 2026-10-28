@@ -12,7 +12,14 @@ from plane.ee.models import Attribute, AttributeValue
 from plane.ee.work_item_types.constants import TypeKey
 from plane.ee.work_item_types.registry import get_type
 from plane.ee.work_item_types.seed import seed_project
-from plane.tests.factories import ProjectMemberFactory, UserFactory, WorkspaceMemberFactory
+from plane.app.serializers import IssueCreateSerializer
+from plane.tests.factories import (
+    ProjectFactory,
+    ProjectMemberFactory,
+    UserFactory,
+    WorkspaceFactory,
+    WorkspaceMemberFactory,
+)
 
 T = TypeKey
 ADMIN, GUEST = 20, 5
@@ -47,6 +54,11 @@ def _issues(workspace, project):
     return f"/api/workspaces/{workspace.slug}/projects/{project.id}/issues/"
 
 
+def _assert_flat(r, code):
+    assert set(r.data) == {"error_code", "message", "details"}, r.data
+    assert r.data["error_code"] == code
+
+
 def _values_url(workspace, project, issue):
     return f"{_issues(workspace, project)}{issue.id}/attribute-values/"
 
@@ -63,13 +75,11 @@ def test_create_bug_missing_severity_400_lists_ids(session_client, workspace, pr
     }
     r = session_client.post(_issues(workspace, project), body, format="json")
     assert r.status_code == status.HTTP_400_BAD_REQUEST, r.data
-    assert r.data["error_code"] == ["attribute_required"]
-    missing = (
-        set(r.data["details"][0]["missing"])
-        if isinstance(r.data["details"], list)
-        else set(r.data["details"]["missing"])
-    )
-    assert missing == {str(_attr(project, T.BUG, "severity").id), str(_attr(project, T.BUG, "actual_result").id)}
+    assert set(r.data) == {"error_code", "message", "details"} and r.data["error_code"] == "attribute_required"
+    assert set(r.data["details"]["missing"]) == {
+        str(_attr(project, T.BUG, "severity").id),
+        str(_attr(project, T.BUG, "actual_result").id),
+    }
 
 
 @pytest.mark.contract
@@ -82,6 +92,7 @@ def test_create_story_with_values_persists_atomically(session_client, workspace,
     bad = {**body, "attribute_values": {str(ac.id): "Given", str(sp.id): "abc"}}
     r = session_client.post(_issues(workspace, project), bad, format="json")
     assert r.status_code == status.HTTP_400_BAD_REQUEST, r.data
+    _assert_flat(r, "invalid_value")
     assert Issue.objects.count() == before
     assert not AttributeValue.objects.exists()
 
@@ -102,7 +113,7 @@ def test_patch_cannot_blank_required(session_client, workspace, project, story):
         f"{_issues(workspace, project)}{story.id}/", {"attribute_values": {str(ac.id): ""}}, format="json"
     )
     assert r.status_code == status.HTTP_400_BAD_REQUEST, r.data
-    assert r.data["error_code"] == ["attribute_required"]
+    assert set(r.data) == {"error_code", "message", "details"} and r.data["error_code"] == "attribute_required"
 
 
 @pytest.mark.contract
@@ -117,6 +128,80 @@ def test_member_value_must_be_project_member(session_client, workspace, project,
         format="json",
     )
     assert r.status_code == status.HTTP_400_BAD_REQUEST, r.data
+    _assert_flat(r, "invalid_value")
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_foreign_project_and_workspace_attribute_ids_rejected(session_client, workspace, project, story, create_user):
+    p2 = Project.objects.create(name="P2", identifier="P2", workspace=workspace, created_by=create_user)
+    seed_project(p2)
+    ws2 = WorkspaceFactory(owner=create_user)
+    p3 = ProjectFactory(workspace=ws2)
+    seed_project(p3)
+    for other in (p2, p3):
+        foreign = _attr(other, T.USER_STORY, "story_points")
+        r = session_client.patch(
+            f"{_issues(workspace, project)}{story.id}/", {"attribute_values": {str(foreign.id): 3}}, format="json"
+        )
+        assert r.status_code == status.HTTP_400_BAD_REQUEST, r.data
+        _assert_flat(r, "invalid_value")
+    assert not AttributeValue.objects.filter(issue=story).exists()
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_get_values_foreign_issue_404(session_client, workspace, project, create_user):
+    p2 = Project.objects.create(name="P2", identifier="P2", workspace=workspace, created_by=create_user)
+    ProjectMemberFactory(project=p2, member=create_user, workspace=workspace, role=ADMIN)
+    seed_project(p2)
+    foreign = Issue.objects.create(name="E", project=p2, type=get_type(workspace.id, T.EPIC))
+    assert session_client.get(_values_url(workspace, project, foreign)).status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_create_with_values_records_activity(session_client, workspace, project, feature):
+    ac = _attr(project, T.USER_STORY, "acceptance_criteria")
+    body = {
+        "name": "s",
+        "type_id": str(get_type(workspace.id, T.USER_STORY).id),
+        "parent_id": str(feature.id),
+        "attribute_values": {str(ac.id).upper(): "Given"},  # non-canonical key is normalized
+    }
+    with (
+        mock.patch("plane.app.views.issue.base.issue_activity") as task,
+        mock.patch("plane.app.views.issue.base.model_activity"),
+    ):
+        r = session_client.post(_issues(workspace, project), body, format="json")
+    assert r.status_code == status.HTTP_201_CREATED, r.data
+    kwargs = {**task.delay.call_args.kwargs, "origin": None, "notification": False}
+    issue_activity(**kwargs)
+    act = IssueActivity.objects.get(issue_id=r.data["id"], field="attribute")
+    assert act.new_identifier == ac.id and act.new_value == "Given"
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_triage_create_with_values_skips_required(workspace, project, story):
+    steps = _attr(project, T.BUG, "steps_to_reproduce")
+    s = IssueCreateSerializer(
+        data={
+            "name": "b",
+            "type_id": str(get_type(workspace.id, T.BUG).id),
+            "parent_id": str(story.id),
+            "attribute_values": {str(steps.id): "x"},
+        },
+        context={
+            "project_id": project.id,
+            "workspace_id": workspace.id,
+            "default_assignee_id": None,
+            "allow_triage_state": True,
+        },
+    )
+    assert s.is_valid(), s.errors
+    issue = s.save()
+    assert AttributeValue.objects.get(issue=issue).value_text == "x"
 
 
 @pytest.mark.contract
@@ -175,3 +260,18 @@ def test_activity_recorded_for_value_and_parent_change(session_client, workspace
     assert acts.filter(field="parent", new_identifier=other.id).exists()
     attr_act = acts.get(field="attribute")
     assert attr_act.new_identifier == sp.id and attr_act.new_value == "3"
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_value_write_check_uses_request_user_and_trusts_no_user(workspace, project):
+    from django.contrib.auth.models import AnonymousUser
+    from rest_framework.exceptions import PermissionDenied
+
+    from plane.ee.work_item_types.validators import check_can_write_values
+
+    check_can_write_values(project.id, None)  # internal caller: trusted, no 403
+    check_can_write_values(project.id, AnonymousUser())
+    outsider = UserFactory()
+    with pytest.raises(PermissionDenied):
+        check_can_write_values(project.id, outsider)

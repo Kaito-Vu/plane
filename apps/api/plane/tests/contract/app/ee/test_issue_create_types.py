@@ -38,7 +38,7 @@ def _post(client, workspace, project, data):
 def test_create_without_type_rejected(session_client, workspace, project):
     r = _post(session_client, workspace, project, {"name": "x"})
     assert r.status_code == status.HTTP_400_BAD_REQUEST
-    assert r.data["error_code"] == ["type_required"]
+    assert set(r.data) == {"error_code", "message", "details"} and r.data["error_code"] == "type_required"
 
 
 @pytest.mark.contract
@@ -46,7 +46,7 @@ def test_create_without_type_rejected(session_client, workspace, project):
 def test_task_without_parent_rejected(session_client, workspace, project):
     r = _post(session_client, workspace, project, {"name": "x", "type_id": str(get_type(workspace.id, T.TASK).id)})
     assert r.status_code == status.HTTP_400_BAD_REQUEST
-    assert r.data["error_code"] == ["parent_required"]
+    assert set(r.data) == {"error_code", "message", "details"} and r.data["error_code"] == "parent_required"
 
 
 @pytest.mark.contract
@@ -71,7 +71,7 @@ def test_patch_cannot_change_type(session_client, workspace, project, story):
         format="json",
     )
     assert r.status_code == status.HTTP_400_BAD_REQUEST
-    assert r.data["error_code"] == ["type_immutable"]
+    assert set(r.data) == {"error_code", "message", "details"} and r.data["error_code"] == "type_immutable"
 
 
 @pytest.mark.contract
@@ -116,7 +116,7 @@ WRITE = re.compile(
 @pytest.mark.contract
 def test_core_issue_writers_call_validate_work_item():
     root = pathlib.Path(plane.__file__).parent
-    assert "validate_work_item(" in (root / "app/serializers/issue.py").read_text(encoding="utf-8")
+    assert "validate_issue_payload(" in (root / "app/serializers/issue.py").read_text(encoding="utf-8")
     offenders = set()
     for sub in (
         "app/views",
@@ -131,7 +131,7 @@ def test_core_issue_writers_call_validate_work_item():
             text = path.read_text(encoding="utf-8")
             if path.match("app/views/page/base.py"):  # `.update(parent=None)` there is Page.parent
                 continue
-            if WRITE.search(text) and "validate_work_item" not in text:
+            if WRITE.search(text) and "validate_work_item" not in text and "validate_issue_payload" not in text:
                 offenders.add(path.relative_to(root).as_posix())
     assert offenders == set(PENDING_BYPASS)
 

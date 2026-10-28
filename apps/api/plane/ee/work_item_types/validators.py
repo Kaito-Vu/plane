@@ -30,9 +30,30 @@ def check_hierarchy(
     assert_no_cycle(issue_id, parent)
 
 
-def check_can_write_values(project_id: UUID) -> None:
+def validate_issue_payload(serializer, attrs: dict) -> None:
+    """EE gate for IssueCreateSerializer. Called from run_validation (after DRF validate()),
+    so WorkItemValidationError reaches the response un-wrapped: {"error_code", "message", "details"}."""
+    instance, ctx = serializer.instance, serializer.context
+    if "attribute_values" in attrs:
+        request = ctx.get("request")
+        check_can_write_values(ctx["project_id"], request.user if request is not None else get_current_user())
+    if instance is None or "type" in attrs or "parent" in attrs or "attribute_values" in attrs:
+        issue_type = attrs.get("type", getattr(instance, "type", None))
+        parent = attrs.get("parent", getattr(instance, "parent", None))
+        validate_work_item(
+            project=ctx["project_id"],
+            issue_type_id=issue_type.id if issue_type else None,
+            parent_id=parent.id if parent else None,
+            attribute_values=attrs.get("attribute_values"),
+            instance=instance,
+            triage=ctx.get("allow_triage_state", False),
+        )
+
+
+def check_can_write_values(project_id: UUID, user) -> None:
     """Attribute values need project role >= member (guests are read-only)."""
-    user = get_current_user()
+    if user is None or not getattr(user, "is_authenticated", False):
+        return  # deliberate: no request user = internal caller (task/script), trusted
     if not ProjectMember.objects.filter(
         project_id=project_id, member_id=getattr(user, "id", None), role__gte=15, is_active=True
     ).exists():

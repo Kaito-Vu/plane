@@ -105,9 +105,17 @@ class TestBehavior:
         url = _base(workspace, project) + f"{a.id}/"
         for body in ({"name": "X"}, {"field_type": "text"}):
             r = session_client.patch(url, body, format="json")
-            assert r.status_code == 400 and r.data["error_code"] == "system_attribute_locked"
+            assert (
+                r.status_code == 400
+                and set(r.data) == {"error_code", "message", "details"}
+                and r.data["error_code"] == "system_attribute_locked"
+            )
         r = session_client.delete(url)
-        assert r.status_code == 400 and r.data["error_code"] == "system_attribute_locked"
+        assert (
+            r.status_code == 400
+            and set(r.data) == {"error_code", "message", "details"}
+            and r.data["error_code"] == "system_attribute_locked"
+        )
         assert session_client.patch(url, {"is_required": True}, format="json").status_code == 200
 
     def test_project_phase_options_editable(self, session_client, workspace, project):
@@ -122,7 +130,11 @@ class TestBehavior:
         issue = Issue.objects.create(name="i", project=project, type=get_type(workspace.id, TypeKey.EPIC))
         AttributeValue.objects.create(attribute=a, issue=issue, project=project, workspace=workspace, value_text="x")
         r = session_client.patch(_base(workspace, project) + f"{a.id}/", {"field_type": "number"}, format="json")
-        assert r.status_code == 400 and r.data["error_code"] == "type_change_blocked"
+        assert (
+            r.status_code == 400
+            and set(r.data) == {"error_code", "message", "details"}
+            and r.data["error_code"] == "type_change_blocked"
+        )
 
     def test_soft_delete_keeps_values(self, session_client, workspace, project, task_type):
         from plane.db.models import Issue
@@ -203,18 +215,30 @@ class TestFixRound1:
         _, p2 = self._foreign(create_user)
         foreign = Attribute.objects.filter(project=p2).first()
         r = session_client.post(_base(workspace, project) + "reorder/", {"ids": [str(foreign.id)]}, format="json")
-        assert r.status_code == 400 and r.data["error_code"] == "invalid_reorder_ids"
+        assert (
+            r.status_code == 400
+            and set(r.data) == {"error_code", "message", "details"}
+            and r.data["error_code"] == "invalid_reorder_ids"
+        )
 
     def test_duplicate_name_400(self, session_client, workspace, project, task_type):
         assert _create(session_client, workspace, project, task_type).status_code == 201
         r = _create(session_client, workspace, project, task_type)
-        assert r.status_code == 400 and r.data["error_code"] == "duplicate_name"
+        assert (
+            r.status_code == 400
+            and set(r.data) == {"error_code", "message", "details"}
+            and r.data["error_code"] == "duplicate_name"
+        )
 
     def test_system_description_patch_400(self, session_client, workspace, project, task_type):
         a = Attribute.objects.get(project=project, issue_type=task_type, system_key="acceptance_criteria")
         url = _base(workspace, project) + f"{a.id}/"
         r = session_client.patch(url, {"description": "x"}, format="json")
-        assert r.status_code == 400 and r.data["error_code"] == "system_attribute_locked"
+        assert (
+            r.status_code == 400
+            and set(r.data) == {"error_code", "message", "details"}
+            and r.data["error_code"] == "system_attribute_locked"
+        )
         same = {"name": a.name, "issue_type": str(task_type.id), "is_required": True}
         assert session_client.patch(url, same, format="json").status_code == 200
 
@@ -226,7 +250,11 @@ class TestFixRound1:
         r = session_client.post(
             _base(workspace, project), {"issue_type": str(it.id), "name": "A", "field_type": "text"}, format="json"
         )
-        assert r.status_code == 400 and r.data["error_code"] == "issue_type_not_in_project"
+        assert (
+            r.status_code == 400
+            and set(r.data) == {"error_code", "message", "details"}
+            and r.data["error_code"] == "issue_type_not_in_project"
+        )
         assert not ProjectIssueType.objects.filter(project=project, issue_type=it).exists()
 
     def test_options_only_for_select_and_template_option_ops(self, session_client, workspace, project, task_type):

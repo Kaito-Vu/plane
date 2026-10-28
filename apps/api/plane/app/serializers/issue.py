@@ -44,7 +44,7 @@ from plane.db.models import (
     EstimatePoint,
     IssueType,
 )
-from plane.ee.work_item_types.validators import check_can_write_values, validate_work_item
+from plane.ee.work_item_types.validators import validate_issue_payload
 from plane.ee.work_item_types.value_codec import write_values
 from plane.utils.content_validator import (
     validate_html_content,
@@ -211,21 +211,11 @@ class IssueCreateSerializer(BaseSerializer):
         ):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
 
-        # EE work item types: type required/immutable + parent-child rules
-        if "attribute_values" in attrs:
-            check_can_write_values(self.context["project_id"])
-        if self.instance is None or "type" in attrs or "parent" in attrs or "attribute_values" in attrs:
-            issue_type = attrs.get("type", getattr(self.instance, "type", None))
-            parent = attrs.get("parent", getattr(self.instance, "parent", None))
-            validate_work_item(
-                project=self.context["project_id"],
-                issue_type_id=issue_type.id if issue_type else None,
-                parent_id=parent.id if parent else None,
-                attribute_values=attrs.get("attribute_values"),
-                instance=self.instance,
-                triage=allow_triage,
-            )
+        return attrs
 
+    def run_validation(self, data=serializers.empty):
+        attrs = super().run_validation(data)
+        validate_issue_payload(self, attrs)  # EE gate outside validate(): flat error body
         return attrs
 
     def create(self, validated_data):

@@ -622,6 +622,10 @@ def create_issue_activity(
             issue_activities,
             epoch,
         )
+    if requested_data.get("attribute_values"):  # EE attribute.updated on create
+        track_attribute_values(
+            requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch
+        )
 
 
 def update_issue_activity(
