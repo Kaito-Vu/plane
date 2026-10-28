@@ -19,6 +19,10 @@ const EntraIcon = (
   </svg>
 );
 
+// next_path is encoded here (core providers pass it raw)
+export const getEntraLoginUrl = (nextPath: string | null) =>
+  `${API_BASE_URL}/auth/entra/${nextPath ? `?next_path=${encodeURIComponent(nextPath)}` : ``}`;
+
 export const useEntraOAuthConfig = (_oauthActionText: string): TOAuthConfigs => {
   const searchParams = useSearchParams();
   const next_path = searchParams.get("next_path");
@@ -33,10 +37,7 @@ export const useEntraOAuthConfig = (_oauthActionText: string): TOAuthConfigs => 
         text: t("auth.entra.sign_in_with", { name: config?.entra_provider_name || "Microsoft" }),
         icon: EntraIcon,
         onClick: () => {
-          // next_path is encoded here (core providers pass it raw)
-          window.location.assign(
-            `${API_BASE_URL}/auth/entra/${next_path ? `?next_path=${encodeURIComponent(next_path)}` : ``}`
-          );
+          window.location.assign(getEntraLoginUrl(next_path));
         },
         enabled: config?.is_entra_enabled,
       },

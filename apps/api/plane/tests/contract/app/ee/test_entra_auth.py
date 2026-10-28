@@ -197,3 +197,10 @@ def test_instance_config_entra_defaults(instance, monkeypatch):
     assert config["is_entra_enabled"] is False
     assert config["entra_provider_name"] == "Microsoft"
     assert config["sso_only_login_page"] is False
+
+
+@pytest.mark.contract
+def test_sign_out_lands_with_no_redirect(db):
+    resp = Client().post("/auth/sign-out/")
+    assert resp.status_code == 302
+    assert "no_redirect=1" in resp["Location"]

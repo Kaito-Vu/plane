@@ -4,17 +4,28 @@
  * See the LICENSE file for details.
  */
 
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocation } from "react-router";
 import type { TOAuthOption } from "@plane/types";
 import { EAuthenticationErrorCodes as E } from "@/helpers/authentication.helper";
+import { INTERNAL_LOGIN_PATH } from "./constants";
+import { getEntraLoginUrl } from "./use-entra-oauth-config";
 import { useInstance } from "@/hooks/store/use-instance";
 
-export const INTERNAL_LOGIN_PATH = "/login/internal";
+export { INTERNAL_LOGIN_PATH };
 
 // error codes raised by the email/password/magic-code flow: these belong on /login/internal
-const EMAIL_FLOW_ERROR_CODES: string[] = new Set([
+const EMAIL_FLOW_ERROR_CODES = new Set<string>([
+  E.INVALID_EMAIL,
+  E.EMAIL_REQUIRED,
+  E.SIGNUP_DISABLED,
+  E.USER_ACCOUNT_DEACTIVATED,
+  E.PASSWORD_TOO_WEAK,
+  E.SMTP_NOT_CONFIGURED,
+  E.USER_ALREADY_EXIST,
+  E.USER_DOES_NOT_EXIST,
+  "5900", // RATE_LIMIT_EXCEEDED (not in the web enum)
   E.AUTHENTICATION_FAILED_SIGN_IN,
   E.AUTHENTICATION_FAILED_SIGN_UP,
   E.INVALID_PASSWORD,
@@ -69,8 +80,9 @@ export const useLoginPolicy = (oAuthOptions: TOAuthOption[]) => {
   const { config } = useInstance();
   const searchParams = useSearchParams();
   const { pathname } = useLocation();
+  const nextPath = searchParams.get("next_path");
   const done = useRef(false);
-  const enabled = oAuthOptions.filter((o) => o.enabled !== false);
+  const enabled = oAuthOptions.filter((o) => !!o.enabled);
   const p = computeLoginPolicy({
     ssoOnly: config?.sso_only_login_page,
     pathname,
@@ -79,12 +91,17 @@ export const useLoginPolicy = (oAuthOptions: TOAuthOption[]) => {
     noRedirect: searchParams.get("no_redirect") === "1",
   });
   const target = enabled.find((o) => o.id === p.autoRedirectProviderId);
-  const autoRedirect = target
-    ? () => {
-        if (done.current) return; // StrictMode / re-render guard
-        done.current = true;
-        target.onClick();
-      }
-    : null;
-  return { hideEmailForm: p.hideEmailForm, autoRedirect, redirectToInternal: p.redirectToInternal };
+  // ref guard: runs the redirect once even with StrictMode double effects / re-renders
+  const autoRedirect = useCallback(() => {
+    if (!target || done.current) return;
+    done.current = true;
+    // replace (not assign) so Browser Back from the IdP does not loop; only Entra exposes a plain URL
+    if (target.id === "entra") window.location.replace(getEntraLoginUrl(nextPath));
+    else target.onClick();
+  }, [target, nextPath]);
+  return {
+    hideEmailForm: p.hideEmailForm,
+    autoRedirect: target ? autoRedirect : null,
+    redirectToInternal: p.redirectToInternal,
+  };
 };

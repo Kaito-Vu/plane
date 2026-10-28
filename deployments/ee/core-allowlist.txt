@@ -53,3 +53,5 @@ apps/admin/components/common/header/core.ts
 apps/web/hooks/oauth/extended.tsx
 apps/web/app/routes/extended.ts
 apps/web/components/account/auth-forms/auth-root.tsx
+apps/web/services/api.service.ts
+apps/api/plane/authentication/views/app/signout.py

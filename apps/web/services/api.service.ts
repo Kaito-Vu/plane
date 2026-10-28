@@ -5,6 +5,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { INTERNAL_LOGIN_PATH } from "@/ee/entra-auth/constants";
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
 import { create } from "axios";
 import { normalizeAPIRequestURL } from "@plane/services";
@@ -47,7 +48,8 @@ export abstract class APIService {
           // "/" to "/?next_path=/" reloads the page in an endless loop instead of
           // letting the sign-in screen render. Only bounce away from private
           // routes.
-          if (currentPath !== "/") {
+          // Same for the internal (break-glass) login page, otherwise it is bounced to "/" and SSO auto-redirect.
+          if (currentPath !== "/" && currentPath !== INTERNAL_LOGIN_PATH) {
             window.location.replace(`/${currentPath ? `?next_path=${encodeURIComponent(currentPath)}` : ``}`);
           }
         }
