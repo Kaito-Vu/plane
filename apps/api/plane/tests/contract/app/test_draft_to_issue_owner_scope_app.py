@@ -31,6 +31,7 @@ from plane.db.models import (
     User,
     WorkspaceMember,
 )
+from plane.tests.factories import epic_type_id
 
 
 def draft_to_issue_url(slug, draft_id):
@@ -124,7 +125,7 @@ class TestDraftToIssueOwnerScope:
 
         response = session_client.post(
             draft_to_issue_url(workspace.slug, draft.id),
-            {"name": "Converted issue"},
+            {"name": "Converted issue", "type_id": epic_type_id(owned_draft["project"])},
             format="json",
         )
 
