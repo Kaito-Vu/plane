@@ -49,6 +49,8 @@ type TIssueDefaultPropertiesProps = {
   isDraft: boolean;
   handleFormChange: () => void;
   setSelectedParentIssue: (issue: ISearchIssueResponse) => void;
+  /** EE work item types render their own type-aware parent picker. */
+  hideParent?: boolean;
 };
 
 export const IssueDefaultProperties = observer(function IssueDefaultProperties(props: TIssueDefaultPropertiesProps) {
@@ -64,6 +66,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
     isDraft,
     handleFormChange,
     setSelectedParentIssue,
+    hideParent = false,
   } = props;
   // states
   const [parentIssueListModalOpen, setParentIssueListModalOpen] = useState(false);
@@ -259,7 +262,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           )}
         />
       )}
-      {parentId ? (
+      {hideParent ? null : parentId ? (
         <Menu>
           <MenuTrigger
             tabIndex={getIndex("parent_id")}

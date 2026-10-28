@@ -157,6 +157,7 @@ class IssueSearchEndpoint(BaseAPIView):
                 "state__name",
                 "state__group",
                 "state__color",
+                "type_id",  # EE: parent picker filters by type
             )[:100],
             status=status.HTTP_200_OK,
         )

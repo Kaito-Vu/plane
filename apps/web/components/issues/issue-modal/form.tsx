@@ -39,7 +39,6 @@ import {
 import {
   IssueDefaultProperties,
   IssueDescriptionEditor,
-  IssueParentTag,
   IssueProjectSelect,
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
@@ -52,6 +51,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
+import { WorkItemTypeFormFields } from "@/ee/work-item-types/components/work-item-type-form-fields";
 
 export interface IssueFormProps {
   data?: Partial<TIssue>;
@@ -127,6 +127,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     handlePropertyValuesValidation,
     handleCreateUpdatePropertyValues,
     handleTemplateChange,
+    issuePropertyValues,
   } = useIssueModal();
   const { isMobile } = usePlatformOS();
   const { moveIssue } = useWorkspaceDraftIssues();
@@ -239,6 +240,9 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
           description_html: formData.description_html ?? "<p></p>",
           type_id: getValues<"type_id">("type_id"),
         };
+
+    // EE: work item type attribute values travel in the payload ({attribute_id: value})
+    Object.assign(submitData, { attribute_values: issuePropertyValues });
 
     // this condition helps to move the issues from draft to project issues
     if (formData.hasOwnProperty("is_draft")) submitData.is_draft = formData.is_draft;
@@ -375,14 +379,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                   />
                 </div>
               </div>
-              {watch("parent_id") && selectedParentIssue && (
-                <IssueParentTag
-                  control={control}
-                  selectedParentIssue={selectedParentIssue}
-                  handleFormChange={handleFormChange}
-                  setSelectedParentIssue={setSelectedParentIssue}
-                />
-              )}
+              <WorkItemTypeFormFields issueId={data?.id} />
               <IssueTitleInput
                 control={control}
                 issueTitleRef={issueTitleRef}
@@ -425,6 +422,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                 isDraft={isDraft}
                 handleFormChange={handleFormChange}
                 setSelectedParentIssue={setSelectedParentIssue}
+                hideParent
               />
             </div>
           </DialogMain>

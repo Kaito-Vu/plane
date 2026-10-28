@@ -11,6 +11,7 @@ import type { TIssueIdentifierProps } from "@plane/types";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
 import { IdentifierText } from "@/components/issues/issue-detail/identifier-text";
+import { TypeBadge } from "@/ee/work-item-types/components/type-badge";
 
 export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueIdentifierProps) {
   const { projectId, variant, size, displayProperties, enableClickToCopyIdentifier = false } = props;
@@ -31,6 +32,7 @@ export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueId
 
   return (
     <div className="flex shrink-0 items-center space-x-2">
+      <TypeBadge projectId={projectId} typeId={isUsingStoreData ? issue?.type_id : props.issueTypeId} compact />
       <IdentifierText
         identifier={`${projectIdentifier}-${issueSequenceId}`}
         enableClickToCopyIdentifier={enableClickToCopyIdentifier}

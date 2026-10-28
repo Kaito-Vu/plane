@@ -13,12 +13,13 @@ import { useForm } from "react-hook-form";
 // plane imports
 import { useTranslation } from "@plane/i18n";
 import { AddOutline } from "@makeplane/propel/icons";
-import { setPromiseToast } from "@plane/blocks/toast";
+import { setPromiseToast, setToast } from "@plane/blocks/toast";
 import type { IProject, TIssue, EIssueLayoutTypes } from "@plane/types";
 import { cn, createIssuePayload } from "@plane/utils";
 // local imports
 import { QuickAddIssueFormRoot } from "./form";
 import { useCreateIssueToastActions } from "../../create-issue-toast-action-items";
+import { useQuickAddTypeValidation } from "@/ee/work-item-types/components/quick-add-type-fields";
 
 export type TQuickAddIssueForm = {
   ref: React.RefObject<HTMLFormElement | null>;
@@ -77,8 +78,10 @@ export const QuickAddIssueRoot = observer(function QuickAddIssueRoot(props: TQui
     handleSubmit,
     setFocus,
     register,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<TIssue>({ defaultValues });
+  const validateTypeFields = useQuickAddTypeValidation();
 
   useEffect(() => {
     if (isQuickAddOpen !== undefined) {
@@ -102,7 +105,10 @@ export const QuickAddIssueRoot = observer(function QuickAddIssueRoot(props: TQui
   const onSubmitHandler = async (formData: TIssue) => {
     if (isSubmitting || !workspaceSlug || !projectId) return;
 
-    reset({ ...defaultValues });
+    // EE: type + parent rules (type and parent stay selected for the next item)
+    const typeError = validateTypeFields(projectId.toString(), { ...prePopulatedData, ...formData });
+    if (typeError) return setToast({ type: "error", title: t("common.error.label"), message: t(typeError) });
+    reset({ ...defaultValues, type_id: formData.type_id, parent_id: formData.parent_id });
 
     const payload = createIssuePayload(projectId.toString(), {
       // oxlint-disable-next-line unicorn/no-useless-fallback-in-spread
@@ -149,6 +155,7 @@ export const QuickAddIssueRoot = observer(function QuickAddIssueRoot(props: TQui
           hasError={errors && errors?.name && errors?.name?.message ? true : false}
           setFocus={setFocus}
           register={register}
+          control={control}
           onSubmit={handleSubmit(onSubmitHandler)}
           onClose={() => handleIsOpen(false)}
           isEpic={isEpic}

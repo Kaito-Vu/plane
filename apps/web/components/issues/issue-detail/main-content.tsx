@@ -32,6 +32,8 @@ import { IssueActivity } from "./issue-activity";
 import { IssueParentDetail } from "./parent";
 import { IssueReaction } from "./reactions";
 import type { TIssueOperations } from "./root";
+import { HierarchyBreadcrumb } from "@/ee/work-item-types/components/hierarchy-breadcrumb";
+import { ChildrenTree } from "@/ee/work-item-types/components/children-tree";
 // services init
 const workItemVersionService = new WorkItemVersionService();
 
@@ -78,6 +80,7 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
   return (
     <>
       <div className="space-y-4 rounded-lg">
+        <HierarchyBreadcrumb workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
         {issue.parent_id && (
           <IssueParentDetail
             workspaceSlug={workspaceSlug}
@@ -160,6 +163,8 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
           )}
         </div>
       </div>
+
+      <ChildrenTree workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} />
 
       <IssueDetailWidgets
         workspaceSlug={workspaceSlug}

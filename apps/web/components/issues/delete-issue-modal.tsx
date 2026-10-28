@@ -17,6 +17,7 @@ import { ConfirmDialog } from "@plane/blocks/dialog";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
+import { SubtreeWarning } from "@/ee/work-item-types/components/subtree-warning";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 
 type Props = {
@@ -123,6 +124,7 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
             {projectDetails?.identifier}-{issue?.sequence_id}
           </span>
           {` ? All of the data related to the ${isEpic ? "epic" : "work item"} will be permanently removed. This action cannot be undone.`}
+          <SubtreeWarning count={issue && "sub_issues_count" in issue ? issue.sub_issues_count : undefined} />
         </>
       }
     />

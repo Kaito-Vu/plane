@@ -53,3 +53,16 @@ packages/constants/src/settings/project.ts
 packages/constants/src/settings/workspace.ts
 packages/i18n/src/locales/en/work-item-type.json
 packages/types/src/settings.ts
+apps/api/plane/app/views/search/issue.py
+apps/web/components/issues/issue-modal/base.tsx
+apps/web/components/issues/issue-modal/components/default-properties.tsx
+apps/web/components/issues/issue-modal/form.tsx
+apps/web/components/issues/issue-modal/provider.tsx
+apps/web/components/issues/archive-issue-modal.tsx
+apps/web/components/issues/delete-issue-modal.tsx
+apps/web/components/issues/issue-detail/issue-identifier.tsx
+apps/web/components/issues/issue-detail/main-content.tsx
+apps/web/components/issues/issue-detail/sidebar.tsx
+apps/web/components/issues/issue-layouts/quick-add/form/root.tsx
+apps/web/components/issues/issue-layouts/quick-add/root.tsx
+apps/web/services/issue/issue.service.ts
