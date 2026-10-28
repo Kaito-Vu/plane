@@ -67,3 +67,12 @@ temp/
 build/
 node_modules/
 README.md
+
+# Tooling / non-build directories (keep the build context small and stable)
+.codegraph/
+.archify/
+.claude/
+.github/
+.husky/
+docs/
+**/__pycache__/

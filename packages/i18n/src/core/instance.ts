@@ -18,7 +18,9 @@ export const i18nInstance: I18nInstance = i18n.createInstance();
 i18nInstance
   .use(ICU)
   .use(initReactI18next)
-  .use(resourcesToBackend((language: string, namespace: string) => import(`../locales/${language}/${namespace}.json`)));
+  // Path is relative to the bundled dist/index.js (the only entry consumers load), so it
+  // points at the real src/locales instead of relying on the `locales` symlink.
+  .use(resourcesToBackend((language: string, namespace: string) => import(`../src/locales/${language}/${namespace}.json`)));
 
 const initialLng =
   typeof window !== "undefined" ? localStorage.getItem(LANGUAGE_STORAGE_KEY) || FALLBACK_LANGUAGE : FALLBACK_LANGUAGE;

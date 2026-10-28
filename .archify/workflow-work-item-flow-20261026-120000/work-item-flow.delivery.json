@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "85399130-f9a4-4cd5-b315-af35d9fb02e0",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "D:\\working\\02.ETC\\plane\\.archify\\workflow-work-item-flow-20261026-120000\\candidate.json",
+  "output": "D:\\working\\02.ETC\\plane\\.archify\\workflow-work-item-flow-20261026-120000\\work-item-flow.html",
+  "specification": {
+    "sha256": "f606c48126a93a7926ad6aec7e9745b55524eba98e393cf037f88947e483278d",
+    "bytes": 7060
+  },
+  "artifact": {
+    "sha256": "f362714866f26b374f28b74029a6b871ea01ebf869026917c08b31c35e4fdb09",
+    "bytes": 835357
+  }
+}

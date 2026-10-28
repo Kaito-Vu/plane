@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM caddy:2.11.7-builder-alpine AS caddy-builder
 
 # grpc and otel move together: grpc >= v1.83.0 requires otel v1.44.0, and xcaddy
@@ -5,7 +6,7 @@ FROM caddy:2.11.7-builder-alpine AS caddy-builder
 # grpc backwards until it finds one that fits (silently, with a zero exit) --
 # it lands on the v1.83.0-dev pre-release and the build still succeeds. Bump the
 # otel pair in lockstep with grpc, and confirm with `go version -m` afterwards.
-RUN XCADDY_SKIP_CLEANUP=1 xcaddy build \
+RUN --mount=type=cache,id=go-mod,target=/go/pkg/mod --mount=type=cache,id=go-build,target=/root/.cache/go-build XCADDY_SKIP_CLEANUP=1 xcaddy build \
         --with github.com/caddy-dns/cloudflare@v0.2.1 \
         --with github.com/caddy-dns/digitalocean@04bde2867106aa1b44c2f9da41a285fa02e629c5 \
         --with github.com/mholt/caddy-l4@6faae83b167fda94e62b686be5cbeb9b3f8fe002 \
@@ -18,7 +19,7 @@ RUN XCADDY_SKIP_CLEANUP=1 xcaddy build \
 # Caddy's own go.mod pins x/crypto, x/net and x/text at versions with open CVEs;
 # xcaddy preserved its build dir above, so upgrade them there and rebuild.
 # x/net v0.60.0 requires x/crypto v0.57.0 and x/text v0.42.0, hence those floors.
-RUN cd "$(find /tmp -maxdepth 1 -name 'buildenv_*' -type d | head -1)" && \
+RUN --mount=type=cache,id=go-mod,target=/go/pkg/mod --mount=type=cache,id=go-build,target=/root/.cache/go-build cd "$(find /tmp -maxdepth 1 -name 'buildenv_*' -type d | head -1)" && \
     go get golang.org/x/crypto@v0.57.0 && \
     go get golang.org/x/net@v0.60.0 && \
     go get golang.org/x/text@v0.42.0 && \

@@ -77,7 +77,7 @@ RUN pnpm turbo run build --filter=web
 # *****************************************************************************
 FROM caddy:2.11.7-builder-alpine AS caddy-builder
 
-RUN XCADDY_SKIP_CLEANUP=1 xcaddy build \
+RUN --mount=type=cache,id=go-mod,target=/go/pkg/mod --mount=type=cache,id=go-build,target=/root/.cache/go-build XCADDY_SKIP_CLEANUP=1 xcaddy build \
     --with github.com/mholt/caddy-ratelimit
 
 # Caddy's own go.mod pins x/crypto, x/net and x/text at versions with open CVEs
@@ -87,7 +87,7 @@ RUN XCADDY_SKIP_CLEANUP=1 xcaddy build \
 # x/net v0.60.0 requires x/crypto v0.57.0 and x/text v0.42.0, hence those floors.
 # grpc and otel move together: grpc >= v1.83.0 requires otel v1.44.0, so bump
 # the otel pair in lockstep or go walks grpc backwards to satisfy the older one.
-RUN cd "$(find /tmp -maxdepth 1 -name 'buildenv_*' -type d | head -1)" && \
+RUN --mount=type=cache,id=go-mod,target=/go/pkg/mod --mount=type=cache,id=go-build,target=/root/.cache/go-build cd "$(find /tmp -maxdepth 1 -name 'buildenv_*' -type d | head -1)" && \
     go get golang.org/x/crypto@v0.57.0 && \
     go get golang.org/x/net@v0.60.0 && \
     go get golang.org/x/text@v0.42.0 && \

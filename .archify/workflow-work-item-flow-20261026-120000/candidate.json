@@ -1,0 +1,100 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Plane – Business flow: tạo / cập nhật Work Item",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": ".archify/workflow-work-item-flow-20261026-120000/work-item-flow.html",
+    "repository": {
+      "url": "git@github.com:Kaito-Vu/plane.git",
+      "provider": "github",
+      "link_mode": "local-only",
+      "revision": "d9726d5c9615756135f3d6cd512ece8e2dd42902"
+    }
+  },
+  "lanes": [
+    { "id": "client", "label": "Người dùng / Hệ thống ngoài" },
+    { "id": "api", "label": "Plane API (Django)" },
+    { "id": "hook", "label": "Celery – Webhook" },
+    { "id": "worker", "label": "Celery – Activity & Thông báo" },
+    { "id": "store", "label": "PostgreSQL" }
+  ],
+  "phases": [
+    { "id": "request", "label": "Yêu cầu", "fromCol": 0, "toCol": 2 },
+    { "id": "async", "label": "Xử lý bất đồng bộ", "fromCol": 3, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["user", "perm", "save", "dispatch", "act", "notif", "notifdb", "email"],
+  "nodes": [
+    { "id": "user", "lane": "client", "col": 0, "type": "external", "label": "Thành viên dự án", "sublabel": "tạo / sửa work item",
+      "sources": [{ "path": "apps/api/plane/app/views/issue/base.py", "line": 405, "end_line": 407, "label": "IssueViewSet.create" }] },
+    { "id": "perm", "lane": "api", "col": 1, "type": "security", "label": "Kiểm tra quyền", "sublabel": "chỉ ADMIN / MEMBER", "tag": "allow_permission",
+      "sources": [{ "path": "apps/api/plane/app/views/issue/base.py", "line": 405, "end_line": 406 }] },
+    { "id": "save", "lane": "api", "col": 2, "type": "backend", "label": "Lưu Issue", "sublabel": "state mặc định + sequence_id",
+      "sources": [
+        { "path": "apps/api/plane/app/views/issue/base.py", "line": 409, "end_line": 419 },
+        { "path": "apps/api/plane/db/models/issue.py", "line": 180, "end_line": 214 },
+        { "path": "apps/api/plane/db/models/issue.py", "line": 228, "end_line": 236 }
+      ] },
+    { "id": "dispatch", "lane": "api", "col": 3, "type": "messagebus", "label": "Đẩy task nền", "sublabel": "issue_activity + model_activity",
+      "sources": [{ "path": "apps/api/plane/app/views/issue/base.py", "line": 421, "end_line": 489 }] },
+    { "id": "model", "lane": "hook", "col": 4, "type": "backend", "label": "model_activity", "sublabel": "lọc webhook theo loại sự kiện",
+      "sources": [
+        { "path": "apps/api/plane/bgtasks/webhook_task.py", "line": 478, "end_line": 495 },
+        { "path": "apps/api/plane/bgtasks/webhook_task.py", "line": 433, "end_line": 466, "label": "webhook_activity" }
+      ] },
+    { "id": "wsend", "lane": "hook", "col": 5, "type": "messagebus", "label": "webhook_send_task", "sublabel": "ký HMAC, retry tối đa 5",
+      "sources": [
+        { "path": "apps/api/plane/bgtasks/webhook_task.py", "line": 235, "end_line": 241 },
+        { "path": "apps/api/plane/bgtasks/webhook_task.py", "line": 296, "end_line": 304 }
+      ] },
+    { "id": "hookrx", "lane": "client", "col": 5, "type": "external", "label": "Webhook endpoint", "sublabel": "hệ thống tích hợp",
+      "sources": [{ "path": "apps/api/plane/bgtasks/webhook_task.py", "line": 328, "end_line": 342, "label": "ghi WebhookLog" }] },
+    { "id": "act", "lane": "worker", "col": 3, "type": "backend", "label": "issue_activity", "sublabel": "ghi lịch sử hoạt động",
+      "sources": [
+        { "path": "apps/api/plane/bgtasks/issue_activities_task.py", "line": 1586, "end_line": 1627 },
+        { "path": "apps/api/plane/bgtasks/issue_activities_task.py", "line": 1629, "end_line": 1640 }
+      ] },
+    { "id": "notif", "lane": "worker", "col": 4, "type": "backend", "label": "notifications", "sublabel": "subscriber + mention + preference",
+      "sources": [
+        { "path": "apps/api/plane/bgtasks/notification_task.py", "line": 190, "end_line": 200 },
+        { "path": "apps/api/plane/bgtasks/notification_task.py", "line": 319, "end_line": 346 }
+      ] },
+    { "id": "email", "lane": "worker", "col": 5, "type": "backend", "label": "Gửi email", "sublabel": "stack_email_notification / 5 phút",
+      "sources": [
+        { "path": "apps/api/plane/bgtasks/email_notification_task.py", "line": 46, "end_line": 50 },
+        { "path": "apps/api/plane/bgtasks/email_notification_task.py", "line": 283, "end_line": 287 },
+        { "path": "apps/api/plane/celery.py", "line": 46, "end_line": 50 }
+      ] },
+    { "id": "issues", "lane": "store", "col": 2, "type": "database", "label": "Issue + IssueSequence", "sublabel": "work item đã tạo",
+      "sources": [{ "path": "apps/api/plane/db/models/issue.py", "line": 195, "end_line": 214 }] },
+    { "id": "actdb", "lane": "store", "col": 3, "type": "database", "label": "IssueActivity", "sublabel": "bulk_create",
+      "sources": [{ "path": "apps/api/plane/bgtasks/issue_activities_task.py", "line": 1629, "end_line": 1630 }] },
+    { "id": "notifdb", "lane": "store", "col": 4, "type": "database", "label": "Notification + EmailLog", "sublabel": "bulk_create",
+      "sources": [{ "path": "apps/api/plane/bgtasks/notification_task.py", "line": 669, "end_line": 670 }] }
+  ],
+  "edges": [
+    { "id": "e-req", "from": "user", "to": "perm", "label": "POST issues", "variant": "emphasis" },
+    { "id": "e-ok", "from": "perm", "to": "save", "label": "được phép", "variant": "security" },
+    { "id": "e-save", "from": "save", "to": "issues", "label": "ghi", "variant": "dashed" },
+    { "id": "e-disp", "from": "save", "to": "dispatch", "label": "serializer hợp lệ", "variant": "emphasis" },
+    { "id": "e-act", "from": "dispatch", "to": "act", "label": "notification=True", "variant": "emphasis" },
+    { "id": "e-model", "from": "dispatch", "to": "model", "label": "webhook", "variant": "dashed", "role": "async" },
+    { "id": "e-actdb", "from": "act", "to": "actdb", "label": "ghi", "variant": "dashed" },
+    { "id": "e-notif", "from": "act", "to": "notif", "label": "kích hoạt", "variant": "emphasis" },
+    { "id": "e-notifdb", "from": "notif", "to": "notifdb", "label": "theo preference", "variant": "dashed" },
+    { "id": "e-email", "from": "notifdb", "to": "email", "label": "log chưa xử lý", "variant": "emphasis" },
+    { "id": "e-wh", "from": "model", "to": "wsend", "label": "webhook active", "variant": "dashed" },
+    { "id": "e-rx", "from": "wsend", "to": "hookrx", "label": "POST + X-Plane-Signature", "variant": "security" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Phạm vi", "items": [
+      "Luồng tạo work item (create); cập nhật dùng cùng hai task nền",
+      "Bỏ qua: cập nhật phiên bản mô tả, cycle/module/intake, archive tự động hằng ngày"
+    ] },
+    { "dot": "rose", "title": "Điều kiện rẽ nhánh", "items": [
+      "Chỉ ADMIN/MEMBER được tạo; email theo UserNotificationPreference",
+      "Webhook chỉ gửi khi webhook is_active và bật loại sự kiện issue"
+    ] }
+  ]
+}
