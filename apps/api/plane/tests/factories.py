@@ -6,7 +6,7 @@ import factory
 from uuid import uuid4
 from django.utils import timezone
 
-from plane.db.models import User, Workspace, WorkspaceMember, Project, ProjectMember
+from plane.db.models import Issue, IssueType, Project, ProjectMember, State, User, Workspace, WorkspaceMember
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -84,3 +84,40 @@ class ProjectMemberFactory(factory.django.DjangoModelFactory):
     role = 20  # Admin role by default
     created_at = factory.LazyFunction(timezone.now)
     updated_at = factory.LazyFunction(timezone.now)
+
+
+class StateFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = State
+
+    name = factory.Sequence(lambda n: f"State {n}")
+    project = factory.SubFactory(ProjectFactory)
+    workspace = factory.SelfAttribute("project.workspace")
+    group = "backlog"
+
+
+class IssueTypeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = IssueType
+
+    name = factory.Sequence(lambda n: f"Type {n}")
+    workspace = factory.SubFactory(WorkspaceFactory)
+
+
+class IssueFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Issue
+
+    name = factory.Sequence(lambda n: f"Issue {n}")
+    project = factory.SubFactory(ProjectFactory)
+    workspace = factory.SelfAttribute("project.workspace")
+
+
+def epic_type_id(project) -> str:
+    """Seed the agile types into ``project`` and return the Epic type id (Epic needs no parent)."""
+    from plane.ee.work_item_types.constants import TypeKey
+    from plane.ee.work_item_types.registry import get_type
+    from plane.ee.work_item_types.seed import seed_project
+
+    seed_project(project)
+    return str(get_type(project.workspace_id, TypeKey.EPIC).id)

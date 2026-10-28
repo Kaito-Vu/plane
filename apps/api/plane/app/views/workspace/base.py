@@ -47,6 +47,7 @@ from plane.app.permissions import ROLE, allow_permission
 from plane.utils.constants import RESTRICTED_WORKSPACE_SLUGS
 from plane.license.utils.instance_value import get_configuration_value
 from plane.bgtasks.workspace_seed_task import workspace_seed
+from plane.ee.work_item_types.seed import seed_workspace
 from plane.utils.url import contains_url
 from plane.utils.csv_utils import sanitize_csv_row
 
@@ -121,6 +122,7 @@ class WorkSpaceViewSet(BaseViewSet):
 
             if serializer.is_valid(raise_exception=True):
                 serializer.save(owner=request.user)
+                seed_workspace(serializer.instance)
                 # Create Workspace member
                 _ = WorkspaceMember.objects.create(
                     workspace_id=serializer.data["id"],

@@ -1,3 +1,7 @@
 apps/api/plane/settings/common.py
 apps/api/plane/urls.py
 .gitattributes
+apps/api/plane/app/serializers/issue.py
+apps/api/plane/app/views/project/base.py
+apps/api/plane/app/views/workspace/base.py
+apps/api/plane/bgtasks/workspace_seed_task.py

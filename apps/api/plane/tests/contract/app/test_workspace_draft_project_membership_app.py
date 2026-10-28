@@ -34,6 +34,7 @@ from plane.db.models import (
     Workspace,
     WorkspaceMember,
 )
+from plane.tests.factories import epic_type_id
 
 
 def drafts_url(slug):
@@ -234,7 +235,11 @@ class TestDraftToIssueProjectMembership:
     def test_can_convert_draft_in_own_project(self, member_client, workspace, member, projects):
         draft = _draft(workspace, projects["own"], member)
 
-        response = member_client.post(draft_to_issue_url(workspace.slug, draft.id), {"name": "Issue"}, format="json")
+        response = member_client.post(
+            draft_to_issue_url(workspace.slug, draft.id),
+            {"name": "Issue", "type_id": epic_type_id(projects["own"])},
+            format="json",
+        )
 
         assert response.status_code == status.HTTP_201_CREATED, (
             f"Got {response.status_code}: {getattr(response, 'data', None)!r}"
@@ -393,7 +398,12 @@ class TestDraftCycleModuleProjectScope:
 
         response = member_client.post(
             draft_to_issue_url(workspace.slug, draft.id),
-            {"name": "Issue", "cycle_id": str(cycle.id), "module_ids": [str(module.id)]},
+            {
+                "name": "Issue",
+                "cycle_id": str(cycle.id),
+                "module_ids": [str(module.id)],
+                "type_id": epic_type_id(own),
+            },
             format="json",
         )
 
@@ -443,7 +453,11 @@ class TestDraftWorkspaceAdminProjectGuest:
             f"Got {response.status_code}: {getattr(response, 'data', None)!r}"
         )
 
-        response = admin_client.post(draft_to_issue_url(workspace.slug, draft.id), {"name": "Issue"}, format="json")
+        response = admin_client.post(
+            draft_to_issue_url(workspace.slug, draft.id),
+            {"name": "Issue", "type_id": epic_type_id(project)},
+            format="json",
+        )
         assert response.status_code == status.HTTP_201_CREATED, (
             f"Got {response.status_code}: {getattr(response, 'data', None)!r}"
         )

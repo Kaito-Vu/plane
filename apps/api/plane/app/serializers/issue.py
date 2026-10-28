@@ -42,7 +42,10 @@ from plane.db.models import (
     IssueDescriptionVersion,
     ProjectMember,
     EstimatePoint,
+    IssueType,
+    Project,
 )
+from plane.ee.work_item_types.validators import validate_work_item
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
@@ -86,6 +89,9 @@ class IssueCreateSerializer(BaseSerializer):
     )
     parent_id = serializers.PrimaryKeyRelatedField(
         source="parent", queryset=Issue.objects.all(), required=False, allow_null=True
+    )
+    type_id = serializers.PrimaryKeyRelatedField(
+        source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
     label_ids = serializers.ListField(
         child=serializers.PrimaryKeyRelatedField(queryset=Label.objects.all()),
@@ -203,6 +209,19 @@ class IssueCreateSerializer(BaseSerializer):
             ).exists()
         ):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
+
+        # EE work item types: type required/immutable + parent-child rules
+        if self.instance is None or "type" in attrs or "parent" in attrs:
+            issue_type = attrs.get("type", getattr(self.instance, "type", None))
+            parent = attrs.get("parent", getattr(self.instance, "parent", None))
+            validate_work_item(
+                project=Project.objects.get(pk=self.context["project_id"]),
+                issue_type_id=issue_type.id if issue_type else None,
+                parent_id=parent.id if parent else None,
+                attribute_values=None,
+                instance=self.instance,
+                triage=allow_triage,
+            )
 
         return attrs
 
