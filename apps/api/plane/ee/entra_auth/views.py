@@ -1,3 +1,4 @@
+import os
 import uuid
 from urllib.parse import urlencode, urljoin
 
@@ -12,6 +13,7 @@ from plane.authentication.utils.redirection_path import get_redirection_path
 from plane.authentication.utils.user_auth_workflow import post_user_auth_workflow
 from plane.ee.entra_auth.entra import EntraProvider
 from plane.license.models import Instance
+from plane.license.utils.instance_value import get_configuration_value
 from plane.utils.path_validator import validate_next_path
 
 SESSION_SURFACE = "entra_surface"
@@ -26,6 +28,11 @@ def _redirect_error(host, exc, next_path=None):
 
 def _error(code):
     return AuthenticationException(error_code=AUTHENTICATION_ERROR_CODES[code], error_message=code)
+
+
+def _entra_enabled():
+    (value,) = get_configuration_value([{"key": "IS_ENTRA_ENABLED", "default": os.environ.get("IS_ENTRA_ENABLED", "0")}])
+    return value == "1"
 
 
 def _instance_ready():
@@ -47,6 +54,8 @@ class _EntraInitiate(View):
 
         if not _instance_ready():
             return _redirect_error(host, _error("INSTANCE_NOT_CONFIGURED"), next_path)
+        if not _entra_enabled():
+            return _redirect_error(host, _error("ENTRA_NOT_CONFIGURED"), next_path)
         try:
             state = uuid.uuid4().hex
             provider = EntraProvider(request=request, state=state)
@@ -75,6 +84,8 @@ class EntraCallbackEndpoint(View):
         host = request.session.get("host") or base_host(request=request, is_app=is_app, is_space=is_space)
         next_path = request.session.get("next_path")
 
+        if not _entra_enabled():
+            return _redirect_error(host, _error("ENTRA_NOT_CONFIGURED"), next_path)
         if not validate_oauth_state(request=request, state=state) or not code:
             return _redirect_error(host, _error("ENTRA_PROVIDER_ERROR"), next_path)
         request.session.pop(SESSION_SURFACE, None)  # state validated: surface is single-use

@@ -24,6 +24,7 @@ class EntraProvider(OIDCProvider):
         tenant_id, client_id, client_secret, domains = get_configuration_value(
             [{"key": k, "default": os.environ.get(k)} for k in _KEYS]
         )
+        tenant_id = (tenant_id or "").strip().lower()  # Microsoft issuer/tid are lowercase
         if not (tenant_id and client_id and client_secret and _GUID_RE.match(tenant_id)):
             raise AuthenticationException(
                 error_code=AUTHENTICATION_ERROR_CODES["ENTRA_NOT_CONFIGURED"],

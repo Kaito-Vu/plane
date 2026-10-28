@@ -35,6 +35,8 @@ God Mode → Authentication → Microsoft Entra ID:
 - `ENABLE_SIGNUP` vẫn áp dụng: nếu tắt, người chưa có tài khoản Plane không tự tạo được qua Entra.
 - Đăng xuất khỏi Plane KHÔNG đăng xuất khỏi Microsoft.
 
+**Lưu ý về claim `email`:** Entra không đảm bảo `email` đã được xác minh hoặc bất biến (Microsoft khuyến cáo không dùng nó để phân quyền). Plane chỉ dùng `email` để tạo/khớp tài khoản, còn danh tính luôn là `oid`. Vì chỉ ghim một tenant, rủi ro giới hạn ở những người dùng tự sửa được thuộc tính mail của mình. Giảm thiểu: đặt `ENTRA_ALLOWED_EMAIL_DOMAINS`, hạn chế ai được sửa `mail` trong Entra, và có thể dùng optional claim `xms_edov` trong thay đổi sau.
+
 ## 4. Xử lý lỗi
 
 | Mã                          | Ý nghĩa                                                                                                             | Cách xử lý                                                           |

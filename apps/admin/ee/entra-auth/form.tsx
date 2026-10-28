@@ -150,7 +150,7 @@ export function InstanceEntraConfigForm(props: Props) {
   const onSubmit = async (formData: EntraConfigFormValues) => {
     const payload: Partial<EntraConfigFormValues> = {
       ...formData,
-      ENTRA_TENANT_ID: formData.ENTRA_TENANT_ID.trim(),
+      ENTRA_TENANT_ID: formData.ENTRA_TENANT_ID.trim().toLowerCase(),
       ENTRA_ALLOWED_EMAIL_DOMAINS: (formData.ENTRA_ALLOWED_EMAIL_DOMAINS ?? "").trim(),
     };
 

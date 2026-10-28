@@ -108,6 +108,15 @@ def test_not_configured(env, over):
     assert code_of(lambda: EntraProvider(req(), state="s")) == "ENTRA_NOT_CONFIGURED"
 
 
+def test_uppercase_tenant_is_normalised(env):
+    env["cfg"]["ENTRA_TENANT_ID"] = f"  {TENANT.upper()} "
+    p = EntraProvider(req(), state="s")
+    assert p.issuer == ISS and p.tenant_id == TENANT
+    assert p.get_auth_url()  # discovery issuer check passes
+    env["cfg"]["ENTRA_TENANT_ID"] = "NOT-A-GUID"
+    assert code_of(lambda: EntraProvider(req(), state="s")) == "ENTRA_NOT_CONFIGURED"
+
+
 def test_initiate_url_and_session(env):
     r = req()
     url = EntraProvider(r, state="st").get_auth_url()

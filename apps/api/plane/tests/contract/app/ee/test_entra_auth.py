@@ -23,6 +23,11 @@ def hosts(settings):
     settings.WEB_URL = None
 
 
+@pytest.fixture(autouse=True)
+def entra_enabled(monkeypatch):
+    monkeypatch.setenv("IS_ENTRA_ENABLED", "1")
+
+
 @pytest.fixture
 def instance(db):
     cache.clear()  # /api/instances/ is cached
@@ -195,6 +200,29 @@ class TestEntraInitiate:
         monkeypatch.delenv("ENTRA_TENANT_ID", raising=False)
         response = Client().get(reverse("entra-initiate"))
         assert _err(response.url) == [str(AUTHENTICATION_ERROR_CODES["ENTRA_NOT_CONFIGURED"])]
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+class TestEntraDisabled:
+    NOT_CONF = [str(AUTHENTICATION_ERROR_CODES["ENTRA_NOT_CONFIGURED"])]
+
+    @pytest.mark.parametrize("name", ["entra-initiate", "space-entra-initiate"])
+    def test_initiate_disabled(self, instance, monkeypatch, name):
+        monkeypatch.setenv("IS_ENTRA_ENABLED", "0")
+        with patch(PROVIDER) as provider:
+            response = Client().get(reverse(name))
+        assert _err(response.url) == self.NOT_CONF
+        provider.assert_not_called()
+
+    def test_callback_disabled(self, instance, monkeypatch):
+        monkeypatch.setenv("IS_ENTRA_ENABLED", "0")
+        client = _client(state="s", surface="app")
+        with patch(PROVIDER) as provider:
+            response = client.get(reverse(CALLBACK), {"code": "c", "state": "s"})
+        assert _err(response.url) == self.NOT_CONF
+        provider.assert_not_called()
+        assert "_auth_user_id" not in client.session
 
 
 @pytest.mark.contract
