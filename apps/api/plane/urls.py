@@ -16,9 +16,11 @@ from drf_spectacular.views import (
 handler404 = "plane.app.views.error_404.custom_404_view"
 
 urlpatterns = [
+    path("api/", include("plane.ee.urls")),
     path("api/", include("plane.app.urls")),
     path("api/public/", include("plane.space.urls")),
     path("api/instances/", include("plane.license.urls")),
+    path("api/v1/", include("plane.ee.api_urls")),
     path("api/v1/", include("plane.api.urls")),
     path("auth/", include("plane.authentication.urls")),
     path("", include("plane.web.urls")),
