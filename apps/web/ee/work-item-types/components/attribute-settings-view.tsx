@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { sortBy } from "lodash-es";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { draggable, dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import { Badge } from "@makeplane/propel/components/badge";
@@ -113,7 +114,10 @@ export function AttributeSettingsView(props: Props) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<{ id: string | undefined } | undefined>();
   const typeId = typeIds[typeKey];
-  const list = items.filter((a) => a.issue_type === typeId).toSorted((a, b) => a.sort_order - b.sort_order);
+  const list = sortBy(
+    items.filter((a) => a.issue_type === typeId),
+    "sort_order"
+  );
   const editingItem = editing?.id ? items.find((a) => a.id === editing.id) : undefined;
 
   const run = async (fn: () => Promise<unknown>) => {

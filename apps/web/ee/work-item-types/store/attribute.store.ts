@@ -1,4 +1,5 @@
 import { action, makeObservable, observable, runInAction } from "mobx";
+import { sortBy } from "lodash-es";
 import { computedFn } from "mobx-utils";
 import type { RootStore } from "@/store/root.store";
 import { PARENT_RULES_UI } from "../constants";
@@ -46,9 +47,10 @@ export class AttributeStore implements IAttributeStore {
   getAttributesByType = computedFn((projectId: string, typeKey: TWorkItemTypeKey): TAttribute[] => {
     const typeId = this.typeIdsByProject[projectId]?.[typeKey];
     if (!typeId) return [];
-    return [...(this.attributesByProject[projectId] ?? [])]
-      .filter((a) => a.issue_type === typeId && a.is_active)
-      .toSorted((a, b) => a.sort_order - b.sort_order);
+    return sortBy(
+      [...(this.attributesByProject[projectId] ?? [])].filter((a) => a.issue_type === typeId && a.is_active),
+      "sort_order"
+    );
   });
 
   // ponytail: parent rules are static per type key, so no project argument needed

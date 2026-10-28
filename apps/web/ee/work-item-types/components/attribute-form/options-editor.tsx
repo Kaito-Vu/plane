@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { sortBy } from "lodash-es";
 import { Button } from "@makeplane/propel/components/button";
 import { Input } from "@makeplane/propel/components/input";
 import { useTranslation } from "@plane/i18n";
@@ -18,7 +19,10 @@ type Props = {
 export function AttributeOptionsEditor({ attributeId, options, api, onChanged, disabled }: Props) {
   const { t } = useTranslation();
   const [newName, setNewName] = useState("");
-  const active = options.filter((o) => o.is_active).toSorted((a, b) => a.sort_order - b.sort_order);
+  const active = sortBy(
+    options.filter((o) => o.is_active),
+    "sort_order"
+  );
 
   const run = async (fn: () => Promise<unknown>) => {
     if (await runWithToast(t, fn)) await onChanged();
