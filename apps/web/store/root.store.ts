@@ -72,6 +72,9 @@ import type { IWorkspaceRootStore } from "./workspace";
 
 enableStaticRendering(typeof window === "undefined");
 
+import type { IAttributeStore } from "@/ee/work-item-types/store/attribute.store";
+import { AttributeStore } from "@/ee/work-item-types/store/attribute.store";
+
 export class CoreRootStore {
   workspaceRoot: IWorkspaceRootStore;
   projectRoot: IProjectRootStore;
@@ -103,6 +106,7 @@ export class CoreRootStore {
   workItemFilters: IWorkItemFilterStore;
   powerK: IPowerKStore;
   timelineStore: ITimelineStore;
+  attribute: IAttributeStore;
 
   constructor() {
     this.router = new RouterStore();
@@ -135,6 +139,7 @@ export class CoreRootStore {
     this.workItemFilters = new WorkItemFilterStore();
     this.powerK = new PowerKStore();
     this.timelineStore = new TimeLineStore(this);
+    this.attribute = new AttributeStore(this);
   }
 
   resetOnSignOut() {
@@ -169,6 +174,7 @@ export class CoreRootStore {
     this.workItemFilters = new WorkItemFilterStore();
     this.powerK = new PowerKStore();
     this.timelineStore = new TimeLineStore(this);
+    this.attribute = new AttributeStore(this);
   }
 }
 
