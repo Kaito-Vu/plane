@@ -16,3 +16,4 @@ apps/api/plane/bgtasks/issue_automation_task.py
 apps/api/plane/space/views/intake.py
 apps/api/plane/space/serializer/issue.py
 apps/api/plane/utils/instance_config_variables/extended.py
+apps/api/plane/authentication/adapter/error.py
