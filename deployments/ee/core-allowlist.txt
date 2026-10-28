@@ -18,3 +18,4 @@ apps/api/plane/urls.py
 apps/api/plane/utils/filters/filter_backend.py
 apps/api/plane/utils/grouper.py
 apps/api/plane/utils/paginator.py
+apps/web/store/root.store.ts
