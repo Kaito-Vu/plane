@@ -103,6 +103,8 @@ PENDING_BYPASS = {
     # dev-only dummy data generator; untyped issues are skipped by the signal anyway
     "bgtasks/dummy_data_task.py": "exempt (dev dummy data bulk_update parent)",
 }
+# Any of these names counts as routing through the EE write gate (validate_intake_type: v1 intake create).
+GATES = ("validate_work_item", "validate_issue_payload", "validate_intake_type")
 WRITE = re.compile(
     r"\bIssue\.objects\.(create|bulk_create)\(|\bIssue\.objects\.bulk_update\([^)]*parent|\.update\(parent"
 )
@@ -126,7 +128,7 @@ def test_core_issue_writers_call_validate_work_item():
             text = path.read_text(encoding="utf-8")
             if path.match("app/views/page/base.py"):  # `.update(parent=None)` there is Page.parent
                 continue
-            if WRITE.search(text) and "validate_work_item" not in text and "validate_issue_payload" not in text:
+            if WRITE.search(text) and not any(g in text for g in GATES):
                 offenders.add(path.relative_to(root).as_posix())
     assert offenders == set(PENDING_BYPASS)
 
