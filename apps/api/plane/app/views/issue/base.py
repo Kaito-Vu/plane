@@ -10,6 +10,7 @@ import json
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 from django.db.models import (
     Count,
     Exists,
@@ -792,7 +793,8 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
         ModuleIssue.objects.filter(issue__in=issues).delete()
 
         # Finally, delete the issues themselves
-        [soft_delete_subtree(issue) for issue in issues]  # EE: whole subtrees
+        with transaction.atomic():  # EE: whole subtrees, all or nothing
+            [soft_delete_subtree(issue) for issue in issues]
 
         return Response(
             {"message": f"{total_issues} issues were deleted"},

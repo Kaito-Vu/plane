@@ -19,7 +19,7 @@ from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import IntakeIssue, Issue, Project, State
 from plane.db.models.intake import IntakeIssueStatus
 from plane.utils.exception_logger import log_exception
-from plane.ee.work_item_types.tree_ops import auto_archive_candidates
+from plane.ee.work_item_types.tree_ops import archive_subtree, auto_archive_candidates
 
 logger = logging.getLogger("plane.worker")
 
@@ -72,6 +72,7 @@ def archive_old_issues():
                 # Bulk Update the issues and log the activity
                 if issues_to_update:
                     Issue.objects.bulk_update(issues_to_update, ["archived_at"], batch_size=100)
+                    [archive_subtree(issue) for issue in issues_to_update]  # EE: no live children under archived
                     _ = [
                         issue_activity.delay(
                             type="issue.activity.updated",

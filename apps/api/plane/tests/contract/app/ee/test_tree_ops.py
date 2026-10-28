@@ -92,3 +92,21 @@ def test_auto_archive_skips_open_trees(project, story, mk, states):
     archive_old_issues()
     assert _row(open_story).archived_at is None
     assert _row(done_story).archived_at is not None
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_auto_archive_archives_candidate_subtree(project, story, mk, caplog):
+    project.archive_in = 1
+    project.save()
+    done_story = mk(T.USER_STORY, parent=story.parent, state="done")
+    fresh_task = mk(T.TASK, parent=done_story, state="done")
+    open_story = mk(T.USER_STORY, parent=story.parent, state="done")
+    mk(T.TASK, parent=open_story, state="doing")
+    old = timezone.now() - timedelta(days=60)
+    Issue.objects.filter(pk__in=[done_story.pk, open_story.pk]).update(updated_at=old)
+    with caplog.at_level("INFO", logger="plane.worker"):
+        archive_old_issues()
+    # fresh_task is too recent to be a candidate itself, but goes with its archived parent
+    assert _row(done_story).archived_at is not None and _row(fresh_task).archived_at is not None
+    assert str(open_story.id) in caplog.text

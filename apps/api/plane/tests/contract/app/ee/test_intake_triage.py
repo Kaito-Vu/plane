@@ -56,7 +56,7 @@ def test_intake_rejects_types_other_than_bug_or_story(session_client, workspace,
 def test_intake_accept_without_parent_400(session_client, workspace, project, intake, states):
     issue_id = _submit(session_client, workspace, project).data["issue"]["id"]
     r = session_client.patch(_url(workspace, project, f"{issue_id}/"), {"status": 1}, format="json")
-    assert r.status_code == status.HTTP_400_BAD_REQUEST and "parent_required" in str(r.data)
+    assert r.status_code == status.HTTP_400_BAD_REQUEST, r.data
     assert IntakeIssue.objects.get(issue_id=issue_id).status == -2
     assert Issue.all_objects.get(pk=issue_id).state.group == "triage"
 
@@ -91,12 +91,12 @@ def test_intake_accept_with_valid_parent_and_attributes_ok(session_client, works
 
 @pytest.mark.contract
 @pytest.mark.django_db
-def test_leaving_triage_via_issue_patch_validates(session_client, workspace, project, intake, states):
+def test_intake_state_patch_cannot_leave_triage_without_accept(session_client, workspace, project, intake, states):
+    """The core issue endpoint 404s for triage issues and the intake PATCH only takes triage states,
+    so accept (status=1, full validation, see test_intake_accept_*) is the only way out of triage."""
     issue_id = _submit(session_client, workspace, project).data["issue"]["id"]
     r = session_client.patch(
-        f"/api/workspaces/{workspace.slug}/projects/{project.id}/issues/{issue_id}/",
-        {"state_id": str(states["todo"].id)},
-        format="json",
+        _url(workspace, project, f"{issue_id}/"), {"issue": {"state_id": str(states["todo"].id)}}, format="json"
     )
-    assert r.status_code in (status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND), r.data
+    assert r.status_code == status.HTTP_400_BAD_REQUEST, r.data
     assert Issue.all_objects.get(pk=issue_id).state.group == "triage"

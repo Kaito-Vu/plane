@@ -8,6 +8,7 @@ import json
 
 # Django imports
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 from django.db.models import OuterRef, Q, Prefetch, Exists, Subquery, Count
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -274,8 +275,9 @@ class IssueArchiveViewSet(BaseViewSet):
             origin=base_host(request=request, is_app=True),
         )
         issue.archived_at = timezone.now().date()
-        issue.save()
-        archive_subtree(issue)  # EE
+        with transaction.atomic():  # EE: root + subtree together
+            issue.save()
+            archive_subtree(issue)
 
         return Response({"archived_at": str(issue.archived_at)}, status=status.HTTP_200_OK)
 
@@ -340,7 +342,8 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
             )
             issue.archived_at = timezone.now().date()
             bulk_archive_issues.append(issue)
-        Issue.objects.bulk_update(bulk_archive_issues, ["archived_at"])
-        [archive_subtree(issue) for issue in bulk_archive_issues]  # EE
+        with transaction.atomic():  # EE: roots + subtrees together
+            Issue.objects.bulk_update(bulk_archive_issues, ["archived_at"])
+            [archive_subtree(issue) for issue in bulk_archive_issues]
 
         return Response({"archived_at": str(timezone.now().date())}, status=status.HTTP_200_OK)

@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
@@ -8,6 +10,7 @@ from plane.db.models import Issue
 from .constants import MAX_DEPTH
 
 DONE_GROUPS = ("completed", "cancelled")
+logger = logging.getLogger("plane.worker")
 
 
 def _descendant_ids(root_ids, **filters) -> list:
@@ -72,4 +75,6 @@ def auto_archive_candidates(qs: QuerySet) -> QuerySet:
         while parent is not None and parent not in blocked and hops <= MAX_DEPTH:
             blocked.add(parent)
             parent, hops = parent_of.get(parent), hops + 1
+    for skipped in qs.filter(id__in=blocked).values_list("id", flat=True):
+        logger.info("auto archive/close: skipped issue %s, it has open descendants", skipped)
     return qs.exclude(id__in=blocked)
