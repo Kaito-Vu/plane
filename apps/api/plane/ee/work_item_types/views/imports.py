@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import transaction
 from rest_framework import status
 from rest_framework.response import Response
@@ -34,13 +36,47 @@ def _row_data(row: ImportRow) -> dict:
     }
 
 
+_LIMITS = {"ref": 255, "type": 64, "name": 255, "parent_ref": 255}
+
+
+class RowInvalid(Exception):
+    pass
+
+
 def _fill(row: ImportRow, payload: dict) -> None:
-    """Known columns map to fields; every other key is merged into row.data (passed to IssueCreateSerializer)."""
-    for col in _COLUMNS:
+    """Known columns map to fields; every other key is merged into row.data (passed to IssueCreateSerializer).
+    Raises RowInvalid on bad types/lengths/uuid. Setting parent_ref clears parent_id and vice versa."""
+    if not isinstance(payload, dict):
+        raise RowInvalid("row must be an object")
+    for col, limit in _LIMITS.items():
+        if col in payload:
+            value = payload[col]
+            if value is None and col == "parent_ref":
+                pass
+            elif not isinstance(value, str) or len(value) > limit:
+                raise RowInvalid(f"{col} must be a string of at most {limit} characters")
+    pid = payload.get("parent_id")
+    if pid is not None:
+        try:
+            pid = uuid.UUID(str(pid)) if isinstance(pid, str) else None
+        except ValueError:
+            pid = None
+        if pid is None:
+            raise RowInvalid("parent_id must be a valid UUID")
+    for col in ("ref", "type", "name"):
         if col in payload:
             setattr(row, col, payload[col])
-    extra = {k: v for k, v in payload.items() if k not in _COLUMNS and k not in ("id", "errors")}
-    row.data = {**row.data, **extra}
+    if payload.get("parent_ref"):
+        row.parent_ref, row.parent_id = payload["parent_ref"], None
+    elif pid is not None:
+        row.parent_ref, row.parent_id = None, pid
+    else:
+        if "parent_ref" in payload:
+            row.parent_ref = None
+        if "parent_id" in payload:
+            row.parent_id = None
+    skip = (*_COLUMNS, "id", "errors", "data")
+    row.data = {**row.data, **{k: v for k, v in payload.items() if k not in skip}}
 
 
 class _Base(BaseAPIView):
@@ -64,17 +100,20 @@ class ImportRowsEndpoint(_Base):
         batch = self.batch(slug, project_id, pk)
         if batch is None:
             return _not_found("Import batch")
-        if batch.status != ImportBatch.DRAFT:
-            return _err("batch_already_committed", "Batch is not a draft")
+        if batch.status == ImportBatch.COMMITTED:
+            return _err("batch_already_committed", "Batch was already committed")
         rows = request.data.get("rows") if isinstance(request.data, dict) else request.data
-        if not isinstance(rows, list) or not rows or not all(isinstance(r, dict) for r in rows):
+        if not isinstance(rows, list) or not rows:
             return _err("invalid_rows", "Send a non-empty list of row objects")
         if batch.rows.count() + len(rows) > MAX_ITEMS:
             return _err("too_many_rows", f"A batch holds at most {MAX_ITEMS} rows")
         objs = []
-        for payload in rows:
+        for index, payload in enumerate(rows):
             row = ImportRow(batch=batch, project_id=batch.project_id, workspace_id=batch.workspace_id)
-            _fill(row, payload)
+            try:
+                _fill(row, payload)
+            except RowInvalid as exc:
+                return _err("invalid_rows", f"Row {index}: {exc}", details={"index": index})
             objs.append(row)
         ImportRow.objects.bulk_create(objs)
         return Response([_row_data(r) for r in objs], status=status.HTTP_201_CREATED)
@@ -86,11 +125,12 @@ class ImportRowDetailEndpoint(_Base):
         row = batch.rows.filter(pk=row_id).first() if batch else None
         if row is None:
             return _not_found("Import row")
-        if batch.status != ImportBatch.DRAFT:
-            return _err("batch_already_committed", "Batch is not a draft")
-        if not isinstance(request.data, dict):
-            return _err("invalid_rows", "Send a row object")
-        _fill(row, request.data)
+        if batch.status == ImportBatch.COMMITTED:
+            return _err("batch_already_committed", "Batch was already committed")
+        try:
+            _fill(row, request.data)
+        except RowInvalid as exc:
+            return _err("invalid_rows", str(exc))
         row.errors = []
         row.save()
         return Response(_row_data(row))
@@ -101,6 +141,10 @@ class ImportValidateEndpoint(_Base):
         batch = self.batch(slug, project_id, pk)
         if batch is None:
             return _not_found("Import batch")
+        if batch.status == ImportBatch.COMMITTED:
+            return _err("batch_already_committed", "Batch was already committed")
+        if not batch.rows.exists():
+            return _err("empty_batch", "Batch has no rows")
         errors = validate_batch(batch, request.user)
         return Response({"valid": not errors, "errors": errors})
 
@@ -118,9 +162,11 @@ class ImportCommitEndpoint(_Base):
             if batch.status == ImportBatch.COMMITTED:
                 return _err("batch_already_committed", "Batch was already committed")
             if not batch.rows.exists():
-                return _err("invalid_rows", "Batch has no rows")
+                return _err("empty_batch", "Batch has no rows")
             errors = validate_batch(batch, request.user)
             if errors:
                 return _err("batch_invalid", "Fix invalid rows first", details={"errors": errors})
             result = commit_batch(batch, request.user)
+            if result["errors"]:
+                return _err("commit_failed", "Commit failed", details={"errors": result["errors"]})
         return Response(result, status=status.HTTP_201_CREATED)

@@ -2,7 +2,7 @@ import pytest
 from rest_framework import status
 
 from plane.db.models import Issue, Project, ProjectMember
-from plane.ee.models import Attribute, ImportRow
+from plane.ee.models import Attribute, ImportBatch, ImportRow
 from plane.ee.work_item_types.constants import TypeKey as T
 from plane.ee.work_item_types.registry import get_type
 from plane.ee.work_item_types.seed import seed_project
@@ -151,3 +151,112 @@ def test_other_project_ids_are_404_and_non_member_403(session_client, workspace,
 def test_guest_cannot_import(session_client, workspace, project, create_user):
     ProjectMember.objects.filter(project=project, member=create_user).update(role=5)
     assert session_client.post(_url(workspace, project), {}, format="json").status_code == 403
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_wrong_parent_type_code(session_client, workspace, project):
+    rows = [{"ref": "e", "type": "epic", "name": "E"}, {"ref": "t", "type": "task", "name": "T", "parent_ref": "e"}]
+    bid = _batch(session_client, workspace, project, rows)
+    r = session_client.post(_url(workspace, project, f"{bid}/validate/"))
+    assert [(e["ref"], e["code"]) for e in r.data["errors"]] == [("t", "parent_type_invalid")]
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_parent_id_of_other_project_rejected(session_client, workspace, project, create_user):
+    other = Project.objects.create(name="Q", identifier="Q", workspace=workspace, created_by=create_user)
+    ProjectMember.objects.create(project=other, member=create_user, workspace=workspace, role=20)
+    seed_project(other)
+    bid = _batch(session_client, workspace, other, [{"ref": "e", "type": "epic", "name": "E"}])
+    session_client.post(_url(workspace, other, f"{bid}/commit/"))
+    foreign = Issue.objects.get(project=other)
+    rows = [{"ref": "f", "type": "feature", "name": "F", "parent_id": str(foreign.id)}]
+    bid = _batch(session_client, workspace, project, rows)
+    r = session_client.post(_url(workspace, project, f"{bid}/commit/"))
+    assert r.status_code == status.HTTP_400_BAD_REQUEST
+    assert not Issue.objects.filter(project=project).exists()
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_committed_batch_rejects_edits(session_client, workspace, project):
+    bid = _batch(session_client, workspace, project, GOOD)
+    session_client.post(_url(workspace, project, f"{bid}/commit/"))
+    row = ImportRow.objects.filter(batch_id=bid).first()
+    r = session_client.patch(_url(workspace, project, f"{bid}/rows/{row.id}/"), {"name": "x"}, format="json")
+    assert (r.status_code, r.data["error_code"]) == (400, "batch_already_committed")
+    r = session_client.post(_url(workspace, project, f"{bid}/rows/"), {"rows": GOOD}, format="json")
+    assert (r.status_code, r.data["error_code"]) == (400, "batch_already_committed")
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_failed_batch_can_be_edited_and_retried(session_client, workspace, project, monkeypatch):
+    from plane.ee.work_item_types import importer
+
+    real = importer.apply_bulk_tree
+    calls = []
+
+    def flaky(project, items, *, dry_run, actor):
+        if dry_run:
+            return real(project, items, dry_run=True, actor=actor)
+        calls.append(1)
+        return {"created": {}, "errors": [{"ref": "e", "code": "boom", "message": "boom"}]}
+
+    monkeypatch.setattr(importer, "apply_bulk_tree", flaky)
+    bid = _batch(session_client, workspace, project, GOOD)
+    r = session_client.post(_url(workspace, project, f"{bid}/commit/"))
+    assert (r.status_code, r.data["error_code"]) == (400, "commit_failed")
+    assert ImportBatch.objects.get(pk=bid).status == "failed"
+    row = ImportRow.objects.filter(batch_id=bid).first()
+    r = session_client.patch(_url(workspace, project, f"{bid}/rows/{row.id}/"), {"name": "E2"}, format="json")
+    assert r.status_code == 200
+    assert (
+        session_client.post(
+            _url(workspace, project, f"{bid}/rows/"), {"rows": [{"ref": "x"}]}, format="json"
+        ).status_code
+        == 201
+    )
+    monkeypatch.setattr(importer, "apply_bulk_tree", real)
+    ImportRow.objects.filter(batch_id=bid, ref="x").delete()
+    assert session_client.post(_url(workspace, project, f"{bid}/commit/")).status_code == 201
+    assert ImportBatch.objects.get(pk=bid).status == "committed"
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_bad_row_input_is_400_not_500(session_client, workspace, project):
+    bid = _batch(session_client, workspace, project, GOOD)
+    url = _url(workspace, project, f"{bid}/rows/")
+    for bad in (["str"], [{"name": "x" * 300}], [{"ref": 5}], [{"parent_id": "nope"}], [{"type": ["a"]}]):
+        r = session_client.post(url, {"rows": bad}, format="json")
+        assert r.status_code == 400 and r.data["error_code"] == "invalid_rows", bad
+    row = ImportRow.objects.filter(batch_id=bid).first()
+    r = session_client.patch(url + f"{row.id}/", {"parent_id": "nope"}, format="json")
+    assert r.status_code == 400
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_patch_parent_ref_clears_parent_id_and_empty_validate(session_client, workspace, project):
+    empty = _batch(session_client, workspace, project)
+    r = session_client.post(_url(workspace, project, f"{empty}/validate/"))
+    assert (r.status_code, r.data["error_code"]) == (400, "empty_batch")
+    bid = _batch(session_client, workspace, project, GOOD)
+    f = ImportRow.objects.get(batch_id=bid, ref="f")
+    u = str(f.id)  # any uuid
+    url = _url(workspace, project, f"{bid}/rows/{f.id}/")
+    session_client.patch(url, {"parent_id": u}, format="json")
+    f.refresh_from_db()
+    assert f.parent_ref is None and str(f.parent_id) == u
+    session_client.patch(url, {"parent_ref": "e", "data": {"x": 1}}, format="json")
+    f.refresh_from_db()
+    assert f.parent_ref == "e" and f.parent_id is None and "data" not in f.data
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_member_role_15_allowed(session_client, workspace, project, create_user):
+    ProjectMember.objects.filter(project=project, member=create_user).update(role=15)
+    assert session_client.post(_url(workspace, project), {}, format="json").status_code == 201
