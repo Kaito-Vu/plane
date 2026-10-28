@@ -236,3 +236,11 @@ def test_allowed_domains_enforced(env):
 def test_token_endpoint_error_maps_to_provider_error(env):
     env["post"].side_effect = requests.ConnectionError()
     assert code_of(lambda: EntraProvider(req(callback_session()), code="c").set_token_data()) == "ENTRA_PROVIDER_ERROR"
+
+
+@pytest.mark.parametrize("key", ["token_endpoint", "authorization_endpoint"])
+def test_discovery_endpoint_host_pinned(env, key):
+    env["get"].return_value = MagicMock(
+        json=lambda: {**DISCOVERY, key: "https://evil.example/x"}, raise_for_status=lambda: None
+    )
+    assert code_of(lambda: EntraProvider(req(), state="s").get_auth_url()) == "ENTRA_PROVIDER_ERROR"

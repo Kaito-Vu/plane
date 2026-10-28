@@ -16,7 +16,9 @@ SESSION_NONCE = "entra_nonce"
 SESSION_VERIFIER = "entra_code_verifier"
 _TIMEOUT = 10
 _DISCOVERY_TTL = 3600
-_JWKS_HOST = "login.microsoftonline.com"
+_HOST = "login.microsoftonline.com"
+# every endpoint we send secrets to or trust keys from must live on Microsoft's host
+_ENDPOINTS = ("authorization_endpoint", "token_endpoint", "jwks_uri")
 
 
 class OIDCProvider(OauthAdapter):
@@ -63,7 +65,7 @@ class OIDCProvider(OauthAdapter):
                 not isinstance(doc, dict)
                 or doc.get("issuer") != self.issuer
                 or not all(isinstance(doc.get(k), str) for k in ("authorization_endpoint", "token_endpoint", "jwks_uri"))
-                or urlparse(doc["jwks_uri"]).hostname != _JWKS_HOST
+                or any(urlparse(doc[k]).hostname != _HOST for k in _ENDPOINTS)
             ):
                 self.logger.warning("OIDC discovery document rejected")
                 raise self._fail()

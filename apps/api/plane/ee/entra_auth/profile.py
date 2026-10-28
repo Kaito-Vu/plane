@@ -23,7 +23,8 @@ def claims_to_user_data(claims: Mapping[str, Any], allowed_domains: Sequence[str
 
     email = None
     for key in ("email", "preferred_username"):
-        value = (claims.get(key) or "").strip().lower()
+        value = claims.get(key)
+        value = value.strip().lower() if isinstance(value, str) else ""
         if _EMAIL_RE.match(value):
             email = value
             break
@@ -38,7 +39,7 @@ def claims_to_user_data(claims: Mapping[str, Any], allowed_domains: Sequence[str
             "provider_id": oid,
             "email": email,
             "avatar": GRAPH_PHOTO_URL,
-            "first_name": (claims.get("name") or "").strip() or email.split("@")[0],
+            "first_name": (claims["name"].strip() if isinstance(claims.get("name"), str) else "") or email.split("@")[0],
             "last_name": "",
             "is_password_autoset": True,
         },

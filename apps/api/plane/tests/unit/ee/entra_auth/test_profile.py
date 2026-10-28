@@ -64,3 +64,9 @@ class TestProfile:
     def test_parse_domains(self):
         assert parse_domains(" ETC.vn, ,a.com ") == ["etc.vn", "a.com"]
         assert parse_domains(None) == []
+
+
+@pytest.mark.unit
+def test_non_string_claims_do_not_crash():
+    d = claims_to_user_data({"oid": "o", "email": 5, "preferred_username": "a@etc.vn", "name": 7}, [])
+    assert d["email"] == "a@etc.vn" and d["user"]["first_name"] == "a"
