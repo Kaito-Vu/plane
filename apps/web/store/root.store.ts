@@ -22,6 +22,8 @@ import { WorkspaceRootStore } from "@/store/workspace";
 import type { ITimelineStore } from "./timeline/timeline.store";
 import { TimeLineStore } from "./timeline/timeline.store";
 // stores
+import type { IAttributeStore } from "@/ee/work-item-types/store/attribute.store";
+import { AttributeStore } from "@/ee/work-item-types/store/attribute.store";
 import type { ICycleStore } from "./cycle.store";
 import { CycleStore } from "./cycle.store";
 import type { ICycleFilterStore } from "./cycle_filter.store";
@@ -71,9 +73,6 @@ import { UserStore } from "./user";
 import type { IWorkspaceRootStore } from "./workspace";
 
 enableStaticRendering(typeof window === "undefined");
-
-import type { IAttributeStore } from "@/ee/work-item-types/store/attribute.store";
-import { AttributeStore } from "@/ee/work-item-types/store/attribute.store";
 
 export class CoreRootStore {
   workspaceRoot: IWorkspaceRootStore;

@@ -1,6 +1,12 @@
 import { API_BASE_URL } from "@plane/constants";
 import { APIService } from "@/services/api.service";
-import type { TAttribute, TAttributeOption, TAttributeTemplate, TAttributeValues } from "../types";
+import type {
+  TAttribute,
+  TProjectWorkItemType,
+  TAttributeOption,
+  TAttributeTemplate,
+  TAttributeValues,
+} from "../types";
 
 type TOptionPayload = Partial<Omit<TAttributeOption, "id">>;
 
@@ -83,6 +89,10 @@ export class AttributeService extends APIService {
   }
   deleteOption(slug: string, projectId: string, id: string, optionId: string) {
     return this.req<void>(this.delete(`${this.proj(slug, projectId)}/${id}/options/${optionId}/`));
+  }
+
+  fetchProjectTypes(slug: string, projectId: string) {
+    return this.req<TProjectWorkItemType[]>(this.get(`${this.ws(slug)}/projects/${projectId}/work-item-types/`));
   }
 
   // values

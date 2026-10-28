@@ -53,3 +53,12 @@ export type TEeError = {
   message: string;
   details?: unknown;
 };
+
+/** Item of GET workspaces/<slug>/projects/<pid>/work-item-types/ */
+export type TProjectWorkItemType = {
+  id: string;
+  key: TWorkItemTypeKey;
+  name: string;
+  level: number;
+  is_epic: boolean;
+};
