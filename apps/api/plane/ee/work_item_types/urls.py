@@ -9,6 +9,13 @@ from .views.attributes import (
     AttributeReorderEndpoint,
 )
 from .views.bulk_tree import BulkTreeEndpoint
+from .views.imports import (
+    ImportBatchEndpoint,
+    ImportCommitEndpoint,
+    ImportRowDetailEndpoint,
+    ImportRowsEndpoint,
+    ImportValidateEndpoint,
+)
 from .views.templates import (
     AttributeTemplateDetailEndpoint,
     AttributeTemplateListEndpoint,
@@ -19,6 +26,7 @@ from .views.templates import (
 from .views.values import IssueAttributeValuesEndpoint
 
 W = "workspaces/<str:slug>/"
+I = W + "projects/<uuid:project_id>/imports/"  # noqa: E741
 P = W + "projects/<uuid:project_id>/attributes/"
 
 urlpatterns = [
@@ -34,6 +42,11 @@ urlpatterns = [
         IssueAttributeValuesEndpoint.as_view(),
     ),
     path(W + "projects/<uuid:project_id>/issues/bulk-tree/", BulkTreeEndpoint.as_view()),
+    path(I, ImportBatchEndpoint.as_view()),
+    path(I + "<uuid:pk>/rows/", ImportRowsEndpoint.as_view()),
+    path(I + "<uuid:pk>/rows/<uuid:row_id>/", ImportRowDetailEndpoint.as_view()),
+    path(I + "<uuid:pk>/validate/", ImportValidateEndpoint.as_view()),
+    path(I + "<uuid:pk>/commit/", ImportCommitEndpoint.as_view()),
     path(P, AttributeListEndpoint.as_view()),
     path(P + "reorder/", AttributeReorderEndpoint.as_view()),
     path(P + "apply-template/", AttributeApplyTemplateEndpoint.as_view()),
