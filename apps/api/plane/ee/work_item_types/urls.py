@@ -23,6 +23,7 @@ from .views.templates import (
     AttributeTemplateOptionEndpoint,
     AttributeTemplateReorderEndpoint,
 )
+from .views.types import ProjectTypesEndpoint
 from .views.values import IssueAttributeValuesEndpoint
 
 W = "workspaces/<str:slug>/"
@@ -47,6 +48,7 @@ urlpatterns = [
     path(I + "<uuid:pk>/rows/<uuid:row_id>/", ImportRowDetailEndpoint.as_view()),
     path(I + "<uuid:pk>/validate/", ImportValidateEndpoint.as_view()),
     path(I + "<uuid:pk>/commit/", ImportCommitEndpoint.as_view()),
+    path(W + "projects/<uuid:project_id>/work-item-types/", ProjectTypesEndpoint.as_view(), name="ee-work-item-types"),
     path(P, AttributeListEndpoint.as_view()),
     path(P + "reorder/", AttributeReorderEndpoint.as_view()),
     path(P + "apply-template/", AttributeApplyTemplateEndpoint.as_view()),
