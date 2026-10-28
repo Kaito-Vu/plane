@@ -700,7 +700,10 @@ class BasePaginator:
                 # paginators below — prevents unauthenticated ORM field-name
                 # injection via user-supplied group_by/sub_group_by query params
                 # (GHSA-wwgj-929g-42cm).
-                if group_by_field_name not in ISSUE_GROUP_BY_ALLOWLIST and not is_ee_group_field(group_by_field_name):
+                ee_qs = paginator_kwargs.get("queryset")
+                if group_by_field_name not in ISSUE_GROUP_BY_ALLOWLIST and not is_ee_group_field(
+                    group_by_field_name, ee_qs
+                ):
                     raise ParseError(detail=f"Invalid group_by field: {group_by_field_name}")
 
                 paginator_kwargs["group_by_field_name"] = group_by_field_name
@@ -709,7 +712,7 @@ class BasePaginator:
 
                 if sub_group_by_field_name:
                     sub_name = sub_group_by_field_name
-                    if sub_name not in ISSUE_GROUP_BY_ALLOWLIST and not is_ee_group_field(sub_name):
+                    if sub_name not in ISSUE_GROUP_BY_ALLOWLIST and not is_ee_group_field(sub_name, ee_qs):
                         raise ParseError(detail=f"Invalid sub_group_by field: {sub_group_by_field_name}")
 
                     paginator_kwargs["sub_group_by_field_name"] = sub_group_by_field_name

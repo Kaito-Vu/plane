@@ -146,6 +146,7 @@ class SubIssuesEndpoint(BaseAPIView):
         sub_issues = list(
             sub_issues.values(
                 "id",
+                "type_id",
                 "name",
                 "state_id",
                 "sort_order",

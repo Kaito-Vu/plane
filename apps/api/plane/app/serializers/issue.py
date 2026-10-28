@@ -816,6 +816,7 @@ class IssueSerializer(DynamicBaseSerializer):
         model = Issue
         fields = [
             "id",
+            "type_id",
             "name",
             "state_id",
             "sort_order",

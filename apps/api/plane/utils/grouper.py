@@ -106,6 +106,7 @@ def issue_on_results(
 
     required_fields: List[str] = [
         "id",
+        "type_id",
         "name",
         "state_id",
         "sort_order",

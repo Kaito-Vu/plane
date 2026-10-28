@@ -9,7 +9,8 @@ import uuid
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
-from django.db.models import OuterRef, Q, Subquery
+from django.db.models import OuterRef, Q, Subquery, UUIDField
+from django.db.models.functions import Cast
 from django.utils.dateparse import parse_date
 
 from plane.db.models import ProjectMember
@@ -21,6 +22,8 @@ from .exceptions import WorkItemValidationError
 
 PREFIX = "attribute:"
 GROUP_PREFIX = "attr_"
+TYPE_GROUP = "ee_type"
+_GROUP_NAME = re.compile(r"attr_[0-9a-f]{32}")
 TYPE_KEYS = {"type", "type__in"}
 GROUPABLE = {"select", "member", "boolean"}
 _COLUMN = {
@@ -74,27 +77,33 @@ def _boolean(raw: Any) -> bool:
     return text == "true"
 
 
+def _range(attribute: Attribute, raw: Any, parse) -> list:
+    values = [parse(v) for v in _list(raw)]
+    if len(values) != 2:
+        raise _bad("invalid_filter", "Range needs two values 'from,to'", attribute_id=str(attribute.id))
+    return values
+
+
 def build_attribute_q(attribute: Attribute, op: str, raw: Any) -> Q:
     """Q on Issue: issues whose value for `attribute` matches `op`/`raw`."""
     ft = attribute.field_type
     column = _COLUMN[ft]
     if ft in ("text", "textarea", "url") and op == "contains":
         lookup = {f"{column}__icontains": str(raw)}
-    elif ft == "number" and op in ("exact", "range"):
-        values = [_number(v) for v in (_list(raw) if op == "range" else [raw])]
-        lookup = {f"{column}__{op}": values if op == "range" else values[0]}
-    elif ft in ("date", "datetime") and op in ("exact", "range"):
-        values = [_date(v) for v in (_list(raw) if op == "range" else [raw])]
-        lookup = {f"{column}__date__{op}": values if op == "range" else values[0]}
-    elif ft == "boolean" and op == "exact":
-        lookup = {column: _boolean(raw)}
+    elif ft == "number" and op == "exact":
+        lookup = {column: _number(raw)}
+    elif ft == "number" and op == "range":
+        lookup = {f"{column}__range": _range(attribute, raw, _number)}
+    elif ft in ("date", "datetime") and op == "exact":
+        lookup = {f"{column}__date": _date(raw)}
+    elif ft in ("date", "datetime") and op == "range":
+        lookup = {f"{column}__date__range": _range(attribute, raw, _date)}
+    elif ft == "boolean" and op in ("exact", "in"):
+        lookup = {f"{column}__in": [_boolean(v) for v in (_list(raw) if op == "in" else [raw])]}
     elif ft in ("select", "multi_select", "member", "multi_member") and op in ("exact", "in"):
-        values = [_uuid(v) for v in (_list(raw) if op == "in" else [raw])]
-        lookup = {f"{column}__in": values}
+        lookup = {f"{column}__in": [_uuid(v) for v in (_list(raw) if op == "in" else [raw])]}
     else:
         raise _bad("invalid_filter", f"Operator '{op}' is not supported for {ft}", attribute_id=str(attribute.id))
-    if op == "range" and len(lookup[next(iter(lookup))]) != 2:
-        raise _bad("invalid_filter", "Range needs two values 'from,to'", attribute_id=str(attribute.id))
     return Q(id__in=AttributeValue.objects.filter(attribute=attribute, **lookup).values("issue_id"))
 
 
@@ -140,12 +149,15 @@ def split_ee_conditions(conditions: dict, view) -> tuple[Q, dict]:
 
 
 def resolve_group_by(queryset, group_by, sub_group_by, project_id):
-    """Map `type` -> type_id and `attribute:<id>` -> an annotated value column."""
+    """Map `type` / `attribute:<id>` to an annotation on the queryset. Only names that are
+    real annotations pass is_ee_group_field, so hand-crafted `attr_*`/`ee_type` get a 400."""
 
     def resolve(key):
         nonlocal queryset
         if key == "type":
-            return "type_id"
+            # Cast: a bare F("type_id") alias collides with type_id in values() (Django dedupes the column)
+            queryset = queryset.annotate(**{TYPE_GROUP: Cast("type_id", UUIDField())})
+            return TYPE_GROUP
         if not key or not key.startswith(PREFIX):
             return key
         attribute = _project_attribute(key[len(PREFIX) :], project_id)
@@ -164,21 +176,27 @@ def resolve_group_by(queryset, group_by, sub_group_by, project_id):
     return queryset, group_by, sub_group_by
 
 
-def is_ee_group_field(name) -> bool:
-    """Strict allowlist for names produced by resolve_group_by (they reach F()/values())."""
-    return name == "type_id" or bool(isinstance(name, str) and re.fullmatch(rf"{GROUP_PREFIX}[0-9a-f]{{32}}", name))
+def _is_ee_name(name) -> bool:
+    return isinstance(name, str) and (name == TYPE_GROUP or bool(_GROUP_NAME.fullmatch(name)))
+
+
+def is_ee_group_field(name, queryset) -> bool:
+    """Paginator allowlist hook: an EE name is valid only if resolve_group_by annotated it."""
+    return _is_ee_name(name) and queryset is not None and name in queryset.query.annotations
 
 
 def extra_result_fields(*group_keys) -> list[str]:
-    return [k for k in group_keys if is_ee_group_field(k)]
+    return [k for k in group_keys if _is_ee_name(k)]
 
 
 def group_values(field: str, project_id) -> list:
-    if field == "type_id":
-        return list(ProjectIssueType.objects.filter(project_id=project_id).values_list("issue_type_id", flat=True))
-    if not field.startswith(GROUP_PREFIX) or not project_id:
+    if not project_id or not _is_ee_name(field):
         return []
-    attribute = Attribute.objects.get(id=uuid.UUID(field[len(GROUP_PREFIX) :]), project_id=project_id)
+    if field == TYPE_GROUP:
+        return list(ProjectIssueType.objects.filter(project_id=project_id).values_list("issue_type_id", flat=True))
+    attribute = Attribute.objects.filter(id=uuid.UUID(field[len(GROUP_PREFIX) :]), project_id=project_id).first()
+    if attribute is None:
+        return []
     if attribute.field_type == "boolean":
         return [True, False, "None"]
     if attribute.field_type == "select":

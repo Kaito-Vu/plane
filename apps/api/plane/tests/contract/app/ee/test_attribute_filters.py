@@ -3,10 +3,12 @@ import json
 from decimal import Decimal
 
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from rest_framework import status
 
-from plane.db.models import Issue, Project, ProjectUserProperty
+from plane.db.models import Cycle, Issue, Project, ProjectUserProperty
 from plane.ee.models import Attribute, AttributeOption, AttributeValue
 from plane.ee.work_item_types.constants import TypeKey
 from plane.ee.work_item_types.registry import get_type
@@ -239,3 +241,86 @@ def test_existing_list_unchanged_without_new_keys(session_client, workspace, pro
     assert {str(i["id"]) for i in r.data["results"]["none"]["results"]} == {str(a.id), str(b.id)}
     r = _list(session_client, workspace, project, filters={"nope": "x"})
     assert r.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_group_by_raw_attr_name_400_on_project_list(session_client, workspace, project, a_b):
+    sel = _attr(project, "select")
+    for raw in (f"attr_{sel.id.hex}", "ee_type"):
+        r = _list(session_client, workspace, project, group_by=raw)
+        assert r.status_code == status.HTTP_400_BAD_REQUEST, (raw, r.status_code)
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_group_by_raw_attr_name_400_on_cycle_list(session_client, workspace, project, create_user):
+    sel = _attr(project, "select")
+    cycle = Cycle.objects.create(name="C", project=project, workspace=workspace, owned_by=create_user)
+    url = f"/api/workspaces/{workspace.slug}/projects/{project.id}/cycles/{cycle.id}/cycle-issues/"
+    for raw in (f"attr_{sel.id.hex}", f"attribute:{sel.id}", "type"):
+        r = session_client.get(url, {"group_by": raw})
+        assert r.status_code == status.HTTP_400_BAD_REQUEST, (raw, r.status_code)
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_ungrouped_list_row_has_type_id(session_client, workspace, project, a_b):
+    a, _ = a_b
+    r = _list(session_client, workspace, project)
+    row = next(i for i in r.data["results"] if str(i["id"]) == str(a.id))
+    assert str(row["type_id"]) == str(a.type_id)
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_list_without_ee_keys_touches_no_attribute_tables(session_client, workspace, project, a_b):
+    for params in ({}, {"group_by": "priority"}, {"filters": {"priority": "none"}}):
+        with CaptureQueriesContext(connection) as ctx:
+            r = _list(session_client, workspace, project, **params)
+        assert r.status_code == status.HTTP_200_OK
+        assert not [q for q in ctx.captured_queries if '"attribute' in q["sql"]], params
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_sub_group_by_attribute(session_client, workspace, project, a_b):
+    a, b = a_b
+    attr = _attr(project, "boolean")
+    _val(a, attr, value_boolean=True)
+    r = _list(session_client, workspace, project, group_by="priority", sub_group_by=f"attribute:{attr.id}")
+    assert r.status_code == status.HTTP_200_OK, r.data
+    sub = r.data["results"]["none"]["results"]
+    assert [str(i["id"]) for i in sub["True"]["results"]] == [str(a.id)]
+    assert [str(i["id"]) for i in sub["None"]["results"]] == [str(b.id)]
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_filter_type_in_by_agile_key(session_client, workspace, project, a_b):
+    a, b = a_b
+    feature = Issue.objects.create(name="F", project=project, type=get_type(workspace.id, T.FEATURE), parent=a)
+    r = _list(session_client, workspace, project, filters={"type__in": ["feature", "epic"]})
+    assert _ids(r) == {str(a.id), str(b.id), str(feature.id)}
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_malformed_attribute_id_400(session_client, workspace, project):
+    r = _list(session_client, workspace, project, filters={"attribute:not-a-uuid__contains": "x"})
+    assert r.status_code == status.HTTP_400_BAD_REQUEST
+    assert r.data["error_code"] == "invalid_attribute"
+    r = _list(session_client, workspace, project, group_by="attribute:not-a-uuid")
+    assert r.status_code == status.HTTP_400_BAD_REQUEST
+    assert r.data["error_code"] == "invalid_attribute"
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_filter_boolean_in(session_client, workspace, project, a_b):
+    a, b = a_b
+    attr = _attr(project, "boolean")
+    _val(a, attr, value_boolean=True)
+    _val(b, attr, value_boolean=False)
+    r = _list(session_client, workspace, project, filters={f"attribute:{attr.id}__in": ["true", "false"]})
+    assert _ids(r) == {str(a.id), str(b.id)}
