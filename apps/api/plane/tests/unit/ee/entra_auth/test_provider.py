@@ -129,6 +129,27 @@ def test_discovery_issuer_mismatch(env):
     assert code_of(lambda: EntraProvider(req(), state="s").get_auth_url()) == "ENTRA_PROVIDER_ERROR"
 
 
+def test_discovery_jwks_host_pinned(env):
+    env["get"].return_value = MagicMock(
+        json=lambda: {**DISCOVERY, "jwks_uri": "https://evil.example/keys"}, raise_for_status=lambda: None
+    )
+    assert code_of(lambda: EntraProvider(req(), state="s").get_auth_url()) == "ENTRA_PROVIDER_ERROR"
+
+
+def test_discovery_jwks_host_valid(env):
+    assert EntraProvider(req(), state="s").get_auth_url()
+
+
+@pytest.mark.parametrize("state", [None, ""])
+def test_auth_url_requires_state(env, state):
+    assert code_of(lambda: EntraProvider(req(), state=state).get_auth_url()) == "ENTRA_PROVIDER_ERROR"
+
+
+def test_auth_url_has_no_client_secret(env):
+    url = EntraProvider(req(), state="st").get_auth_url()
+    assert "client_secret" not in url and "sec" not in parse_qs(urlparse(url).query).get("client_secret", [])
+
+
 def test_discovery_network_error(env):
     env["get"].side_effect = requests.ConnectionError()
     assert code_of(lambda: EntraProvider(req(), state="s").get_auth_url()) == "ENTRA_PROVIDER_ERROR"

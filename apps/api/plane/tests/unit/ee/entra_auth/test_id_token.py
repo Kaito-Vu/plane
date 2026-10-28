@@ -108,5 +108,5 @@ def test_get_signing_key_reuses_client_and_returns_key():
         assert get_signing_key("t2", "https://a/jwks") == "K"
         get_signing_key("t", "https://b/jwks")
     assert cls.call_count == 2
-    cls.assert_any_call("https://a/jwks", cache_keys=True)
+    cls.assert_any_call("https://a/jwks", cache_keys=True, timeout=10)
     m._client.cache_clear()

@@ -77,6 +77,7 @@ class EntraCallbackEndpoint(View):
 
         if not validate_oauth_state(request=request, state=state) or not code:
             return _redirect_error(host, _error("ENTRA_PROVIDER_ERROR"), next_path)
+        request.session.pop(SESSION_SURFACE, None)  # state validated: surface is single-use
 
         try:
             if not _instance_ready():

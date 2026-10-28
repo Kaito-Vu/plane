@@ -38,7 +38,7 @@ def claims_to_user_data(claims: Mapping[str, Any], allowed_domains: Sequence[str
             "provider_id": oid,
             "email": email,
             "avatar": GRAPH_PHOTO_URL,
-            "first_name": claims.get("name") or email.split("@")[0],
+            "first_name": (claims.get("name") or "").strip() or email.split("@")[0],
             "last_name": "",
             "is_password_autoset": True,
         },

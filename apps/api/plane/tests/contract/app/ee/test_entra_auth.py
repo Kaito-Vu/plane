@@ -55,6 +55,12 @@ def _client(state=None, surface=None, next_path=None):
     return client
 
 
+def _err_exc():
+    from plane.authentication.adapter.error import AuthenticationException
+
+    return AuthenticationException(error_code=AUTHENTICATION_ERROR_CODES["ENTRA_PROVIDER_ERROR"], error_message="x")
+
+
 def _err(url):
     return parse_qs(urlparse(url).query).get("error_code")
 
@@ -137,6 +143,21 @@ class TestEntraCallback:
             response = client.get(reverse(CALLBACK), params)
         assert _err(response.url)
         provider.assert_not_called()
+
+    def test_second_callback_with_same_state_fails_and_surface_cleared(self, instance, create_user):
+        client = _client(state="s", surface="app")
+        with patch(PROVIDER) as provider:
+            provider.return_value.authenticate.return_value = create_user
+            client.get(reverse(CALLBACK), {"code": "c", "state": "s"})
+        assert "entra_surface" not in client.session
+        assert _err(client.get(reverse(CALLBACK), {"code": "c", "state": "s"}).url)
+
+    def test_surface_cleared_on_failure_after_state(self, instance):
+        client = _client(state="s", surface="app")
+        with patch(PROVIDER) as provider:
+            provider.return_value.authenticate.side_effect = _err_exc()
+            client.get(reverse(CALLBACK), {"code": "c", "state": "s"})
+        assert "entra_surface" not in client.session
 
     def test_new_user_blocked_when_signup_disabled(self, instance, entra_env, monkeypatch):
         monkeypatch.setenv("ENABLE_SIGNUP", "0")

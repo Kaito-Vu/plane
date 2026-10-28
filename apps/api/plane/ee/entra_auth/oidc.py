@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 from django.core.cache import cache
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
 from plane.authentication.adapter.oauth import OauthAdapter
@@ -16,6 +16,7 @@ SESSION_NONCE = "entra_nonce"
 SESSION_VERIFIER = "entra_code_verifier"
 _TIMEOUT = 10
 _DISCOVERY_TTL = 3600
+_JWKS_HOST = "login.microsoftonline.com"
 
 
 class OIDCProvider(OauthAdapter):
@@ -62,6 +63,7 @@ class OIDCProvider(OauthAdapter):
                 not isinstance(doc, dict)
                 or doc.get("issuer") != self.issuer
                 or not all(isinstance(doc.get(k), str) for k in ("authorization_endpoint", "token_endpoint", "jwks_uri"))
+                or urlparse(doc["jwks_uri"]).hostname != _JWKS_HOST
             ):
                 self.logger.warning("OIDC discovery document rejected")
                 raise self._fail()
@@ -73,6 +75,8 @@ class OIDCProvider(OauthAdapter):
         return self.get_discovery()["token_endpoint"]
 
     def get_auth_url(self):
+        if not self.state:
+            raise self._fail()
         discovery = self.get_discovery()
         nonce = secrets.token_urlsafe(32)
         verifier = secrets.token_urlsafe(64)

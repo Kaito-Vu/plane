@@ -109,11 +109,30 @@ def test_sync_404_keeps_existing_avatar(user):
     assert user.avatar_asset_id == old.pk and user.first_name == "New"
 
 
+def test_signup_with_asset_still_clears_graph_url(user):
+    asset = FileAsset.objects.create(
+        asset="n.jpg", user=user, entity_type=FileAsset.EntityTypeContext.USER_AVATAR, attributes={"name": "n", "type": "image/jpeg", "size": 1}, size=1
+    )
+    user.avatar_asset = asset
+    user.avatar = GRAPH_PHOTO_URL
+    p = make()
+    p.request.META = {"REMOTE_ADDR": "1.1.1.1", "HTTP_USER_AGENT": "ua"}
+    p.save_user_data(user)
+    user.refresh_from_db()
+    assert user.avatar == "" and user.avatar_asset_id == asset.pk
+
+
 def test_sync_replaces_avatar_when_photo_exists(user):
+    old = FileAsset.objects.create(
+        asset="old.jpg", user=user, entity_type=FileAsset.EntityTypeContext.USER_AVATAR, attributes={"name": "o", "type": "image/jpeg", "size": 1}, size=1
+    )
+    user.avatar_asset = old
+    user.save()
     with patch("plane.ee.entra_auth.entra.pinned_fetch", return_value=resp()):
         make().sync_user_data(user)
     user.refresh_from_db()
-    assert user.avatar_asset_id is not None
+    assert user.avatar_asset_id is not None and user.avatar_asset_id != old.pk
+    assert not FileAsset.objects.filter(pk=old.pk).exists()
 
 
 def test_sync_flag_gates_existing_users():

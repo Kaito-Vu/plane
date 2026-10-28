@@ -66,7 +66,7 @@ class EntraProvider(OIDCProvider):
         return response
 
     def save_user_data(self, user):
-        if user.avatar == GRAPH_PHOTO_URL and not user.avatar_asset_id:
+        if user.avatar == GRAPH_PHOTO_URL:
             user.avatar = ""  # never keep the Graph URL as a public avatar
         return super().save_user_data(user)
 
