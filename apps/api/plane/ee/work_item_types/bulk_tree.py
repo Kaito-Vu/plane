@@ -45,7 +45,11 @@ def _order(items: list[dict], errors: list[RowError]) -> list[dict]:
     queue: deque[str] = deque()
     for ref, item in by_ref.items():
         parent_ref = item.get("parent_ref")
-        if parent_ref is None:
+        if parent_ref is not None and not isinstance(parent_ref, str):
+            errors.append({"ref": ref, "code": "parent_ref_invalid", "message": "parent_ref must be a string"})
+        elif parent_ref is not None and item.get("parent_id") is not None:
+            errors.append({"ref": ref, "code": "ambiguous_parent", "message": "Send parent_ref or parent_id, not both"})
+        elif parent_ref is None:
             queue.append(ref)
         elif parent_ref not in by_ref:
             message = f"parent_ref '{parent_ref}' not in batch"
@@ -117,7 +121,7 @@ def apply_bulk_tree(project: Project, items: list[dict], *, dry_run: bool, actor
                 if parent_ref is not None and parent_ref not in created:
                     errors.append({"ref": ref, "code": "parent_failed", "message": "parent row was not created"})
                     continue
-                if item.get("type") not in types:
+                if not isinstance(item.get("type"), str) or item["type"] not in types:
                     errors.append({"ref": ref, "code": "type_invalid", "message": "Unknown work item type"})
                     continue
                 data = {k: v for k, v in item.items() if k not in _META}

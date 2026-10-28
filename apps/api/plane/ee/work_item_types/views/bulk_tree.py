@@ -13,7 +13,9 @@ MAX_ITEMS = 1000  # ponytail: one request, one transaction; raise if real import
 
 class BulkTreeMixin:
     """POST {"items": [{ref, type, name, parent_ref | parent_id, attribute_values, ...}]} (spec §7).
-    Member+ (spec §12). 201 created / 200 dry-run ok / 400 with per-row errors."""
+    Member+ (spec §12). 201 created / 200 dry-run ok / 400 with per-row errors.
+    Keys other than ref/type/parent_ref/parent_id are passed to IssueCreateSerializer as-is.
+    ?dry_run=true: ids in `created` come from a rolled-back transaction and do not exist."""
 
     permission_classes = [ProjectMemberPermission]
 

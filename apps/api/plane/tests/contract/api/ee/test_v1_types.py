@@ -81,3 +81,33 @@ def test_v1_intake_defaults_to_bug_and_rejects_other_types(api_key_client, works
     assert Issue.objects.get(name="crash").type.external_id == "bug"
     body = {"issue": {"name": "e", "type_id": str(get_type(workspace.id, T.EPIC).id)}}
     _flat(api_key_client.post(url, body, format="json"), "type_invalid")
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_v1_bulk_tree_non_member_forbidden(api_key_client, workspace, create_user):
+    other = Project.objects.create(name="Q", identifier="Q", workspace=workspace, created_by=create_user)
+    seed_project(other)
+    items = [{"ref": "e", "type": "epic", "name": "E"}]
+    r = api_key_client.post(_url(workspace, other, "issues/bulk-tree/"), {"items": items}, format="json")
+    assert r.status_code == status.HTTP_403_FORBIDDEN
+    assert not Issue.objects.filter(project=other).exists()
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_v1_bulk_tree_bad_refs_are_row_errors(api_key_client, workspace, project):
+    epic = Issue.objects.create(name="E0", project=project, type=get_type(workspace.id, T.EPIC))
+    items = [
+        {"ref": "e", "type": "epic", "name": "E"},
+        {"ref": "a", "type": ["epic"], "name": "A"},
+        {"ref": "b", "type": "feature", "name": "B", "parent_ref": {"x": 1}},
+        {"ref": "c", "type": "feature", "name": "C", "parent_ref": "e", "parent_id": str(epic.id)},
+    ]
+    r = api_key_client.post(_url(workspace, project, "issues/bulk-tree/"), {"items": items}, format="json")
+    assert r.status_code == status.HTTP_400_BAD_REQUEST, r.data
+    assert {(e["ref"], e["code"]) for e in r.data["errors"]} == {
+        ("a", "type_invalid"),
+        ("b", "parent_ref_invalid"),
+        ("c", "ambiguous_parent"),
+    }
