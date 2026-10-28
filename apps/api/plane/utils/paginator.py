@@ -16,6 +16,7 @@ from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 
 # Module imports
+from plane.ee.work_item_types.filters import is_ee_group_field
 from plane.utils.order_queryset import ISSUE_GROUP_BY_ALLOWLIST
 
 
@@ -699,7 +700,7 @@ class BasePaginator:
                 # paginators below — prevents unauthenticated ORM field-name
                 # injection via user-supplied group_by/sub_group_by query params
                 # (GHSA-wwgj-929g-42cm).
-                if group_by_field_name not in ISSUE_GROUP_BY_ALLOWLIST:
+                if group_by_field_name not in ISSUE_GROUP_BY_ALLOWLIST and not is_ee_group_field(group_by_field_name):
                     raise ParseError(detail=f"Invalid group_by field: {group_by_field_name}")
 
                 paginator_kwargs["group_by_field_name"] = group_by_field_name
@@ -707,7 +708,8 @@ class BasePaginator:
                 paginator_kwargs["count_filter"] = count_filter
 
                 if sub_group_by_field_name:
-                    if sub_group_by_field_name not in ISSUE_GROUP_BY_ALLOWLIST:
+                    sub_name = sub_group_by_field_name
+                    if sub_name not in ISSUE_GROUP_BY_ALLOWLIST and not is_ee_group_field(sub_name):
                         raise ParseError(detail=f"Invalid sub_group_by field: {sub_group_by_field_name}")
 
                     paginator_kwargs["sub_group_by_field_name"] = sub_group_by_field_name

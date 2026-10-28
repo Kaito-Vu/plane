@@ -61,6 +61,7 @@ from plane.db.models import (
     ProjectMember,
     UserRecentVisit,
 )
+from plane.ee.work_item_types.filters import resolve_group_by
 from plane.utils.filters import ComplexFilterBackend, IssueFilterSet
 from plane.utils.global_paginator import paginate
 from plane.utils.grouper import (
@@ -300,6 +301,7 @@ class IssueViewSet(BaseViewSet):
 
         # issue queryset
         issue_queryset = issue_queryset_grouper(queryset=issue_queryset, group_by=group_by, sub_group_by=sub_group_by)
+        issue_queryset, group_by, sub_group_by = resolve_group_by(issue_queryset, group_by, sub_group_by, project_id)
 
         recent_visited_task.delay(
             slug=slug,
