@@ -89,11 +89,12 @@ export function AttributeFormModal({ isOpen, onClose, issueTypeId, attribute, ap
             <div className="flex flex-col gap-3">
               <label className="flex flex-col gap-1 text-13">
                 {t("agile_attributes.form.name")}
-                <Input value={form.name} disabled={isSystem} onChange={(e) => set("name", e.target.value)} />
+                <Input size="md" value={form.name} disabled={isSystem} onChange={(e) => set("name", e.target.value)} />
               </label>
               <label className="flex flex-col gap-1 text-13">
                 {t("agile_attributes.form.description")}
                 <Input
+                  size="md"
                   value={form.description}
                   disabled={isSystem}
                   onChange={(e) => set("description", e.target.value)}
@@ -118,7 +119,7 @@ export function AttributeFormModal({ isOpen, onClose, issueTypeId, attribute, ap
               </label>
               <div className="flex items-center justify-between text-13">
                 {t("agile_attributes.form.is_required")}
-                <Switch checked={form.is_required} onCheckedChange={(v: boolean) => set("is_required", v)} />
+                <Switch size="md" checked={form.is_required} onCheckedChange={(v: boolean) => set("is_required", v)} />
               </div>
               {!isSystem && (
                 <div className="flex flex-col gap-1 text-13">
@@ -151,8 +152,15 @@ export function AttributeFormModal({ isOpen, onClose, issueTypeId, attribute, ap
           </DialogBody>
         </DialogMain>
         <DialogActions>
-          <Button variant="secondary" size="md" label={t("agile_attributes.actions.cancel")} onClick={onClose} />
           <Button
+            stretch="auto"
+            variant="secondary"
+            size="md"
+            label={t("agile_attributes.actions.cancel")}
+            onClick={onClose}
+          />
+          <Button
+            stretch="auto"
             variant="primary"
             size="md"
             disabled={saving || !form.name.trim()}

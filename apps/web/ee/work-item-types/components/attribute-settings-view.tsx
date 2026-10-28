@@ -63,16 +63,29 @@ function AttributeRow({ item, canEdit, onMove, onEdit, onToggleActive, onDelete 
       </div>
       {canEdit && (
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" label={t("agile_attributes.actions.edit")} onClick={onEdit} />
+          <Button
+            stretch="auto"
+            variant="ghost"
+            size="sm"
+            label={t("agile_attributes.actions.edit")}
+            onClick={onEdit}
+          />
           {!item.is_system && (
             <>
               <Button
+                stretch="auto"
                 variant="ghost"
                 size="sm"
                 label={t(item.is_active ? "agile_attributes.actions.hide" : "agile_attributes.actions.show")}
                 onClick={onToggleActive}
               />
-              <Button variant="ghost" size="sm" label={t("agile_attributes.actions.delete")} onClick={onDelete} />
+              <Button
+                stretch="auto"
+                variant="ghost"
+                size="sm"
+                label={t("agile_attributes.actions.delete")}
+                onClick={onDelete}
+              />
             </>
           )}
         </div>
@@ -134,6 +147,7 @@ export function AttributeSettingsView(props: Props) {
         {canEdit && extraActions}
         {canEdit && typeId && (
           <Button
+            stretch="auto"
             variant="primary"
             size="md"
             label={t("agile_attributes.actions.add")}

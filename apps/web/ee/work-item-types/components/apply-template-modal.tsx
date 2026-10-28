@@ -103,8 +103,15 @@ export function ApplyTemplateModal(props: Props) {
           </DialogBody>
         </DialogMain>
         <DialogActions>
-          <Button variant="secondary" size="md" label={t("agile_attributes.actions.cancel")} onClick={onClose} />
           <Button
+            stretch="auto"
+            variant="secondary"
+            size="md"
+            label={t("agile_attributes.actions.cancel")}
+            onClick={onClose}
+          />
+          <Button
+            stretch="auto"
             variant="primary"
             size="md"
             disabled={saving || !templateId}

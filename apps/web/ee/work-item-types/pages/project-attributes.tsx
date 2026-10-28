@@ -76,6 +76,7 @@ function ProjectAttributesPage() {
           canEdit={canEdit}
           extraActions={
             <Button
+              stretch="auto"
               variant="secondary"
               size="md"
               label={t("agile_attributes.apply_template.open")}

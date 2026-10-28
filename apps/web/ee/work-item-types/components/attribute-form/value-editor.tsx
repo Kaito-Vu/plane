@@ -29,7 +29,7 @@ const SELECT_CLASS = "w-full rounded-md border border-subtle bg-surface-1 px-2 p
 
 // One editor per field_type (spec §4). Empty input means "no default" (null).
 function TextEditor({ value, onChange, id }: TEditorProps<unknown>) {
-  return <Input id={id} value={str(value)} onChange={(e) => onChange(e.target.value || null)} />;
+  return <Input size="md" id={id} value={str(value)} onChange={(e) => onChange(e.target.value || null)} />;
 }
 
 function TextareaEditor({ value, onChange, id }: TEditorProps<unknown>) {
@@ -45,20 +45,23 @@ function TextareaEditor({ value, onChange, id }: TEditorProps<unknown>) {
 
 function NumberEditor({ value, onChange, id }: TEditorProps<unknown>) {
   // sent as a string: the backend stores a Decimal (16 integer + 4 decimal digits)
-  return <Input id={id} type="number" value={str(value)} onChange={(e) => onChange(e.target.value || null)} />;
+  return (
+    <Input size="md" id={id} type="number" value={str(value)} onChange={(e) => onChange(e.target.value || null)} />
+  );
 }
 
 function BooleanEditor({ value, onChange }: TEditorProps<unknown>) {
-  return <Switch checked={value === true} onCheckedChange={(v: boolean) => onChange(v)} />;
+  return <Switch size="md" checked={value === true} onCheckedChange={(v: boolean) => onChange(v)} />;
 }
 
 function DateEditor({ value, onChange, id }: TEditorProps<unknown>) {
-  return <Input id={id} type="date" value={str(value)} onChange={(e) => onChange(e.target.value || null)} />;
+  return <Input size="md" id={id} type="date" value={str(value)} onChange={(e) => onChange(e.target.value || null)} />;
 }
 
 function DatetimeEditor({ value, onChange, id }: TEditorProps<unknown>) {
   return (
     <Input
+      size="md"
       id={id}
       type="datetime-local"
       value={str(value).slice(0, 16)}
@@ -68,7 +71,7 @@ function DatetimeEditor({ value, onChange, id }: TEditorProps<unknown>) {
 }
 
 function UrlEditor({ value, onChange, id }: TEditorProps<unknown>) {
-  return <Input id={id} type="url" value={str(value)} onChange={(e) => onChange(e.target.value || null)} />;
+  return <Input size="md" id={id} type="url" value={str(value)} onChange={(e) => onChange(e.target.value || null)} />;
 }
 
 function SelectEditor({ value, onChange, id, options }: TEditorProps<unknown> & { options: TAttributeOption[] }) {

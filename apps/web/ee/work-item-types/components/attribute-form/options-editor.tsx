@@ -36,6 +36,7 @@ export function AttributeOptionsEditor({ attributeId, options, api, onChanged, d
       {active.map((o) => (
         <div key={o.id} className="flex items-center gap-2">
           <Input
+            size="md"
             defaultValue={o.name}
             disabled={disabled}
             aria-label={t("agile_attributes.options.name")}
@@ -55,6 +56,7 @@ export function AttributeOptionsEditor({ attributeId, options, api, onChanged, d
             {t("agile_attributes.options.default")}
           </label>
           <Button
+            stretch="auto"
             variant="ghost"
             size="sm"
             disabled={disabled}
@@ -66,6 +68,7 @@ export function AttributeOptionsEditor({ attributeId, options, api, onChanged, d
       {!disabled && (
         <div className="flex items-center gap-2">
           <Input
+            size="md"
             value={newName}
             placeholder={t("agile_attributes.options.add_placeholder")}
             onChange={(e) => setNewName(e.target.value)}
@@ -76,7 +79,13 @@ export function AttributeOptionsEditor({ attributeId, options, api, onChanged, d
               }
             }}
           />
-          <Button variant="secondary" size="sm" label={t("agile_attributes.options.add")} onClick={() => void add()} />
+          <Button
+            stretch="auto"
+            variant="secondary"
+            size="sm"
+            label={t("agile_attributes.options.add")}
+            onClick={() => void add()}
+          />
         </div>
       )}
     </div>
