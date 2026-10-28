@@ -43,7 +43,6 @@ from plane.db.models import (
     ProjectMember,
     EstimatePoint,
     IssueType,
-    Project,
 )
 from plane.ee.work_item_types.validators import validate_work_item
 from plane.utils.content_validator import (
@@ -215,7 +214,7 @@ class IssueCreateSerializer(BaseSerializer):
             issue_type = attrs.get("type", getattr(self.instance, "type", None))
             parent = attrs.get("parent", getattr(self.instance, "parent", None))
             validate_work_item(
-                project=Project.objects.get(pk=self.context["project_id"]),
+                project=self.context["project_id"],
                 issue_type_id=issue_type.id if issue_type else None,
                 parent_id=parent.id if parent else None,
                 attribute_values=None,

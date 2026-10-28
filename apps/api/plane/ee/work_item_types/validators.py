@@ -8,13 +8,17 @@ from .hierarchy import assert_no_cycle, validate_parent
 from .registry import type_key_of
 
 
-def check_hierarchy(issue_type: IssueType, parent: Issue | None, issue_id: UUID | None, *, triage: bool) -> None:
+def check_hierarchy(
+    issue_type: IssueType, parent: Issue | None, issue_id: UUID | None, project_id: UUID, *, triage: bool
+) -> None:
     """Parent-child rules shared by the serializer gate and the pre_save signal."""
     type_key = type_key_of(issue_type)
     if type_key is None:
         raise WorkItemValidationError("type_invalid", "Work item type is not a known agile type")
     parent_key = None
     if parent is not None:
+        if str(parent.project_id) != str(project_id):
+            raise WorkItemValidationError("parent_invalid", "Parent must be a work item in the same project")
         parent_key = type_key_of(parent.type)
         if parent_key is None:
             raise WorkItemValidationError("parent_type_invalid", "Parent has no valid work item type")
@@ -24,19 +28,20 @@ def check_hierarchy(issue_type: IssueType, parent: Issue | None, issue_id: UUID 
 
 def validate_work_item(
     *,
-    project: Project,
+    project: Project | UUID,
     issue_type_id: UUID | None,
     parent_id: UUID | None,
     attribute_values: dict | None,
     instance: Issue | None = None,
     triage: bool = False,
 ) -> None:
+    project_id = getattr(project, "id", project)
     if issue_type_id is None:
         raise WorkItemValidationError("type_required", "Work item type is required")
     if instance is not None and instance.type_id is not None and instance.type_id != issue_type_id:
         raise WorkItemValidationError("type_immutable", "Work item type cannot be changed")
     link = (
-        ProjectIssueType.objects.filter(project=project, issue_type_id=issue_type_id)
+        ProjectIssueType.objects.filter(project_id=project_id, issue_type_id=issue_type_id)
         .select_related("issue_type")
         .first()
     )
@@ -44,8 +49,8 @@ def validate_work_item(
         raise WorkItemValidationError("type_invalid", "Work item type is not enabled for this project")
     parent = None
     if parent_id is not None:
-        parent = Issue.objects.filter(pk=parent_id, project=project).select_related("type").first()
+        parent = Issue.objects.filter(pk=parent_id).select_related("type").first()
         if parent is None:
             raise WorkItemValidationError("parent_invalid", "Parent must be a work item in the same project")
-    check_hierarchy(link.issue_type, parent, instance.id if instance else None, triage=triage)
+    check_hierarchy(link.issue_type, parent, instance.id if instance else None, project_id, triage=triage)
     # attribute_values: required-attribute checks are wired in by Task 6.

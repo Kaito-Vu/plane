@@ -40,3 +40,21 @@ def test_management_command_seeds_existing(workspace, create_user):
     call_command("seed_work_item_types")
     assert _agile_types(workspace).count() == 6
     assert ProjectIssueType.objects.filter(project=project).count() == 6
+
+
+@pytest.mark.unit
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_seed_yields_six_types(workspace):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from django.db import connection
+
+    def run():
+        try:
+            seed_workspace(workspace)
+        finally:
+            connection.close()
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(lambda _: run(), range(4)))
+    assert _agile_types(workspace).count() == 6

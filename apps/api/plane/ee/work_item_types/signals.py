@@ -15,4 +15,10 @@ def enforce_hierarchy(sender, instance: Issue, raw=False, **kwargs):
         return
     if instance.state_id is not None and instance.state.group == StateGroup.TRIAGE.value:
         return
-    check_hierarchy(instance.type, instance.parent, instance.id if not instance._state.adding else None, triage=False)
+    check_hierarchy(
+        instance.type,
+        instance.parent,
+        None if instance._state.adding else instance.id,
+        instance.project_id,
+        triage=False,
+    )

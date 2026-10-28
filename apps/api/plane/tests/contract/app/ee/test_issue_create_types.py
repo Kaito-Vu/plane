@@ -103,6 +103,10 @@ PENDING_BYPASS = {
     "app/views/issue/sub_issue.py": "Task 7 (sub-issue bulk_update parent)",
     "api/views/intake.py": "Task 8 (public API intake)",
     "space/views/intake.py": "Task 7 (space intake)",
+    "space/serializer/issue.py": "Task 7 (space issue create)",
+    "api/serializers/issue.py": "Task 8 (public API create)",
+    # dev-only dummy data generator; untyped issues are skipped by the signal anyway
+    "bgtasks/dummy_data_task.py": "exempt (dev dummy data bulk_update parent)",
 }
 WRITE = re.compile(
     r"\bIssue\.objects\.(create|bulk_create)\(|\bIssue\.objects\.bulk_update\([^)]*parent|\.update\(parent"
@@ -114,7 +118,15 @@ def test_core_issue_writers_call_validate_work_item():
     root = pathlib.Path(plane.__file__).parent
     assert "validate_work_item(" in (root / "app/serializers/issue.py").read_text(encoding="utf-8")
     offenders = set()
-    for sub in ("app/views", "api/views", "space/views"):
+    for sub in (
+        "app/views",
+        "api/views",
+        "space/views",
+        "app/serializers",
+        "api/serializers",
+        "space/serializer",
+        "bgtasks",
+    ):
         for path in (root / sub).rglob("*.py"):
             text = path.read_text(encoding="utf-8")
             if path.match("app/views/page/base.py"):  # `.update(parent=None)` there is Page.parent
@@ -122,3 +134,14 @@ def test_core_issue_writers_call_validate_work_item():
             if WRITE.search(text) and "validate_work_item" not in text:
                 offenders.add(path.relative_to(root).as_posix())
     assert offenders == set(PENDING_BYPASS)
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_signal_rejects_parent_from_other_project(workspace, create_user, project):
+    other = Project.objects.create(name="Q", identifier="Q", workspace=workspace, created_by=create_user)
+    seed_project(other)
+    epic = Issue.objects.create(name="E", project=other, type=get_type(workspace.id, T.EPIC))
+    with pytest.raises(WorkItemValidationError) as e:
+        Issue.objects.create(name="F", project=project, type=get_type(workspace.id, T.FEATURE), parent=epic)
+    assert e.value.error_code == "parent_invalid"
