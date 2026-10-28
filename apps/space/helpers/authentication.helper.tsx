@@ -65,6 +65,9 @@ export enum EAuthenticationErrorCodes {
   GOOGLE_OAUTH_PROVIDER_ERROR = "5115",
   GITHUB_OAUTH_PROVIDER_ERROR = "5120",
   GITLAB_OAUTH_PROVIDER_ERROR = "5121",
+  ENTRA_NOT_CONFIGURED = "5126",
+  ENTRA_PROVIDER_ERROR = "5127",
+  ENTRA_EMAIL_UNUSABLE = "5128",
   // Reset Password
   INVALID_PASSWORD_TOKEN = "5125",
   EXPIRED_PASSWORD_TOKEN = "5130",
@@ -261,6 +264,19 @@ const errorCodeMessages: {
     title: `GitLab OAuth provider error`,
     message: () => `GitLab OAuth provider error. Please try again.`,
   },
+  [EAuthenticationErrorCodes.ENTRA_NOT_CONFIGURED]: {
+    title: `Microsoft Entra ID not configured`,
+    message: () => `Microsoft Entra ID not configured. Please contact your administrator.`,
+  },
+  [EAuthenticationErrorCodes.ENTRA_PROVIDER_ERROR]: {
+    title: `Microsoft Entra ID provider error`,
+    message: () => `Microsoft Entra ID provider error. Please try again.`,
+  },
+  [EAuthenticationErrorCodes.ENTRA_EMAIL_UNUSABLE]: {
+    title: `Microsoft Entra ID email unusable`,
+    message: () =>
+      `Your Microsoft Entra ID account has no usable email address or its domain is not allowed. Please contact your administrator.`,
+  },
 
   // Reset Password
   [EAuthenticationErrorCodes.INVALID_PASSWORD_TOKEN]: {
@@ -376,6 +392,9 @@ export const authErrorHandler = (errorCode: EAuthenticationErrorCodes, email?: s
     EAuthenticationErrorCodes.GOOGLE_OAUTH_PROVIDER_ERROR,
     EAuthenticationErrorCodes.GITHUB_OAUTH_PROVIDER_ERROR,
     EAuthenticationErrorCodes.GITLAB_OAUTH_PROVIDER_ERROR,
+    EAuthenticationErrorCodes.ENTRA_NOT_CONFIGURED,
+    EAuthenticationErrorCodes.ENTRA_PROVIDER_ERROR,
+    EAuthenticationErrorCodes.ENTRA_EMAIL_UNUSABLE,
     EAuthenticationErrorCodes.INVALID_PASSWORD_TOKEN,
     EAuthenticationErrorCodes.EXPIRED_PASSWORD_TOKEN,
     EAuthenticationErrorCodes.INCORRECT_OLD_PASSWORD,
