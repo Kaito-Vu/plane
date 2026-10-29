@@ -60,3 +60,12 @@ God Mode → Authentication → Microsoft Entra ID:
 - [ ] SSO-only: đăng xuất không bị đẩy ngược đăng nhập lại ngay.
 - [ ] Không provider nào bật: trang đăng nhập hiện form email.
 - [ ] Space board: đăng nhập từ board sẽ quay lại đúng board.
+
+## Bảo mật liên kết tài khoản (sau review)
+
+- Danh tính là `oid`. Nếu `oid` đã gắn với một tài khoản Plane mà email trong Entra thay đổi → từ chối đăng nhập (lỗi 5128), không tự chuyển sang tài khoản khác.
+- Email đã tồn tại trong Plane (tài khoản local/provider khác) chỉ được liên kết lần đầu khi **`ENTRA_ALLOWED_EMAIL_DOMAINS` đã được đặt** (God Mode → Allowed email domains). Nếu để trống, đăng nhập bị từ chối (5128) để tránh chiếm tài khoản qua claim email có thể sửa được.
+- Tài khoản khách B2B (`idp` hoặc `#EXT#`) bị từ chối.
+- Khi chạy sau proxy/CDN: proxy phải giữ nguyên `Host` và gửi `X-Forwarded-Proto: https`, nếu không `redirect_uri` sai và Entra báo AADSTS50011. Space ở host khác cũng phải proxy `/auth/*` về API; `APP_BASE_URL`, `SPACE_BASE_URL`, `WEB_URL` phải đúng.
+- Khi SSO-only bị lỗi: dùng `/login/internal` hoặc `/?no_redirect=1` để dừng tự chuyển hướng. Trang space không áp dụng SSO-only.
+- Biến cấu hình (God Mode ghi đè env): `IS_ENTRA_ENABLED`, `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET` (mã hóa), `ENTRA_PROVIDER_NAME`, `ENTRA_ALLOWED_EMAIL_DOMAINS`, `ENABLE_ENTRA_SYNC`, `SSO_ONLY_LOGIN_PAGE`.

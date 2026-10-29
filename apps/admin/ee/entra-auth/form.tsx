@@ -71,11 +71,11 @@ export function InstanceEntraConfigForm(props: Props) {
   } = useForm<EntraConfigFormValues>({
     mode: "onChange",
     defaultValues: {
-      ENTRA_TENANT_ID: config["ENTRA_TENANT_ID"],
-      ENTRA_CLIENT_ID: config["ENTRA_CLIENT_ID"],
-      ENTRA_CLIENT_SECRET: config["ENTRA_CLIENT_SECRET"],
-      ENTRA_PROVIDER_NAME: config["ENTRA_PROVIDER_NAME"],
-      ENTRA_ALLOWED_EMAIL_DOMAINS: config["ENTRA_ALLOWED_EMAIL_DOMAINS"],
+      ENTRA_TENANT_ID: config["ENTRA_TENANT_ID"] ?? "",
+      ENTRA_CLIENT_ID: config["ENTRA_CLIENT_ID"] ?? "",
+      ENTRA_CLIENT_SECRET: config["ENTRA_CLIENT_SECRET"] ?? "",
+      ENTRA_PROVIDER_NAME: config["ENTRA_PROVIDER_NAME"] ?? "",
+      ENTRA_ALLOWED_EMAIL_DOMAINS: config["ENTRA_ALLOWED_EMAIL_DOMAINS"] ?? "",
       ENABLE_ENTRA_SYNC: config["ENABLE_ENTRA_SYNC"] || "0",
       SSO_ONLY_LOGIN_PAGE: config["SSO_ONLY_LOGIN_PAGE"] || "0",
     },
@@ -163,7 +163,7 @@ export function InstanceEntraConfigForm(props: Props) {
       });
       reset(
         Object.fromEntries(
-          ENTRA_KEYS.map((key) => [key, response.find((item) => item.key === key)?.value])
+          ENTRA_KEYS.map((key) => [key, response.find((item) => item.key === key)?.value ?? ""])
         ) as EntraConfigFormValues
       );
     } catch (err) {

@@ -3,13 +3,19 @@ import re
 
 from plane.authentication.adapter.error import AUTHENTICATION_ERROR_CODES, AuthenticationException
 from plane.ee.entra_auth.oidc import OIDCProvider
-from plane.db.models import User
+from plane.db.models import Account, User
 from plane.ee.entra_auth.profile import GRAPH_PHOTO_URL, claims_to_user_data, parse_domains
 from plane.license.utils.instance_value import get_configuration_value
 from plane.utils.url_security import pinned_fetch
 
 _GUID_RE = re.compile(r"^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$")
 _KEYS = ("ENTRA_TENANT_ID", "ENTRA_CLIENT_ID", "ENTRA_CLIENT_SECRET", "ENTRA_ALLOWED_EMAIL_DOMAINS")
+
+
+def _unusable() -> AuthenticationException:
+    return AuthenticationException(
+        error_code=AUTHENTICATION_ERROR_CODES["ENTRA_EMAIL_UNUSABLE"], error_message="ENTRA_EMAIL_UNUSABLE"
+    )
 
 
 class EntraProvider(OIDCProvider):
@@ -50,6 +56,29 @@ class EntraProvider(OIDCProvider):
 
     def build_user_data(self, claims: dict) -> dict:
         return claims_to_user_data(claims, self.allowed_domains)
+
+    def authenticate(self):
+        self.set_token_data()
+        self.set_user_data()
+        self._check_identity()
+        return self.complete_login_or_signup()
+
+    def _check_identity(self):
+        """oid is the identity; the (mutable, unverified) email claim must not move or take over accounts."""
+        oid = self.user_data["user"]["provider_id"]
+        email = self.user_data["email"]
+        known = Account.objects.filter(provider=self.provider, provider_account_id=oid).select_related("user").first()
+        if known:
+            if known.user.email.lower() != email:
+                raise _unusable()  # the email changed in Entra: refuse instead of switching accounts
+            return
+        existing = User.objects.filter(email=email).first()
+        if existing is None:
+            return
+        # Linking an existing account by email alone is a takeover vector; only allow it when the admin
+        # constrained the tenant's emails to owned domains, and never onto an account bound to another oid.
+        if not self.allowed_domains or Account.objects.filter(user=existing, provider=self.provider).exists():
+            raise _unusable()
 
     def fetch_avatar(self, avatar_url):
         # The bearer token must only ever reach Graph. allowed_hosts in url_security only skips the

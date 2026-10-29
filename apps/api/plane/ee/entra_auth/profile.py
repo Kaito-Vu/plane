@@ -21,6 +21,11 @@ def claims_to_user_data(claims: Mapping[str, Any], allowed_domains: Sequence[str
     if not oid:
         raise _error("ENTRA_PROVIDER_ERROR")
 
+    # B2B guests: their email comes from a directory we do not control (idp is only present for them)
+    upn = claims.get("preferred_username")
+    if claims.get("idp") or (isinstance(upn, str) and "#EXT#" in upn):
+        raise _error("ENTRA_EMAIL_UNUSABLE")
+
     email = None
     for key in ("email", "preferred_username"):
         value = claims.get(key)

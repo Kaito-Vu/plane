@@ -168,7 +168,7 @@ class TestEntraCallback:
         monkeypatch.setenv("ENABLE_SIGNUP", "0")
 
         def fake_user_data(self):
-            self.user_data = {"email": "new@corp.example", "user": {"first_name": "N"}, "provider_id": "x"}
+            self.user_data = {"email": "new@corp.example", "user": {"first_name": "N", "provider_id": "x"}}
 
         client = _client(state="s", surface="app")
         with (
