@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { sortBy } from "lodash-es";
 import { Button } from "@makeplane/propel/components/button";
-import { Input } from "@makeplane/propel/components/input";
+import { BorderedInput as Input } from "./bordered-input";
 import { useTranslation } from "@plane/i18n";
 import type { TAttributeOption } from "../../types";
 import { runWithToast } from "./helpers";

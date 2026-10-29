@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
-import { Input } from "@makeplane/propel/components/input";
+import { BorderedInput as Input } from "./attribute-form/bordered-input";
 import { useTranslation } from "@plane/i18n";
 import type { ISearchIssueResponse } from "@plane/types";
 import useDebounce from "@/hooks/use-debounce";

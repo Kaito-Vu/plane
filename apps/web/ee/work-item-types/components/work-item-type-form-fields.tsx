@@ -66,6 +66,7 @@ export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({
         onChange={(k) => {
           setValue("type_id", getTypeId(projectId, k) ?? null, { shouldDirty: true });
           clearError(TYPE_FIELD);
+          clearError(PARENT_FIELD); // parent requirement depends on the type
         }}
       />
       {typeKey && (

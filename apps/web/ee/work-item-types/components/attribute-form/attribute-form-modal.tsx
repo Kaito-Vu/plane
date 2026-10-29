@@ -10,7 +10,7 @@ import {
   DialogMain,
   DialogTitle,
 } from "@makeplane/propel/components/dialog";
-import { Input } from "@makeplane/propel/components/input";
+import { BorderedInput as Input } from "./bordered-input";
 import { Switch } from "@makeplane/propel/components/switch";
 import { useTranslation } from "@plane/i18n";
 import type { TAttributeFieldType } from "../../types";

@@ -1,5 +1,5 @@
 import { observer } from "mobx-react";
-import { Input } from "@makeplane/propel/components/input";
+import { BorderedInput as Input } from "./bordered-input";
 import { Switch } from "@makeplane/propel/components/switch";
 import { useMember } from "@/hooks/store/use-member";
 import type { TAttributeFieldType, TAttributeOption } from "../../types";
