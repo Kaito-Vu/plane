@@ -20,6 +20,7 @@ import type { TImportRow, TImportRowError, TWorkItemTypeKey } from "../types";
 import { asEeError } from "../work-item-errors";
 import { BorderedInput as Input } from "./attribute-form/bordered-input";
 import { ParentPicker } from "./parent-picker";
+import type { ISearchIssueResponse } from "@plane/types";
 
 const service = new AttributeService();
 
@@ -74,6 +75,7 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
         TYPE_KEYS.includes(key as TWorkItemTypeKey) ? getTypeId(projectId, key as TWorkItemTypeKey) : undefined
       );
       if (payload.length === 0) throw { error_code: "empty_batch", message: "The CSV has no data rows" };
+      // ponytail: if adding rows fails the empty batch stays (the API has no batch delete); it is never committed
       const batch = await service.createImportBatch(workspaceSlug, projectId);
       setRows(await service.addImportRows(workspaceSlug, projectId, batch.id, payload));
       setBatchId(batch.id);
@@ -192,6 +194,7 @@ function ImportRowView(props: {
   patchRow: (row: TImportRow, data: Record<string, unknown>) => Promise<void>;
 }) {
   const { row, workspaceSlug, projectId, busy, patchRow } = props;
+  const [picked, setPicked] = useState<ISearchIssueResponse | null>(null);
   const typeKey = TYPE_KEYS.includes(row.type as TWorkItemTypeKey) ? (row.type as TWorkItemTypeKey) : undefined;
   const commitText = (field: "name" | "parent_ref", value: string) => {
     if (value === (row[field] ?? "")) return;
@@ -223,12 +226,18 @@ function ImportRowView(props: {
             workspaceSlug={workspaceSlug}
             projectId={projectId}
             typeKey={typeKey}
-            value={null}
+            value={row.parent_id && picked?.id === row.parent_id ? picked : null}
             disabled={busy}
-            onChange={(issue) => issue && void patchRow(row, { parent_id: issue.id })}
+            onChange={(issue) => {
+              setPicked(issue);
+              if (issue) void patchRow(row, { parent_id: issue.id });
+            }}
           />
         ) : null}
-        {row.parent_id && <span className="text-tertiary">{row.parent_id.slice(0, 8)}</span>}
+        {/* parent_id given in the CSV: only the id is known */}
+        {row.parent_id && picked?.id !== row.parent_id && (
+          <span className="text-tertiary">{row.parent_id.slice(0, 8)}</span>
+        )}
       </td>
       <td className="p-1 text-danger-primary">{row.errors.map((e) => e.message).join("; ")}</td>
     </tr>

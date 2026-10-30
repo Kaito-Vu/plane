@@ -19,8 +19,8 @@ export interface IssuesModalProps {
   onClose: () => void;
   beforeFormSubmit?: () => Promise<void>;
   onSubmit?: (res: TIssue) => Promise<void>;
-  /** EE: runs after a successful update, inside its error handling (intake accept after parent/attributes saved). */
-  afterUpdate?: () => Promise<void>;
+  /** EE: replaces the project issue PATCH (intake accept: triage issues are not served by IssueViewSet). */
+  updateOverride?: (payload: Partial<TIssue>) => Promise<void>;
   withDraftIssueWrapper?: boolean;
   storeType?: EIssuesStoreType;
   isDraft?: boolean;

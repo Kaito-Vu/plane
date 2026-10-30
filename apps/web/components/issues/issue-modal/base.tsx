@@ -42,7 +42,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     onClose,
     beforeFormSubmit,
     onSubmit,
-    afterUpdate,
+    updateOverride,
     withDraftIssueWrapper = true,
     storeType: issueStoreFromProps,
     isDraft = false,
@@ -332,7 +332,8 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     if (!workspaceSlug || !payload.project_id || !data?.id) return;
 
     try {
-      if (isDraft) await draftIssues.updateIssue(workspaceSlug.toString(), data.id, payload);
+      if (updateOverride) await updateOverride(payload);
+      else if (isDraft) await draftIssues.updateIssue(workspaceSlug.toString(), data.id, payload);
       else if (updateIssue) await updateIssue(payload.project_id, data.id, payload);
 
       // Run cycle, module, and property changes sequentially to avoid
@@ -346,7 +347,6 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
         workspaceSlug: workspaceSlug?.toString(),
         isDraft: isDraft,
       });
-      if (afterUpdate) await afterUpdate();
 
       setToast({
         type: "success",

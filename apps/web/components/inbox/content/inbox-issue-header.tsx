@@ -29,7 +29,7 @@ import { IconButton } from "@makeplane/propel/components/icon-button";
 import { Icon } from "@makeplane/propel/components/icon";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@makeplane/propel/components/menu";
 import { setToast } from "@plane/blocks/toast";
-import type { TNameDescriptionLoader } from "@plane/types";
+import type { TIssue, TNameDescriptionLoader } from "@plane/types";
 import { EInboxIssueStatus } from "@plane/types";
 import { Row } from "@plane/blocks/layout";
 import { copyUrlToClipboard, findHowManyDaysLeft, generateWorkItemLink } from "@plane/utils";
@@ -139,9 +139,11 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
     }
   };
 
-  const handleInboxIssueAccept = async () => {
+  // EE: one intake PATCH saves the form (parent, attribute_values, ...) then accepts; the backend validates
+  // fully on accept and throws the flat EE error body, which the modal shows.
+  const handleInboxIssueAccept = async (payload: Partial<TIssue>) => {
     const nextOrPreviousIssueId = redirectIssue();
-    await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.ACCEPTED); // throws the flat EE error body
+    await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.ACCEPTED, payload);
     setAcceptIssueModal(false);
     handleRedirection(nextOrPreviousIssueId);
   };
@@ -274,8 +276,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
           data={inboxIssue?.issue}
           isOpen={acceptIssueModal}
           onClose={() => setAcceptIssueModal(false)}
-          // EE: save parent + attributes first, then accept (backend validates fully on accept)
-          afterUpdate={handleInboxIssueAccept}
+          updateOverride={handleInboxIssueAccept}
           withDraftIssueWrapper={false}
           fetchIssueDetails={false}
           showActionItemsOnUpdate

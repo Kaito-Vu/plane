@@ -193,7 +193,8 @@ def group_values(field: str, project_id) -> list:
     if not project_id or not _is_ee_name(field):
         return []
     if field == TYPE_GROUP:
-        return list(ProjectIssueType.objects.filter(project_id=project_id).values_list("issue_type_id", flat=True))
+        types = ProjectIssueType.objects.filter(project_id=project_id).values_list("issue_type_id", flat=True)
+        return list(types) + ["None"]  # untyped (pre-migration) issues
     attribute = Attribute.objects.filter(id=uuid.UUID(field[len(GROUP_PREFIX) :]), project_id=project_id).first()
     if attribute is None:
         return []

@@ -30,6 +30,7 @@ import { EIssueLayoutTypes } from "@plane/types";
 import { getComputedDisplayFilters, getComputedDisplayProperties } from "@plane/utils";
 // lib
 import { storage } from "@/lib/local-storage";
+import { isEeGroupKey, isStaleEeGroupKey, withEeGroupFilter } from "@/ee/work-item-types/group-filter";
 
 interface ILocalStoreIssueFilters {
   key: EIssuesStoreType;
@@ -96,14 +97,16 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
   ): Partial<Record<TIssueParams, string | boolean>> => {
     const computedDisplayFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string>> = {
       // EE: `type` / `attribute:<id>` are sent as-is (resolved by the project IssueViewSet)
-      group_by: displayFilters?.group_by
-        ? (EIssueGroupByToServerOptions[displayFilters.group_by as keyof typeof EIssueGroupByToServerOptions] ??
-          displayFilters.group_by)
-        : undefined,
-      sub_group_by: displayFilters?.sub_group_by
-        ? (EIssueGroupByToServerOptions[displayFilters.sub_group_by as keyof typeof EIssueGroupByToServerOptions] ??
-          displayFilters.sub_group_by)
-        : undefined,
+      group_by:
+        displayFilters?.group_by && !isStaleEeGroupKey(displayFilters.group_by)
+          ? (EIssueGroupByToServerOptions[displayFilters.group_by as keyof typeof EIssueGroupByToServerOptions] ??
+            displayFilters.group_by)
+          : undefined,
+      sub_group_by:
+        displayFilters?.sub_group_by && !isStaleEeGroupKey(displayFilters.sub_group_by)
+          ? (EIssueGroupByToServerOptions[displayFilters.sub_group_by as keyof typeof EIssueGroupByToServerOptions] ??
+            displayFilters.sub_group_by)
+          : undefined,
       order_by: displayFilters?.order_by || undefined,
       sub_issue: displayFilters?.sub_issue ?? true,
     };
@@ -333,7 +336,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       const groupBy = paginationParams["group_by"] as EIssueGroupByToServerOptions | undefined;
       delete paginationParams["group_by"];
 
-      if (groupBy) {
+      if (groupBy && isEeGroupKey(groupBy)) withEeGroupFilter(paginationParams, groupBy, groupId);
+      else if (groupBy) {
         const groupByFilterOption = EServerGroupByToFilterOptions[groupBy];
         paginationParams[groupByFilterOption] = groupId;
       }
@@ -344,7 +348,8 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       const subGroupBy = paginationParams["sub_group_by"] as EIssueGroupByToServerOptions | undefined;
       delete paginationParams["sub_group_by"];
 
-      if (subGroupBy) {
+      if (subGroupBy && isEeGroupKey(subGroupBy)) withEeGroupFilter(paginationParams, subGroupBy, subGroupId);
+      else if (subGroupBy) {
         const subGroupByFilterOption = EServerGroupByToFilterOptions[subGroupBy];
         paginationParams[subGroupByFilterOption] = subGroupId;
       }

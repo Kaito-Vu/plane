@@ -14,7 +14,9 @@ import { createFilterConfig, createOperatorConfigEntry, getMultiSelectConfig } f
 import { FilterOption } from "@/components/issues/issue-layouts/filters";
 import type { TFiltersOperatorConfigs } from "@/hooks/rich-filters/use-filters-operator-configs";
 import { store } from "@/lib/store-context";
+import { ALL_ISSUES } from "@plane/constants";
 import { TYPE_KEYS } from "../constants";
+import { isStaleEeGroupKey } from "../group-filter";
 import { useAttributes, useEnsureProjectTypes } from "../hooks/use-attributes";
 import type { TAttribute, TWorkItemTypeKey } from "../types";
 import { TypeKeyBadge } from "./type-badge";
@@ -95,12 +97,13 @@ export const AttributeGroupByOptions = observer(function AttributeGroupByOptions
   const { selected, exclude, onSelect } = props;
   const { workspaceSlug, projectId } = useParams();
   const { t } = useTranslation();
-  const { getProjectAttributes } = useAttributes();
+  const { getProjectAttributes, typeIdsByProject } = useAttributes();
   useEnsureProjectTypes(workspaceSlug?.toString(), projectId?.toString());
   const available = useEeGroupByAvailable();
   if (!available || !projectId) return null;
+  const hasTypes = Object.keys(typeIdsByProject[projectId.toString()] ?? {}).length > 0;
   const options: { key: TIssueGroupByOptions; title: string }[] = [
-    { key: "type", title: t("agile_work_item.type") },
+    ...(hasTypes ? [{ key: "type" as TIssueGroupByOptions, title: t("agile_work_item.type") }] : []),
     ...getProjectAttributes(projectId.toString())
       .filter((a) => GROUPABLE.has(a.field_type))
       .map((a) => ({ key: `${ATTR}${a.id}` as TIssueGroupByOptions, title: a.name })),
@@ -138,15 +141,22 @@ export const getEeGroupByColumns = (groupBy: string, projectId: string | undefin
   const attributeStore = store.attribute;
   if (groupBy === "type") {
     const ids = attributeStore.typeIdsByProject[projectId] ?? {};
-    return TYPE_KEYS.filter((k) => ids[k]).map((k: TWorkItemTypeKey) => ({
-      id: ids[k] as string,
-      name: humanize(k),
-      icon: <TypeKeyBadge typeKey={k} compact />,
-      payload: {},
-      isDropDisabled: true,
-      dropErrorMessage: "Type cannot be changed",
-    }));
+    return [
+      ...TYPE_KEYS.filter((k) => ids[k]).map(
+        (k: TWorkItemTypeKey): IGroupByColumn => ({
+          id: ids[k] as string,
+          name: humanize(k),
+          icon: <TypeKeyBadge typeKey={k} compact />,
+          payload: {},
+          isDropDisabled: true,
+          dropErrorMessage: "Type cannot be changed",
+        })
+      ),
+      column("None", "None"), // untyped (pre-migration) issues
+    ];
   }
+  // saved group-by on a deleted attribute: the request is sent ungrouped (isStaleEeGroupKey)
+  if (isStaleEeGroupKey(groupBy)) return [column(ALL_ISSUES, "All work items")];
   if (!groupBy.startsWith(ATTR)) return undefined;
   const attribute = attributeStore.getProjectAttributes(projectId).find((a) => a.id === groupBy.slice(ATTR.length));
   if (!attribute) return undefined;

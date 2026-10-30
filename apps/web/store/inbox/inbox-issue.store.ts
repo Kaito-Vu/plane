@@ -33,7 +33,8 @@ export interface IInboxIssueStore {
   created_by: string | undefined;
   duplicate_issue_detail: TInboxDuplicateIssueDetails | undefined;
   // actions
-  updateInboxIssueStatus: (status: TInboxIssueStatus) => Promise<void>; // accept, decline
+  /** `issue` (EE): issue fields saved in the same intake PATCH, before the status change. */
+  updateInboxIssueStatus: (status: TInboxIssueStatus, issue?: Partial<TIssue>) => Promise<void>; // accept, decline
   updateInboxIssueDuplicateTo: (issueId: string) => Promise<void>; // connecting the inbox issue to the project existing issue
   updateInboxIssueSnoozeTill: (date: Date | undefined) => Promise<void>; // snooze the issue
   updateIssue: (issue: Partial<TIssue>) => Promise<void>; // updating the issue
@@ -97,7 +98,7 @@ export class InboxIssueStore implements IInboxIssueStore {
     });
   }
 
-  updateInboxIssueStatus = async (status: TInboxIssueStatus) => {
+  updateInboxIssueStatus = async (status: TInboxIssueStatus, issue?: Partial<TIssue>) => {
     const previousData: Partial<TInboxIssue> = {
       status: this.status,
     };
@@ -108,6 +109,7 @@ export class InboxIssueStore implements IInboxIssueStore {
 
       const inboxIssue = await this.inboxIssueService.update(this.workspaceSlug, this.projectId, this.issue.id, {
         status: status,
+        ...(issue ? { issue: issue as TIssue } : {}),
       });
       runInAction(() => {
         set(this, "status", inboxIssue?.status);

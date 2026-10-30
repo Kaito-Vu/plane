@@ -57,13 +57,14 @@ export const AttributeDisplayPropertyToggles = observer(function AttributeDispla
   );
 });
 
-const useIssueValues = (issue: TIssue) => {
+/** Fetches only when `needed` (an enabled column belongs to the issue's type): no columns, no requests. */
+const useIssueValues = (issue: TIssue, needed: boolean) => {
   const { workspaceSlug } = useParams();
   const { valuesByIssue, ensureIssueValues } = useAttributes();
   useEffect(() => {
-    if (workspaceSlug && issue.project_id && issue.id && !issue.tempId)
+    if (needed && workspaceSlug && issue.project_id && issue.id && !issue.tempId)
       ensureIssueValues(workspaceSlug.toString(), issue.project_id, issue.id);
-  }, [workspaceSlug, issue.project_id, issue.id, issue.tempId, ensureIssueValues]);
+  }, [needed, workspaceSlug, issue.project_id, issue.id, issue.tempId, ensureIssueValues]);
   return valuesByIssue[issue.id];
 };
 
@@ -100,7 +101,10 @@ export const AttributeRowCells = observer(function AttributeRowCells(props: {
 }) {
   const { displayProperties, issue } = props;
   const attributes = useEnabledAttributes(issue.project_id, displayProperties);
-  const values = useIssueValues(issue);
+  const values = useIssueValues(
+    issue,
+    attributes.some((a) => a.issue_type === issue.type_id)
+  );
   const format = useFormatter();
   return (
     <>
@@ -125,7 +129,7 @@ export const AttributeListProperties = observer(function AttributeListProperties
   const attributes = useEnabledAttributes(issue.project_id, displayProperties).filter(
     (a) => a.issue_type === issue.type_id
   );
-  const values = useIssueValues(issue);
+  const values = useIssueValues(issue, attributes.length > 0);
   const format = useFormatter();
   return (
     <>

@@ -107,17 +107,16 @@ export class AttributeStore implements IAttributeStore {
       : []
   );
 
-  // ponytail: one request per visible issue (list API has no values); embed values in the list API if this hurts
+  // ponytail: one request per visible issue with an enabled column, cached for the session (stale after
+  // other users/import edit values until reload); embed values in the list API if this hurts
   ensureIssueValues = (workspaceSlug: string, projectId: string, issueId: string) => {
     if (this.valuesRequested.has(issueId)) return;
     this.valuesRequested.add(issueId);
     this.service
       .getAttributeValues(workspaceSlug, projectId, issueId)
       .then((values) => runInAction(() => (this.valuesByIssue[issueId] = values)))
-      .catch((err) => {
-        this.valuesRequested.delete(issueId);
-        console.error(err);
-      });
+      // no retry on failure (virtualised rows remount often); a reload retries
+      .catch((err) => console.error(err));
   };
 
   setIssueValues = (issueId: string, values: TAttributeValues) => {
