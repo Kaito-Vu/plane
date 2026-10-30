@@ -19,6 +19,8 @@ export interface IssuesModalProps {
   onClose: () => void;
   beforeFormSubmit?: () => Promise<void>;
   onSubmit?: (res: TIssue) => Promise<void>;
+  /** EE: runs after a successful update, inside its error handling (intake accept after parent/attributes saved). */
+  afterUpdate?: () => Promise<void>;
   withDraftIssueWrapper?: boolean;
   storeType?: EIssuesStoreType;
   isDraft?: boolean;

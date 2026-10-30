@@ -62,3 +62,18 @@ export type TProjectWorkItemType = {
   level: number;
   is_epic: boolean;
 };
+
+/** Per-row error of bulk-tree / import validation. */
+export type TImportRowError = { ref: string; code: string; message: string };
+
+/** Staged import row (apps/api/plane/ee/work_item_types/views/imports.py _row_data). */
+export type TImportRow = {
+  id: string;
+  ref: string;
+  type: string;
+  parent_ref: string | null;
+  parent_id: string | null;
+  name: string;
+  data: Record<string, unknown>;
+  errors: TImportRowError[];
+};

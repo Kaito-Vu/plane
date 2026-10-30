@@ -1,6 +1,8 @@
 import { API_BASE_URL } from "@plane/constants";
 import { APIService } from "@/services/api.service";
 import type {
+  TImportRow,
+  TImportRowError,
   TAttribute,
   TProjectWorkItemType,
   TAttributeOption,
@@ -105,6 +107,28 @@ export class AttributeService extends APIService {
   updateAttributeValues(slug: string, projectId: string, issueId: string, values: TAttributeValues) {
     return this.req<unknown>(
       this.patch(`${this.ws(slug)}/projects/${projectId}/issues/${issueId}/`, { attribute_values: values })
+    );
+  }
+
+  // two-step import (ImportBatch / ImportRow staging)
+  private imports = (slug: string, projectId: string) => `${this.ws(slug)}/projects/${projectId}/imports`;
+  createImportBatch(slug: string, projectId: string) {
+    return this.req<{ id: string; status: string }>(this.post(`${this.imports(slug, projectId)}/`, {}));
+  }
+  addImportRows(slug: string, projectId: string, batchId: string, rows: Record<string, unknown>[]) {
+    return this.req<TImportRow[]>(this.post(`${this.imports(slug, projectId)}/${batchId}/rows/`, { rows }));
+  }
+  updateImportRow(slug: string, projectId: string, batchId: string, rowId: string, data: Record<string, unknown>) {
+    return this.req<TImportRow>(this.patch(`${this.imports(slug, projectId)}/${batchId}/rows/${rowId}/`, data));
+  }
+  validateImport(slug: string, projectId: string, batchId: string) {
+    return this.req<{ valid: boolean; errors: TImportRowError[] }>(
+      this.post(`${this.imports(slug, projectId)}/${batchId}/validate/`, {})
+    );
+  }
+  commitImport(slug: string, projectId: string, batchId: string) {
+    return this.req<{ created: Record<string, string>; errors: TImportRowError[] }>(
+      this.post(`${this.imports(slug, projectId)}/${batchId}/commit/`, {})
     );
   }
 }

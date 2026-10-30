@@ -13,6 +13,7 @@ import { useTranslation } from "@plane/i18n";
 // types
 import type { IIssueDisplayProperties } from "@plane/types";
 // components
+import { AttributeDisplayPropertyToggles } from "@/ee/work-item-types/components/attribute-columns";
 import { FilterHeader } from "../helpers/filter-header";
 
 type Props = {
@@ -50,6 +51,7 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
       default:
         return true;
     }
+    // oxlint-disable-next-line no-map-spread
   }).map((property) => {
     if (isEpic && property.key === "sub_issue_count") {
       return { ...property, titleTranslationKey: "issue.display.properties.work_item_count" };
@@ -86,6 +88,7 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
               </button>
             </>
           ))}
+          <AttributeDisplayPropertyToggles displayProperties={displayProperties} handleUpdate={handleUpdate} />
         </div>
       )}
     </>

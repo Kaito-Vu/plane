@@ -4,7 +4,7 @@ import { computedFn } from "mobx-utils";
 import type { RootStore } from "@/store/root.store";
 import { PARENT_RULES_UI } from "../constants";
 import { AttributeService } from "../services/attribute.service";
-import type { TAttribute, TProjectWorkItemType, TWorkItemTypeKey } from "../types";
+import type { TAttribute, TAttributeValues, TProjectWorkItemType, TWorkItemTypeKey } from "../types";
 
 type TTypeIds = Partial<Record<TWorkItemTypeKey, string>>;
 
@@ -20,6 +20,12 @@ export interface IAttributeStore {
   fetchProjectTypes: (workspaceSlug: string, projectId: string) => Promise<TProjectWorkItemType[]>;
   /** Fetch a project's types and attributes once per session (concurrent callers share the request). */
   ensureProject: (workspaceSlug: string, projectId: string) => Promise<void>;
+  /** Active attributes of every type in the project (columns, filters, group by). */
+  getProjectAttributes: (projectId: string | null | undefined) => TAttribute[];
+  valuesByIssue: Record<string, TAttributeValues>;
+  /** Attribute values of one issue, fetched once per session (columns). */
+  ensureIssueValues: (workspaceSlug: string, projectId: string, issueId: string) => void;
+  setIssueValues: (issueId: string, values: TAttributeValues) => void;
 }
 
 export class AttributeStore implements IAttributeStore {
@@ -28,12 +34,16 @@ export class AttributeStore implements IAttributeStore {
   typeIdsByProject: Record<string, TTypeIds> = {};
   private service = new AttributeService();
   private ensured: Record<string, Promise<void>> = {};
+  valuesByIssue: Record<string, TAttributeValues> = {};
+  private valuesRequested = new Set<string>();
 
   // rootStore kept for the standard store constructor signature
   constructor(_rootStore: RootStore) {
     makeObservable(this, {
       attributesByProject: observable,
       typeIdsByProject: observable,
+      valuesByIssue: observable,
+      setIssueValues: action,
       setProjectTypes: action,
       fetchProjectAttributes: action,
       fetchProjectTypes: action,
@@ -86,6 +96,33 @@ export class AttributeStore implements IAttributeStore {
         console.error(err);
       });
     return this.ensured[projectId];
+  };
+
+  getProjectAttributes = computedFn((projectId: string | null | undefined): TAttribute[] =>
+    projectId
+      ? sortBy(
+          (this.attributesByProject[projectId] ?? []).filter((a) => a.is_active),
+          "sort_order"
+        )
+      : []
+  );
+
+  // ponytail: one request per visible issue (list API has no values); embed values in the list API if this hurts
+  ensureIssueValues = (workspaceSlug: string, projectId: string, issueId: string) => {
+    if (this.valuesRequested.has(issueId)) return;
+    this.valuesRequested.add(issueId);
+    this.service
+      .getAttributeValues(workspaceSlug, projectId, issueId)
+      .then((values) => runInAction(() => (this.valuesByIssue[issueId] = values)))
+      .catch((err) => {
+        this.valuesRequested.delete(issueId);
+        console.error(err);
+      });
+  };
+
+  setIssueValues = (issueId: string, values: TAttributeValues) => {
+    this.valuesRequested.add(issueId);
+    this.valuesByIssue[issueId] = values;
   };
 
   fetchProjectTypes = async (workspaceSlug: string, projectId: string) => {

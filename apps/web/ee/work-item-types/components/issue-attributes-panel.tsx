@@ -19,7 +19,7 @@ type TProps = { workspaceSlug: string; projectId: string; issueId: string; disab
 export const IssueAttributesPanel = observer(function IssueAttributesPanel(props: TProps) {
   const { workspaceSlug, projectId, issueId, disabled } = props;
   const { t } = useTranslation();
-  const { getTypeKey, getAttributesByType } = useAttributes();
+  const { getTypeKey, getAttributesByType, setIssueValues } = useAttributes();
   const {
     issue: { getIssueById },
   } = useIssueDetail();
@@ -54,6 +54,7 @@ export const IssueAttributesPanel = observer(function IssueAttributesPanel(props
     try {
       await service.updateAttributeValues(workspaceSlug, projectId, issueId, values);
       setSaved(values);
+      setIssueValues(issueId, values); // refresh list/spreadsheet attribute columns
       setErrors({});
     } catch (err) {
       setErrors(workItemFieldErrors(err));

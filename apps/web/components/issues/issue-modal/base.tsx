@@ -42,6 +42,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     onClose,
     beforeFormSubmit,
     onSubmit,
+    afterUpdate,
     withDraftIssueWrapper = true,
     storeType: issueStoreFromProps,
     isDraft = false,
@@ -345,6 +346,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
         workspaceSlug: workspaceSlug?.toString(),
         isDraft: isDraft,
       });
+      if (afterUpdate) await afterUpdate();
 
       setToast({
         type: "success",

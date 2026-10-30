@@ -56,6 +56,7 @@ import { ISSUE_FILTER_DEFAULT_DATA } from "@/store/issue/helpers/base-issues.sto
 import { DEFAULT_DISPLAY_PROPERTIES } from "@/store/issue/issue-details/sub_issues_filter.store";
 // constants
 import { ISSUE_GROUP_BY_OPTIONS } from "@plane/constants";
+import { getEeGroupByColumns } from "@/ee/work-item-types/components/attribute-filter";
 // components
 import {
   SpreadsheetAssigneeColumn,
@@ -156,7 +157,9 @@ export const getGroupByColumns = ({
   };
 
   // Get and return the columns for the specified group by option
-  return groupByColumnMap[groupBy]?.({ isWorkspaceLevel, projectId });
+  return (
+    groupByColumnMap[groupBy]?.({ isWorkspaceLevel, projectId }) ?? getEeGroupByColumns(groupBy, projectId) // EE
+  );
 };
 
 const getProjectColumns = (): IGroupByColumn[] | undefined => {

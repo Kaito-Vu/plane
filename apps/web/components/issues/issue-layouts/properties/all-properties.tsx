@@ -45,6 +45,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // local components
 import { IssuePropertyLabels } from "./labels";
 import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";
+import { AttributeListProperties } from "@/ee/work-item-types/components/attribute-columns";
 
 export interface IIssueProperties {
   issue: TIssue;
@@ -472,6 +473,8 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
           maxRender={3}
         />
       </WithDisplayPropertiesHOC>
+
+      <AttributeListProperties displayProperties={displayProperties} issue={issue} />
     </div>
   );
 });

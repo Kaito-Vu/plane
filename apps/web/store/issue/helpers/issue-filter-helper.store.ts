@@ -95,9 +95,14 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     acceptableParamsByLayout: TIssueParams[]
   ): Partial<Record<TIssueParams, string | boolean>> => {
     const computedDisplayFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string>> = {
-      group_by: displayFilters?.group_by ? EIssueGroupByToServerOptions[displayFilters.group_by] : undefined,
+      // EE: `type` / `attribute:<id>` are sent as-is (resolved by the project IssueViewSet)
+      group_by: displayFilters?.group_by
+        ? (EIssueGroupByToServerOptions[displayFilters.group_by as keyof typeof EIssueGroupByToServerOptions] ??
+          displayFilters.group_by)
+        : undefined,
       sub_group_by: displayFilters?.sub_group_by
-        ? EIssueGroupByToServerOptions[displayFilters.sub_group_by]
+        ? (EIssueGroupByToServerOptions[displayFilters.sub_group_by as keyof typeof EIssueGroupByToServerOptions] ??
+          displayFilters.sub_group_by)
         : undefined,
       order_by: displayFilters?.order_by || undefined,
       sub_issue: displayFilters?.sub_issue ?? true,

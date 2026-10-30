@@ -44,6 +44,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 // store
 import type { IInboxIssueStore } from "@/store/inbox/inbox-issue.store";
 // local imports
+import { workItemErrorMessage } from "@/ee/work-item-types/work-item-errors";
 import { InboxIssueStatus } from "../inbox-issue-status";
 import { DeclineIssueModal } from "../modals/decline-issue-modal";
 import { DeleteInboxIssueModal } from "../modals/delete-issue-modal";
@@ -140,14 +141,19 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
 
   const handleInboxIssueAccept = async () => {
     const nextOrPreviousIssueId = redirectIssue();
-    await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.ACCEPTED);
+    await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.ACCEPTED); // throws the flat EE error body
     setAcceptIssueModal(false);
     handleRedirection(nextOrPreviousIssueId);
   };
 
   const handleInboxIssueDecline = async () => {
     const nextOrPreviousIssueId = redirectIssue();
-    await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.DECLINED);
+    try {
+      await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.DECLINED);
+    } catch (error) {
+      setToast({ type: "error", title: t("error"), message: workItemErrorMessage(t, error) ?? t("error") });
+      return;
+    }
     setDeclineIssueModal(false);
     handleRedirection(nextOrPreviousIssueId);
   };
@@ -165,6 +171,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
 
   const handleInboxIssueDelete = async () => {
     if (!inboxIssue || !currentInboxIssueId) return;
+    // oxlint-disable-next-line promise/always-return
     await deleteInboxIssue(workspaceSlug, projectId, currentInboxIssueId).then(() => {
       if (!isNotificationEmbed) router.push(`/${workspaceSlug}/projects/${projectId}/intake`);
     });
@@ -267,7 +274,8 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
           data={inboxIssue?.issue}
           isOpen={acceptIssueModal}
           onClose={() => setAcceptIssueModal(false)}
-          beforeFormSubmit={handleInboxIssueAccept}
+          // EE: save parent + attributes first, then accept (backend validates fully on accept)
+          afterUpdate={handleInboxIssueAccept}
           withDraftIssueWrapper={false}
           fetchIssueDetails={false}
           showActionItemsOnUpdate

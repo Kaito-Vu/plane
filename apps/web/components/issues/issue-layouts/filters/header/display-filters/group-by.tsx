@@ -12,6 +12,7 @@ import type { IIssueDisplayFilterOptions, TIssueGroupByOptions } from "@plane/ty
 import { useGroupByOptions } from "../../../utils";
 // components
 import { FilterHeader, FilterOption } from "@/components/issues/issue-layouts/filters";
+import { AttributeGroupByOptions } from "@/ee/work-item-types/components/attribute-filter";
 
 type Props = {
   displayFilters: IIssueDisplayFilterOptions | undefined;
@@ -59,6 +60,13 @@ export const FilterGroupBy = observer(function FilterGroupBy(props: Props) {
               />
             );
           })}
+          {groupByOptions.length > 0 && (
+            <AttributeGroupByOptions
+              selected={selectedGroupBy}
+              exclude={displayFilters?.layout === "kanban" ? selectedSubGroupBy : undefined}
+              onSelect={handleUpdate}
+            />
+          )}
         </div>
       )}
     </>

@@ -19,6 +19,7 @@ type Props = {
   subGroupByOptions: TIssueGroupByOptions[];
   ignoreGroupedFilters: Partial<TIssueGroupByOptions>[];
 };
+import { AttributeGroupByOptions } from "@/ee/work-item-types/components/attribute-filter";
 
 export const FilterSubGroupBy = observer(function FilterSubGroupBy(props: Props) {
   // hooks
@@ -47,13 +48,14 @@ export const FilterSubGroupBy = observer(function FilterSubGroupBy(props: Props)
             return (
               <FilterOption
                 key={subGroupBy?.key}
-                isChecked={selectedSubGroupBy === subGroupBy?.key ? true : false}
+                isChecked={selectedSubGroupBy === subGroupBy?.key}
                 onClick={() => handleUpdate(subGroupBy.key)}
                 title={t(subGroupBy.titleTranslationKey)}
                 multiple={false}
               />
             );
           })}
+          <AttributeGroupByOptions selected={selectedSubGroupBy} exclude={selectedGroupBy} onSelect={handleUpdate} />
         </div>
       )}
     </>

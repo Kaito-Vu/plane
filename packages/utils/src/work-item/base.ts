@@ -294,6 +294,7 @@ export const getComputedDisplayFilters = (
 export const getComputedDisplayProperties = (
   displayProperties: IIssueDisplayProperties = {}
 ): IIssueDisplayProperties => ({
+  ...displayProperties, // EE: keep dynamic `attribute:<id>` column toggles
   assignee: displayProperties?.assignee ?? true,
   start_date: displayProperties?.start_date ?? true,
   due_date: displayProperties?.due_date ?? true,

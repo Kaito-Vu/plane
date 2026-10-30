@@ -13,6 +13,7 @@ import { ApplyTemplateModal } from "../components/apply-template-modal";
 import { runWithToast } from "../components/attribute-form/helpers";
 import type { TAttributeApi } from "../components/attribute-form/helpers";
 import { AttributeSettingsView } from "../components/attribute-settings-view";
+import { ImportWizard } from "../components/import-wizard";
 import { useAttributes } from "../hooks/use-attributes";
 import { AttributeService } from "../services/attribute.service";
 import type { TWorkItemTypeKey } from "../types";
@@ -26,6 +27,7 @@ function ProjectAttributesPage() {
   const { workspaceUserInfo, allowPermissions } = useUserPermissions();
   const [typeKey, setTypeKey] = useState<TWorkItemTypeKey>("user_story");
   const [applyOpen, setApplyOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const canView = allowPermissions([EUserPermissions.ADMIN, EUserPermissions.MEMBER], EUserPermissionsLevel.PROJECT);
   const canEdit = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.PROJECT);
@@ -75,16 +77,31 @@ function ProjectAttributesPage() {
           reload={reload}
           canEdit={canEdit}
           extraActions={
-            <Button
-              stretch="auto"
-              variant="secondary"
-              size="md"
-              label={t("agile_attributes.apply_template.open")}
-              onClick={() => setApplyOpen(true)}
-            />
+            <>
+              <Button
+                stretch="auto"
+                variant="secondary"
+                size="md"
+                label="Import CSV"
+                onClick={() => setImportOpen(true)}
+              />
+              <Button
+                stretch="auto"
+                variant="secondary"
+                size="md"
+                label={t("agile_attributes.apply_template.open")}
+                onClick={() => setApplyOpen(true)}
+              />
+            </>
           }
         />
       </div>
+      <ImportWizard
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        workspaceSlug={workspaceSlug}
+        projectId={projectId}
+      />
       <ApplyTemplateModal
         isOpen={applyOpen}
         onClose={() => setApplyOpen(false)}

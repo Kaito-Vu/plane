@@ -22,6 +22,7 @@ import { MemberSelect } from "@/components/dropdowns/member/member-select";
 import { ModuleSelect } from "@/components/dropdowns/module/module-select";
 import { PrioritySelect } from "@/components/dropdowns/priority/priority-select";
 import { ParentIssuesListModal } from "@/components/issues/parent-issues-list-modal";
+import { IntakeTypeField } from "@/ee/work-item-types/components/intake-accept-fields";
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useUserProfile } from "@/hooks/store/user";
@@ -60,6 +61,14 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
 
   return (
     <div className="relative flex flex-wrap items-center gap-2">
+      {/* EE: work item type (Bug / User Story) */}
+      <IntakeTypeField
+        workspaceSlug={workspaceSlug}
+        projectId={projectId}
+        typeId={data?.type_id}
+        onChange={(typeId) => handleData("type_id", typeId)}
+      />
+
       {/* intake state */}
       <IntakeStateSelect
         workspaceSlug={workspaceSlug}
