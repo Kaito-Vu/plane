@@ -6,6 +6,7 @@
 import json
 
 # Django import
+from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q, Count, OuterRef, Func, F, Prefetch, Subquery
 from django.core.serializers.json import DjangoJSONEncoder
@@ -53,6 +54,7 @@ from plane.utils.global_paginator import paginate
 from plane.utils.host import base_host
 from plane.utils.serializers import writable_data
 from plane.db.models.intake import SourceType
+from plane.ee.work_item_types.validators import validate_intake_type
 
 
 class IntakeViewSet(BaseViewSet):
@@ -256,6 +258,8 @@ class IntakeIssueViewSet(BaseViewSet):
                 default=False,
             )
         request.data["issue"]["state_id"] = triage_state.id
+        # EE: Bug when no type is sent (same default as API v1 / space intake)
+        request.data["issue"]["type_id"] = str(validate_intake_type(project, request.data["issue"].get("type_id")).id)
 
         # create an issue
         serializer = IssueCreateSerializer(
@@ -431,9 +435,15 @@ class IntakeIssueViewSet(BaseViewSet):
             if not intake_serializer.is_valid():
                 return Response(intake_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # Both serializers are valid, now save them
+        # Both serializers are valid, now save them. EE: atomically, so an accept rejected by the
+        # type rules (raised in IntakeIssueSerializer.update) does not keep the issue edits.
+        with transaction.atomic():
+            if issue_serializer:
+                issue_serializer.save()
+            if intake_serializer:
+                intake_serializer.save()
+
         if issue_serializer:
-            issue_serializer.save()
 
             # Check if the update is a migration description update
             is_migration_description_update = skip_activity and is_description_update
@@ -460,7 +470,6 @@ class IntakeIssueViewSet(BaseViewSet):
                     )
 
         if intake_serializer:
-            intake_serializer.save()
             # create a activity for status change
             issue_activity.delay(
                 type="intake.activity.created",

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useAttributes, useEnsureProjectTypes } from "../hooks/use-attributes";
 import type { TWorkItemTypeKey } from "../types";
@@ -16,7 +17,12 @@ export const IntakeTypeField = observer(function IntakeTypeField(props: {
   const { workspaceSlug, projectId, typeId, onChange } = props;
   const { getTypeKey, getTypeId } = useAttributes();
   useEnsureProjectTypes(workspaceSlug, projectId);
-  if (!getTypeId(projectId, "bug")) return null;
+  const bugId = getTypeId(projectId, "bug");
+  // put the shown default into the form so the payload carries it
+  useEffect(() => {
+    if (bugId && !typeId) onChange(bugId);
+  }, [bugId, typeId, onChange]);
+  if (!bugId) return null;
   return (
     <TypeSelector
       compact

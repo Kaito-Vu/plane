@@ -170,6 +170,18 @@ def test_filter_attribute_of_other_project_400(session_client, workspace, projec
 
 @pytest.mark.contract
 @pytest.mark.django_db
+def test_filter_isnull_for_none_group(session_client, workspace, project, a_b):
+    a, b = a_b
+    sel = _attr(project, "select")
+    _val(a, sel, value_option=AttributeOption.objects.create(attribute=sel, name="o1"))
+    r = _list(session_client, workspace, project, filters={f"attribute:{sel.id}__isnull": "true"})
+    assert _ids(r) == {str(b.id)}
+    r = _list(session_client, workspace, project, filters={"type__isnull": "true"})
+    assert _ids(r) == set()
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
 def test_filter_by_type(session_client, workspace, project, a_b):
     a, b = a_b
     feature = Issue.objects.create(name="F", project=project, type=get_type(workspace.id, T.FEATURE), parent=a)

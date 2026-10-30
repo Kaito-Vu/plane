@@ -275,5 +275,20 @@ def test_value_write_check_uses_request_user_and_trusts_no_user(workspace, proje
     check_can_write_values(project.id, None)  # internal caller: trusted, no 403
     check_can_write_values(project.id, AnonymousUser())
     outsider = UserFactory()
-    with pytest.raises(PermissionDenied):
+    with pytest.raises(PermissionDenied) as e:
         check_can_write_values(project.id, outsider)
+    assert e.value.detail["error_code"] == "permission_denied"
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_restricted_guest_cannot_read_values_of_others_issues(workspace, project, story):
+    project.guest_view_all_features = False
+    project.save()
+    guest = UserFactory()
+    WorkspaceMemberFactory(workspace=workspace, member=guest, role=GUEST)
+    ProjectMemberFactory(project=project, member=guest, workspace=workspace, role=GUEST)
+    c = APIClient()
+    c.force_authenticate(user=guest)
+    r = c.get(_issues(workspace, project) + f"{story.id}/attribute-values/")
+    assert r.status_code == status.HTTP_404_NOT_FOUND

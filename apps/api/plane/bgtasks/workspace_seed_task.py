@@ -323,8 +323,9 @@ def create_project_issues(
                 created_by_id=bot_user.id,
             )
 
-        # Create cycle issues
-        if cycle_id:
+        # Create cycle issues. EE: sample issues are Epics, which may not enter a cycle (spec §6),
+        # so they are not linked. ponytail: seed a typed tree with Tasks in cycles if demo cycles need content.
+        if cycle_id and issue.type.external_id not in (TypeKey.EPIC.value, TypeKey.FEATURE.value):
             CycleIssue.objects.create(
                 issue=issue,
                 cycle_id=cycles_map[cycle_id],

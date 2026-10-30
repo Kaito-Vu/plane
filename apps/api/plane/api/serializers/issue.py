@@ -199,12 +199,8 @@ class IssueSerializer(BaseSerializer):
         workspace_id = self.context["workspace_id"]
         default_assignee_id = self.context["default_assignee_id"]
 
+        # EE: type_id is required in API v1 (validate_issue_payload rejects a missing type)
         issue_type = validated_data.pop("type", None)
-
-        if not issue_type:
-            # Get default issue type
-            issue_type = IssueType.objects.filter(project_issue_types__project_id=project_id, is_default=True).first()
-            issue_type = issue_type
 
         with transaction.atomic():  # EE: issue + attribute values, all-or-nothing
             issue = Issue.objects.create(**validated_data, project_id=project_id, type=issue_type)

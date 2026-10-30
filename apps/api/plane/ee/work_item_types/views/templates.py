@@ -13,6 +13,8 @@ from plane.ee.work_item_types.exceptions import WorkItemValidationError
 from ..serializers.attribute import AttributeTemplateOptionSerializer, AttributeTemplateSerializer
 
 ADMIN = allow_permission([ROLE.ADMIN], level="WORKSPACE")
+# Read-only list for the project "apply template" modal (project admins are often workspace members).
+READ = allow_permission([ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
 
 
 def save_unique(serializer, **kwargs):
@@ -55,7 +57,7 @@ def _templates(slug):
 
 
 class AttributeTemplateListEndpoint(BaseAPIView):
-    @ADMIN
+    @READ
     def get(self, request, slug):
         return Response(AttributeTemplateSerializer(_templates(slug), many=True).data)
 

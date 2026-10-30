@@ -553,7 +553,8 @@
       "invalid_issue_type": "Loại mục công việc này không thuộc không gian làm việc.",
       "issue_type_not_in_project": "Loại mục công việc này chưa được bật trong dự án.",
       "options_not_allowed": "Chỉ thuộc tính Chọn một và Chọn nhiều mới có tùy chọn.",
-      "invalid_value": "Giá trị mặc định không hợp lệ với kiểu trường này."
+      "invalid_value": "Giá trị mặc định không hợp lệ với kiểu trường này.",
+      "template_type_mismatch": "Mẫu này thuộc về một loại mục công việc khác."
     },
     "boolean": {
       "yes": "Có",

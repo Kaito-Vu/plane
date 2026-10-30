@@ -5,10 +5,8 @@ import { store } from "@/lib/store-context";
 export const isEeGroupKey = (key: string) => key === "type" || key.startsWith("attribute:");
 
 export const withEeGroupFilter = (params: Record<string, unknown>, groupKey: string, groupId: string) => {
-  // ponytail: the "None" group has no filter key (backend filters match values only), so its later pages
-  // are unfiltered; add an `__isnull` lookup in plane.ee.work_item_types.filters to fix.
-  if (groupId === "None") return;
-  const condition = { [`${groupKey}__in`]: groupId };
+  // "None" = no type / no value for the attribute (backend `__isnull`)
+  const condition = groupId === "None" ? { [`${groupKey}__isnull`]: "true" } : { [`${groupKey}__in`]: groupId };
   let current: unknown;
   try {
     current = typeof params.filters === "string" ? JSON.parse(params.filters) : undefined;

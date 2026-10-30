@@ -111,3 +111,39 @@ def test_v1_bulk_tree_bad_refs_are_row_errors(api_key_client, workspace, project
         ("b", "parent_ref_invalid"),
         ("c", "ambiguous_parent"),
     }
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_v1_project_create_seeds_types(api_key_client, workspace):
+    r = api_key_client.post(
+        f"/api/v1/workspaces/{workspace.slug}/projects/", {"name": "New", "identifier": "NEW"}, format="json"
+    )
+    assert r.status_code == status.HTTP_201_CREATED, r.data
+    p = Project.objects.get(pk=r.data["id"])
+    body = {"name": "e", "type_id": str(get_type(workspace.id, T.EPIC).id)}
+    assert api_key_client.post(_url(workspace, p), body, format="json").status_code == status.HTTP_201_CREATED
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_v1_delete_soft_deletes_subtree(api_key_client, workspace, project):
+    epic = Issue.objects.create(name="E", project=project, type=get_type(workspace.id, T.EPIC))
+    feat = Issue.objects.create(name="F", project=project, type=get_type(workspace.id, T.FEATURE), parent=epic)
+    r = api_key_client.delete(_url(workspace, project, f"issues/{epic.id}/"))
+    assert r.status_code == status.HTTP_204_NO_CONTENT
+    assert Issue.all_objects.get(pk=feat.id).deleted_at is not None
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_v1_cycle_rejects_epic(api_key_client, workspace, project):
+    from plane.db.models import Cycle, CycleIssue
+
+    cycle = Cycle.objects.create(name="C", project=project, workspace=workspace)
+    epic = Issue.objects.create(name="E", project=project, type=get_type(workspace.id, T.EPIC))
+    r = api_key_client.post(
+        _url(workspace, project, f"cycles/{cycle.id}/cycle-issues/"), {"issues": [str(epic.id)]}, format="json"
+    )
+    _flat(r, "cycle_type_not_allowed")
+    assert not CycleIssue.objects.filter(cycle=cycle).exists()

@@ -67,6 +67,10 @@ class TestPermissions:
         assert c.post(url, body, format="json").status_code == status.HTTP_403_FORBIDDEN
         assert session_client.post(url, body, format="json").status_code == status.HTTP_201_CREATED
 
+    def test_workspace_member_project_admin_lists_templates(self, workspace, project):
+        c = _member_client(workspace, project, MEMBER, ADMIN)
+        assert c.get(f"/api/workspaces/{workspace.slug}/attribute-templates/").status_code == status.HTTP_200_OK
+
 
 @pytest.mark.contract
 @pytest.mark.django_db
@@ -99,6 +103,20 @@ class TestBehavior:
         copy = Attribute.objects.get(pk=r.data["id"])
         assert (copy.name, copy.is_required, copy.options.count()) == ("Sel", False, 1)
         assert copy.source_template_id == AttributeTemplate.objects.get(pk=t["id"]).id
+
+    def test_apply_template_to_other_type_400(self, session_client, workspace, project, task_type):
+        t = session_client.post(
+            f"/api/workspaces/{workspace.slug}/attribute-templates/",
+            {"issue_type": str(task_type.id), "name": "X", "field_type": "text"},
+            format="json",
+        ).data
+        bug = get_type(workspace.id, TypeKey.BUG)
+        r = session_client.post(
+            _base(workspace, project) + "apply-template/",
+            {"template_id": t["id"], "issue_type_id": str(bug.id)},
+            format="json",
+        )
+        assert r.status_code == 400 and r.data["error_code"] == "template_type_mismatch"
 
     def test_apply_template_remaps_select_default(self, session_client, workspace, project, task_type):
         base = f"/api/workspaces/{workspace.slug}/attribute-templates/"

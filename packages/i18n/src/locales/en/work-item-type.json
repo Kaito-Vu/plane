@@ -553,7 +553,8 @@
       "invalid_issue_type": "This work item type doesn't belong to the workspace.",
       "issue_type_not_in_project": "This work item type isn't enabled in this project.",
       "options_not_allowed": "Only Single select and Multi select attributes have options.",
-      "invalid_value": "The default value is not valid for this field type."
+      "invalid_value": "The default value is not valid for this field type.",
+      "template_type_mismatch": "The template belongs to another work item type."
     },
     "boolean": {
       "yes": "Yes",

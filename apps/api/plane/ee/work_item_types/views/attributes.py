@@ -124,6 +124,8 @@ class AttributeApplyTemplateEndpoint(BaseAPIView):
             s.is_valid(raise_exception=True)
             it = s.validated_data["issue_type"]
             check_project_type(slug, project_id, it)
+            if t.issue_type_id and it.id != t.issue_type_id:
+                raise WorkItemValidationError("template_type_mismatch", "Template belongs to another work item type")
             last = _attrs(slug, project_id).filter(issue_type=it).aggregate(m=Max("sort_order"))["m"] or 0
             a = save_unique(
                 s, project_id=project_id, workspace_id=t.workspace_id, source_template=t, sort_order=last + 10000

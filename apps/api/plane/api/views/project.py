@@ -39,6 +39,7 @@ from plane.db.models import (
     ProjectPage,
 )
 from plane.bgtasks.webhook_task import model_activity, webhook_activity
+from plane.ee.work_item_types.seed import seed_project
 from plane.utils.exception_logger import log_exception
 from .base import BaseAPIView
 from plane.utils.host import base_host
@@ -273,6 +274,7 @@ class ProjectListCreateAPIEndpoint(BaseAPIView):
                             for state in DEFAULT_STATES
                         ]
                     )
+                    seed_project(serializer.instance)  # EE: work item types + system attributes
 
                     project = self.get_queryset().filter(pk=serializer.instance.id).first()
 

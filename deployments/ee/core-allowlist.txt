@@ -85,3 +85,7 @@ packages/shared-state/src/store/work-item-filters/adapter.ts
 packages/types/src/view-props.ts
 packages/utils/src/work-item/base.ts
 packages/i18n/src/locales/vi-VN/work-item-type.json
+apps/api/plane/api/views/project.py
+apps/api/plane/api/views/issue.py
+apps/api/plane/api/views/cycle.py
+apps/api/plane/app/views/intake/base.py

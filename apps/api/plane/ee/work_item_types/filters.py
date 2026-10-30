@@ -24,7 +24,7 @@ PREFIX = "attribute:"
 GROUP_PREFIX = "attr_"
 TYPE_GROUP = "ee_type"
 _GROUP_NAME = re.compile(r"attr_[0-9a-f]{32}")
-TYPE_KEYS = {"type", "type__in"}
+TYPE_KEYS = {"type", "type__in", "type__isnull"}
 GROUPABLE = {"select", "member", "boolean"}
 _COLUMN = {
     "text": "value_text",
@@ -133,16 +133,27 @@ def _type_q(raw: Any) -> Q:
     return Q(type_id__in=ids) | Q(type__external_source=AGILE_SOURCE, type__external_id__in=keys)
 
 
+def _isnull_q(attribute: Attribute, raw: Any) -> Q:
+    """No value for `attribute` (the group-by "None" bucket) when raw is true, any value otherwise."""
+    has = Q(
+        id__in=AttributeValue.objects.filter(attribute=attribute, **{f"{_COLUMN[attribute.field_type]}__isnull": False})
+        .values("issue_id")
+    )
+    return ~has if _boolean(raw) else has
+
+
 def split_ee_conditions(conditions: dict, view) -> tuple[Q, dict]:
     """Pull our keys out of a filter leaf; return (Q for them, remaining core conditions)."""
     ee_q, rest = Q(), {}
     for key, raw in conditions.items():
-        if key in TYPE_KEYS:
+        if key == "type__isnull":
+            ee_q &= Q(type__isnull=_boolean(raw))
+        elif key in TYPE_KEYS:
             ee_q &= _type_q(raw)
         elif key.startswith(PREFIX):
             raw_id, _, op = key[len(PREFIX) :].partition("__")
             attribute = _project_attribute(raw_id, view.kwargs.get("project_id"))
-            ee_q &= build_attribute_q(attribute, op or "exact", raw)
+            ee_q &= _isnull_q(attribute, raw) if op == "isnull" else build_attribute_q(attribute, op or "exact", raw)
         else:
             rest[key] = raw
     return ee_q, rest

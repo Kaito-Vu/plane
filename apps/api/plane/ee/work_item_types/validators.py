@@ -88,7 +88,13 @@ def check_can_write_values(project_id: UUID, user) -> None:
     if not ProjectMember.objects.filter(
         project_id=project_id, member_id=getattr(user, "id", None), role__gte=15, is_active=True
     ).exists():
-        raise PermissionDenied("Only project members can write attribute values")
+        raise PermissionDenied(  # flat EE body so the FE error mapper recognises it
+            {
+                "error_code": "permission_denied",
+                "message": "Only project members can write attribute values",
+                "details": {},
+            }
+        )
 
 
 def validate_work_item(
