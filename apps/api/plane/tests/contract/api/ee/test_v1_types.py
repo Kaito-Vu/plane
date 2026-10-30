@@ -137,10 +137,10 @@ def test_v1_delete_soft_deletes_subtree(api_key_client, workspace, project):
 
 @pytest.mark.contract
 @pytest.mark.django_db
-def test_v1_cycle_rejects_epic(api_key_client, workspace, project):
+def test_v1_cycle_rejects_epic(api_key_client, workspace, project, create_user):
     from plane.db.models import Cycle, CycleIssue
 
-    cycle = Cycle.objects.create(name="C", project=project, workspace=workspace)
+    cycle = Cycle.objects.create(name="C", project=project, workspace=workspace, owned_by=create_user)
     epic = Issue.objects.create(name="E", project=project, type=get_type(workspace.id, T.EPIC))
     r = api_key_client.post(
         _url(workspace, project, f"cycles/{cycle.id}/cycle-issues/"), {"issues": [str(epic.id)]}, format="json"

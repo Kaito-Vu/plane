@@ -226,7 +226,7 @@ class TestFixRound1:
 
     def test_member_and_guest_forbidden(self, workspace, project, task_type):
         m = _member_client(workspace, project, MEMBER, MEMBER)
-        assert m.get(_tmpl_url(workspace)).status_code == 403
+        assert m.get(_tmpl_url(workspace)).status_code == 200  # read-only list (I5)
         assert m.post(_tmpl_url(workspace), {}, format="json").status_code == 403
         g = _member_client(workspace, project, 5, 5)
         assert _create(g, workspace, project, task_type).status_code == 403
