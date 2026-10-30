@@ -128,7 +128,8 @@ class AttributeApplyTemplateEndpoint(BaseAPIView):
             a = save_unique(
                 s, project_id=project_id, workspace_id=t.workspace_id, source_template=t, sort_order=last + 10000
             )
-            AttributeOption.objects.bulk_create(
+            src = list(t.options.all())
+            new_opts = AttributeOption.objects.bulk_create(
                 AttributeOption(
                     attribute=a,
                     name=o.name,
@@ -137,8 +138,17 @@ class AttributeApplyTemplateEndpoint(BaseAPIView):
                     color=o.color,
                     is_default=o.is_default,
                 )
-                for o in t.options.all()
+                for o in src
             )
+            # Select default_value holds template option id(s); point them at the copied options.
+            id_map = {str(o.pk): str(n.pk) for o, n in zip(src, new_opts)}
+            dv = a.default_value
+            if isinstance(dv, list):
+                a.default_value = [id_map.get(str(v), v) for v in dv]
+            elif dv is not None:
+                a.default_value = id_map.get(str(dv), dv)
+            if a.default_value != dv:
+                a.save(update_fields=["default_value"])
         return Response(_out(slug, project_id, a.pk), status=status.HTTP_201_CREATED)
 
 

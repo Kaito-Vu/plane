@@ -100,6 +100,22 @@ class TestBehavior:
         assert (copy.name, copy.is_required, copy.options.count()) == ("Sel", False, 1)
         assert copy.source_template_id == AttributeTemplate.objects.get(pk=t["id"]).id
 
+    def test_apply_template_remaps_select_default(self, session_client, workspace, project, task_type):
+        base = f"/api/workspaces/{workspace.slug}/attribute-templates/"
+        t = session_client.post(
+            base, {"issue_type": str(task_type.id), "name": "Sel2", "field_type": "select"}, format="json"
+        ).data
+        o = session_client.post(base + f"{t['id']}/options/", {"name": "A"}, format="json").data
+        AttributeTemplate.objects.filter(pk=t["id"]).update(default_value=o["id"])
+        r = session_client.post(
+            _base(workspace, project) + "apply-template/",
+            {"template_id": t["id"], "issue_type_id": str(task_type.id)},
+            format="json",
+        )
+        assert r.status_code == 201, r.data
+        copy = Attribute.objects.get(pk=r.data["id"])
+        assert copy.default_value == str(copy.options.get().id) != o["id"]
+
     def test_system_attribute_locked(self, session_client, workspace, project, task_type):
         a = Attribute.objects.get(project=project, issue_type=task_type, system_key="acceptance_criteria")
         url = _base(workspace, project) + f"{a.id}/"
