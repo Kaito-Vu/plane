@@ -44,11 +44,11 @@ const multiSelect = (key: string, label: string, options: TOption[], params: TFi
     ]),
   });
 
-const attributeOptions = (a: TAttribute, members: IUserLite[]): TOption[] => {
+const attributeOptions = (a: TAttribute, members: IUserLite[], t: (key: string) => string): TOption[] => {
   if (a.field_type === "boolean")
     return [
-      { id: "true", label: "Yes" },
-      { id: "false", label: "No" },
+      { id: "true", label: t("agile_attributes.boolean.yes") },
+      { id: "false", label: t("agile_attributes.boolean.no") },
     ];
   if (a.field_type === "member" || a.field_type === "multi_member")
     return members.map((m) => ({ id: m.id, label: m.display_name }));
@@ -77,7 +77,7 @@ export const useAttributeFilterConfigs = (
       multiSelect("type", t("agile_work_item.type"), typeOptions, operatorConfigs),
       ...attributes
         .filter((a) => FILTERABLE.has(a.field_type))
-        .map((a) => multiSelect(`${ATTR}${a.id}`, a.name, attributeOptions(a, members), operatorConfigs)),
+        .map((a) => multiSelect(`${ATTR}${a.id}`, a.name, attributeOptions(a, members, t), operatorConfigs)),
     ];
   }, [projectId, typeIds, attributes, members, operatorConfigs, t]);
 };

@@ -20,6 +20,7 @@ import { cn, createIssuePayload } from "@plane/utils";
 import { QuickAddIssueFormRoot } from "./form";
 import { useCreateIssueToastActions } from "../../create-issue-toast-action-items";
 import { useQuickAddTypeValidation } from "@/ee/work-item-types/components/quick-add-type-fields";
+import { workItemErrorMessage } from "@/ee/work-item-types/work-item-errors";
 
 export type TQuickAddIssueForm = {
   ref: React.RefObject<HTMLFormElement | null>;
@@ -128,7 +129,7 @@ export const QuickAddIssueRoot = observer(function QuickAddIssueRoot(props: TQui
         },
         error: {
           title: t("common.error.label"),
-          message: (err) => err?.message || t("common.error.message"),
+          message: (err) => workItemErrorMessage(t, err) || err?.message || t("common.error.message"),
         },
       });
 

@@ -554,6 +554,10 @@
       "issue_type_not_in_project": "This work item type isn't enabled in this project.",
       "options_not_allowed": "Only Single select and Multi select attributes have options.",
       "invalid_value": "The default value is not valid for this field type."
+    },
+    "boolean": {
+      "yes": "Yes",
+      "no": "No"
     }
   },
   "agile_work_item": {
@@ -567,7 +571,7 @@
     "children": "Child work items",
     "no_children": "No child work items",
     "quick_add_choose_type": "Choose a type",
-    "delete_subtree_warning": "This work item has {count} direct child work items. They and all their descendants will be removed too.",
+    "delete_subtree_warning": "{count, plural, one {This work item has # direct child work item. It and all its descendants will be removed too.} other {This work item has # direct child work items. They and all their descendants will be removed too.}}",
     "cycle_warning_title": "Cycle warning",
     "errors": {
       "fix_fields": "Fix the highlighted fields before saving.",
@@ -581,8 +585,29 @@
       "parent_cycle": "A work item cannot be its own ancestor.",
       "max_depth_exceeded": "The hierarchy is too deep.",
       "attribute_required": "Some required attributes are empty.",
-      "open_children": "{count} child work items are still open. Complete them first.",
+      "open_children": "{count, plural, one {# child work item is still open. Complete it first.} other {# child work items are still open. Complete them first.}}",
       "cycle_type_not_allowed": "This work item type cannot be added to a cycle."
     }
+  },
+  "agile_import": {
+    "open": "Import CSV",
+    "title_upload": "Import: upload CSV",
+    "title_review": "Import: review rows",
+    "help": "Columns: {columns}. Any column named like an attribute of the row's type fills that attribute (separate multiple values with \";\"). Other columns (for example {example}) go to the work item as-is.",
+    "columns": {
+      "ref": "Ref",
+      "type": "Type",
+      "name": "Name",
+      "parent_ref": "Parent ref (in file)",
+      "existing_parent": "Existing parent",
+      "errors": "Errors"
+    },
+    "request_failed": "Request failed",
+    "empty_csv": "The CSV has no data rows",
+    "dry_run": "Dry-run",
+    "commit": "Commit",
+    "dry_run_passed": "Dry-run passed: ready to commit.",
+    "complete_title": "Import complete",
+    "complete_message": "{count, plural, one {# work item created} other {# work items created}}"
   }
 }

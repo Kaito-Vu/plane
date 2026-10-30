@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@makeplane/propel/components/dialog";
 import { setToast } from "@plane/blocks/toast";
+import { useTranslation } from "@plane/i18n";
 import { TYPE_KEYS } from "../constants";
 import { useAttributes } from "../hooks/use-attributes";
 import { csvToImportRows, parseCsv } from "../import-csv";
@@ -31,6 +32,7 @@ const withErrors = (rows: TImportRow[], errors: TImportRowError[]) =>
 
 /** Two-step import: 1) upload CSV into a staging batch, 2) fix parents/errors, dry-run, commit. */
 export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, workspaceSlug, projectId }: Props) {
+  const { t } = useTranslation();
   const { getProjectAttributes, getTypeId } = useAttributes();
   const [batchId, setBatchId] = useState<string>();
   const [rows, setRows] = useState<TImportRow[]>([]);
@@ -55,7 +57,7 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
       const e = asEeError(err);
       const rowErrors = (e?.details as { errors?: TImportRowError[] } | undefined)?.errors;
       if (rowErrors) setRows((prev) => withErrors(prev, rowErrors));
-      setBatchError(e?.message ?? "Request failed");
+      setBatchError(e?.message ?? t("agile_import.request_failed"));
     } finally {
       setBusy(false);
     }
@@ -74,7 +76,7 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
       const payload = csvToImportRows(parseCsv(await file.text()), getProjectAttributes(projectId), (key) =>
         TYPE_KEYS.includes(key as TWorkItemTypeKey) ? getTypeId(projectId, key as TWorkItemTypeKey) : undefined
       );
-      if (payload.length === 0) throw { error_code: "empty_batch", message: "The CSV has no data rows" };
+      if (payload.length === 0) throw { error_code: "empty_batch", message: t("agile_import.empty_csv") };
       // ponytail: if adding rows fails the empty batch stays (the API has no batch delete); it is never committed
       const batch = await service.createImportBatch(workspaceSlug, projectId);
       setRows(await service.addImportRows(workspaceSlug, projectId, batch.id, payload));
@@ -98,8 +100,8 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
       const res = await service.commitImport(workspaceSlug, projectId, batchId);
       setToast({
         type: "success",
-        title: "Import complete",
-        message: `${Object.keys(res.created).length} work items created`,
+        title: t("agile_import.complete_title"),
+        message: t("agile_import.complete_message", { count: Object.keys(res.created).length }),
       });
       close();
     });
@@ -110,7 +112,7 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
         <DialogMain>
           <DialogHeader>
             <DialogHeading>
-              <DialogTitle>{batchId ? "Import: review rows" : "Import: upload CSV"}</DialogTitle>
+              <DialogTitle>{t(batchId ? "agile_import.title_review" : "agile_import.title_upload")}</DialogTitle>
             </DialogHeading>
           </DialogHeader>
           <DialogBody>
@@ -118,9 +120,7 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
               {!batchId ? (
                 <>
                   <p className="text-secondary">
-                    Columns: <code>ref, type, parent_ref, parent_id, name</code>; any column named like an attribute of
-                    the row&apos;s type fills that attribute (multi values separated by &quot;;&quot;). Other columns
-                    (e.g. <code>priority</code>) go to the work item as-is.
+                    {t("agile_import.help", { columns: "ref, type, parent_ref, parent_id, name", example: "priority" })}
                   </p>
                   <input
                     type="file"
@@ -137,12 +137,12 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
                   <table className="w-full text-left text-12">
                     <thead>
                       <tr className="text-tertiary">
-                        <th className="p-1">Ref</th>
-                        <th className="p-1">Type</th>
-                        <th className="p-1">Name</th>
-                        <th className="p-1">Parent ref (in file)</th>
-                        <th className="p-1">Existing parent</th>
-                        <th className="p-1">Errors</th>
+                        <th className="p-1">{t("agile_import.columns.ref")}</th>
+                        <th className="p-1">{t("agile_import.columns.type")}</th>
+                        <th className="p-1">{t("agile_import.columns.name")}</th>
+                        <th className="p-1">{t("agile_import.columns.parent_ref")}</th>
+                        <th className="p-1">{t("agile_import.columns.existing_parent")}</th>
+                        <th className="p-1">{t("agile_import.columns.errors")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -154,12 +154,12 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
                 </div>
               )}
               {batchError && <p className="text-danger-primary">{batchError}</p>}
-              {batchId && valid && <p className="text-success-primary">Dry-run passed: ready to commit.</p>}
+              {batchId && valid && <p className="text-success-primary">{t("agile_import.dry_run_passed")}</p>}
             </div>
           </DialogBody>
         </DialogMain>
         <DialogActions>
-          <Button stretch="auto" variant="secondary" size="md" label="Cancel" onClick={close} />
+          <Button stretch="auto" variant="secondary" size="md" label={t("cancel")} onClick={close} />
           {batchId && (
             <>
               <Button
@@ -167,7 +167,7 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
                 variant="secondary"
                 size="md"
                 disabled={busy}
-                label="Dry-run"
+                label={t("agile_import.dry_run")}
                 onClick={() => void dryRun()}
               />
               <Button
@@ -175,7 +175,7 @@ export const ImportWizard = observer(function ImportWizard({ isOpen, onClose, wo
                 variant="primary"
                 size="md"
                 disabled={busy || !valid}
-                label="Commit"
+                label={t("agile_import.commit")}
                 onClick={() => void commit()}
               />
             </>

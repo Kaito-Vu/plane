@@ -84,3 +84,4 @@ apps/web/store/issue/helpers/issue-filter-helper.store.ts
 packages/shared-state/src/store/work-item-filters/adapter.ts
 packages/types/src/view-props.ts
 packages/utils/src/work-item/base.ts
+packages/i18n/src/locales/vi-VN/work-item-type.json

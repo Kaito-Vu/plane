@@ -82,7 +82,7 @@ function ProjectAttributesPage() {
                 stretch="auto"
                 variant="secondary"
                 size="md"
-                label="Import CSV"
+                label={t("agile_import.open")}
                 onClick={() => setImportOpen(true)}
               />
               <Button
