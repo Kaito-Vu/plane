@@ -80,6 +80,7 @@ export function ArchiveIssueModal(props: Props) {
           <SubtreeWarning
             projectId={issue.project_id}
             issueId={issue.id}
+            forArchive
             fallbackCount={"sub_issues_count" in issue ? issue.sub_issues_count : undefined}
           />
         </>

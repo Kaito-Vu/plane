@@ -10,10 +10,12 @@ type TProps = {
   issueId: string | null | undefined;
   /** Direct child count shown until the subtree count arrives. */
   fallbackCount?: number;
+  /** Archive dialog: already-archived descendants are not counted. */
+  forArchive?: boolean;
 };
 
 /** Delete/archive confirm note: the backend acts on the whole subtree; shows all live descendants. */
-export function SubtreeWarning({ projectId, issueId, fallbackCount }: TProps) {
+export function SubtreeWarning({ projectId, issueId, fallbackCount, forArchive }: TProps) {
   const { t } = useTranslation();
   const { workspaceSlug } = useParams();
   const [count, setCount] = useState<number | undefined>(undefined);
@@ -21,13 +23,13 @@ export function SubtreeWarning({ projectId, issueId, fallbackCount }: TProps) {
     if (!workspaceSlug || !projectId || !issueId) return;
     let alive = true;
     service
-      .getSubtreeCount(workspaceSlug.toString(), projectId, issueId)
+      .getSubtreeCount(workspaceSlug.toString(), projectId, issueId, forArchive)
       .then((res) => alive && setCount(res.count))
       .catch(console.error);
     return () => {
       alive = false;
     };
-  }, [workspaceSlug, projectId, issueId]);
+  }, [workspaceSlug, projectId, issueId, forArchive]);
   const shown = count ?? fallbackCount;
   if (!shown) return null;
   return (

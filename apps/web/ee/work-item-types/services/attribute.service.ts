@@ -111,9 +111,12 @@ export class AttributeService extends APIService {
   }
 
   /** All live descendants of an issue (delete/archive confirm). */
-  getSubtreeCount(slug: string, projectId: string, issueId: string) {
+  getSubtreeCount(slug: string, projectId: string, issueId: string, forArchive = false) {
     return this.req<{ count: number }>(
-      this.get(`${this.ws(slug)}/projects/${projectId}/issues/${issueId}/subtree-count/`)
+      this.get(
+        `${this.ws(slug)}/projects/${projectId}/issues/${issueId}/subtree-count/`,
+        forArchive ? { for: "archive" } : {}
+      )
     );
   }
 
