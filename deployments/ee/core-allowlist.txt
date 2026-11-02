@@ -98,3 +98,6 @@ packages/types/src/rich-filters/field-types/extended.ts
 packages/types/src/rich-filters/operator-configs/extended.ts
 packages/types/src/rich-filters/operators/extended.ts
 packages/constants/src/rich-filters/operator-labels/extended.ts
+apps/web/package.json
+apps/web/vitest.config.ts
+pnpm-lock.yaml
