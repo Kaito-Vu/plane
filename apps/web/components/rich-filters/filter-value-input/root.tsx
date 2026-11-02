@@ -25,6 +25,7 @@ import { DateRangeFilterValueInput } from "./date/range";
 import { SingleDateFilterValueInput } from "./date/single";
 import { MultiSelectFilterValueInput } from "./select/multi";
 import { SingleSelectFilterValueInput } from "./select/single";
+import { AttributeFilterValueInput } from "@/ee/work-item-types/components/attribute-filter-inputs";
 
 export const FilterValueInput = observer(function FilterValueInput<P extends TFilterProperty, V extends TFilterValue>(
   props: TFilterValueInputProps<P, V>
@@ -85,7 +86,10 @@ export const FilterValueInput = observer(function FilterValueInput<P extends TFi
 export const AdditionalFilterValueInput = observer(function AdditionalFilterValueInput<
   P extends TFilterProperty,
   V extends TFilterValue,
->(_props: TFilterValueInputProps<P, V>) {
+>(props: TFilterValueInputProps<P, V>) {
+  // EE: text / number / number-range inputs for work item attribute filters
+  const eeInput = AttributeFilterValueInput(props as unknown as TFilterValueInputProps<string, V>);
+  if (eeInput) return eeInput;
   return (
     // Fallback
     <div className="flex h-full cursor-not-allowed items-center px-4 text-11 text-placeholder transition-opacity duration-200">

@@ -7,10 +7,25 @@ import type {
   IUserLite,
   TFilterConfig,
   TIssueGroupByOptions,
+  TOperatorSpecificConfigs,
+  TSupportedOperators,
   TWorkItemFilterProperty,
 } from "@plane/types";
-import { COLLECTION_OPERATOR, EQUALITY_OPERATOR } from "@plane/types";
-import { createFilterConfig, createOperatorConfigEntry, getMultiSelectConfig } from "@plane/utils";
+import {
+  COLLECTION_OPERATOR,
+  COMPARISON_OPERATOR,
+  EQUALITY_OPERATOR,
+  EXTENDED_OPERATORS,
+  FILTER_FIELD_TYPE,
+} from "@plane/types";
+import {
+  createFilterConfig,
+  createOperatorConfigEntry,
+  getDatePickerConfig,
+  getDateRangePickerConfig,
+  getMultiSelectConfig,
+  getSingleSelectConfig,
+} from "@plane/utils";
 import { FilterOption } from "@/components/issues/issue-layouts/filters";
 import type { TFiltersOperatorConfigs } from "@/hooks/rich-filters/use-filters-operator-configs";
 import { store } from "@/lib/store-context";
@@ -44,6 +59,65 @@ const multiSelect = (key: string, label: string, options: TOption[], params: TFi
     ]),
   });
 
+const TEXT_TYPES = new Set(["text", "textarea", "url"]);
+const DATE_TYPES = new Set(["date", "datetime"]);
+
+/** Operators the core allows plus the EE ones (icontains, gte, lte, isnull). */
+const withEeOperators = (params: TFiltersOperatorConfigs): TFiltersOperatorConfigs => ({
+  ...params,
+  allowedOperators: new Set([...params.allowedOperators, ...Object.values(EXTENDED_OPERATORS)]),
+});
+
+/** isnull as a two-option select: "true" = no value, "false" = has a value. */
+const emptyEntry = (params: TFiltersOperatorConfigs) =>
+  createOperatorConfigEntry(EQUALITY_OPERATOR.ISNULL, { isEnabled: true, ...params }, (updated) =>
+    getSingleSelectConfig<TOption, string>(
+      {
+        items: [
+          { id: "true", label: "yes" },
+          { id: "false", label: "no" },
+        ],
+        getId: (o) => o.id,
+        getLabel: (o) => o.label,
+        getValue: (o) => o.id,
+      },
+      updated
+    )
+  );
+
+/** Text (contains), number (=, >=, <=, between) and date (on, on/after, on/before, between) filters,
+ * all with "is empty". Keys follow plane.ee.work_item_types.filters: `attribute:<id>__<op>`. */
+const valueFilter = (a: TAttribute, label: string, base: TFiltersOperatorConfigs) => {
+  const params = withEeOperators(base);
+  const p = { isEnabled: true, ...params };
+  // text/number field configs are plain objects (no factory in @plane/utils for the EE field types)
+  const field = (type: string) => (updated: typeof p) => ({ type, ...updated }) as never;
+  let entries: [TSupportedOperators, TOperatorSpecificConfigs[keyof TOperatorSpecificConfigs]][];
+  if (TEXT_TYPES.has(a.field_type))
+    entries = [createOperatorConfigEntry(EQUALITY_OPERATOR.ICONTAINS, p, field(FILTER_FIELD_TYPE.TEXT))];
+  else if (a.field_type === "number")
+    entries = [
+      createOperatorConfigEntry(EQUALITY_OPERATOR.EXACT, p, field(FILTER_FIELD_TYPE.NUMBER)),
+      createOperatorConfigEntry(COMPARISON_OPERATOR.GTE, p, field(FILTER_FIELD_TYPE.NUMBER)),
+      createOperatorConfigEntry(COMPARISON_OPERATOR.LTE, p, field(FILTER_FIELD_TYPE.NUMBER)),
+      createOperatorConfigEntry(COMPARISON_OPERATOR.RANGE, p, field(FILTER_FIELD_TYPE.NUMBER_RANGE)),
+    ];
+  else
+    entries = [
+      createOperatorConfigEntry(EQUALITY_OPERATOR.EXACT, p, (u) => getDatePickerConfig(u)),
+      createOperatorConfigEntry(COMPARISON_OPERATOR.GTE, p, (u) => getDatePickerConfig(u)),
+      createOperatorConfigEntry(COMPARISON_OPERATOR.LTE, p, (u) => getDatePickerConfig(u)),
+      createOperatorConfigEntry(COMPARISON_OPERATOR.RANGE, p, (u) => getDateRangePickerConfig(u)),
+    ];
+  return createFilterConfig<TWorkItemFilterProperty>({
+    id: `${ATTR}${a.id}` as TWorkItemFilterProperty,
+    label,
+    isEnabled: true,
+    ...params,
+    supportedOperatorConfigsMap: new Map([...entries, emptyEntry(params)]),
+  });
+};
+
 const attributeOptions = (a: TAttribute, members: IUserLite[], t: (key: string) => string): TOption[] => {
   if (a.field_type === "boolean")
     return [
@@ -73,11 +147,19 @@ export const useAttributeFilterConfigs = (
       id: typeIds[k] as string,
       label: t(`agile_attributes.types.${k}`),
     }));
+    const typeKeyOf = Object.fromEntries(Object.entries(typeIds).map(([k, id]) => [id, k]));
+    // names repeat across types (Story Points on Epic/Feature/Story/Bug): label with the type
+    const label = (a: TAttribute) =>
+      typeKeyOf[a.issue_type] ? `${a.name} (${t(`agile_attributes.types.${typeKeyOf[a.issue_type]}`)})` : a.name;
     return [
       multiSelect("type", t("agile_work_item.type"), typeOptions, operatorConfigs),
-      ...attributes
-        .filter((a) => FILTERABLE.has(a.field_type))
-        .map((a) => multiSelect(`${ATTR}${a.id}`, a.name, attributeOptions(a, members, t), operatorConfigs)),
+      ...attributes.flatMap((a) => {
+        if (FILTERABLE.has(a.field_type))
+          return [multiSelect(`${ATTR}${a.id}`, label(a), attributeOptions(a, members, t), operatorConfigs)];
+        if (TEXT_TYPES.has(a.field_type) || a.field_type === "number" || DATE_TYPES.has(a.field_type))
+          return [valueFilter(a, label(a), operatorConfigs)];
+        return [];
+      }),
     ];
   }, [projectId, typeIds, attributes, members, operatorConfigs, t]);
 };

@@ -12,7 +12,10 @@ export const EXTENDED_LOGICAL_OPERATOR = {} as const;
 /**
  * Extended equality operators
  */
-export const EXTENDED_EQUALITY_OPERATOR = {} as const;
+export const EXTENDED_EQUALITY_OPERATOR = {
+  ICONTAINS: "icontains", // EE attribute text filters
+  ISNULL: "isnull", // EE attribute filters: value "true" (empty) / "false" (set)
+} as const;
 
 /**
  * Extended collection operators
@@ -22,7 +25,10 @@ export const EXTENDED_COLLECTION_OPERATOR = {} as const;
 /**
  * Extended comparison operators
  */
-export const EXTENDED_COMPARISON_OPERATOR = {} as const;
+export const EXTENDED_COMPARISON_OPERATOR = {
+  GTE: "gte", // EE attribute number/date filters
+  LTE: "lte",
+} as const;
 
 /**
  * Extended operators that support multiple values
