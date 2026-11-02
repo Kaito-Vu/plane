@@ -572,7 +572,7 @@
     "children": "Mục công việc con",
     "no_children": "Không có mục công việc con",
     "quick_add_choose_type": "Chọn loại",
-    "delete_subtree_warning": "{count, plural, one {Mục công việc này có # mục con trực tiếp. Mục con và toàn bộ hậu duệ của nó cũng sẽ bị xóa.} other {Mục công việc này có # mục con trực tiếp. Các mục con và toàn bộ hậu duệ của chúng cũng sẽ bị xóa.}}",
+    "delete_subtree_warning": "{count, plural, other {# mục công việc bên dưới (mọi cấp) cũng sẽ bị áp dụng theo.}}",
     "cycle_warning_title": "Cảnh báo chu kỳ",
     "errors": {
       "fix_fields": "Hãy sửa các trường được đánh dấu trước khi lưu.",

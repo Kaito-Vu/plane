@@ -110,6 +110,13 @@ export class AttributeService extends APIService {
     );
   }
 
+  /** All live descendants of an issue (delete/archive confirm). */
+  getSubtreeCount(slug: string, projectId: string, issueId: string) {
+    return this.req<{ count: number }>(
+      this.get(`${this.ws(slug)}/projects/${projectId}/issues/${issueId}/subtree-count/`)
+    );
+  }
+
   // two-step import (ImportBatch / ImportRow staging)
   private imports = (slug: string, projectId: string) => `${this.ws(slug)}/projects/${projectId}/imports`;
   createImportBatch(slug: string, projectId: string) {

@@ -124,7 +124,11 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
             {projectDetails?.identifier}-{issue?.sequence_id}
           </span>
           {` ? All of the data related to the ${isEpic ? "epic" : "work item"} will be permanently removed. This action cannot be undone.`}
-          <SubtreeWarning count={issue && "sub_issues_count" in issue ? issue.sub_issues_count : undefined} />
+          <SubtreeWarning
+            projectId={issue?.project_id}
+            issueId={issue?.id}
+            fallbackCount={issue && "sub_issues_count" in issue ? issue.sub_issues_count : undefined}
+          />
         </>
       }
     />

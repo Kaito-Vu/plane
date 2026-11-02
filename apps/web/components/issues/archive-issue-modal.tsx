@@ -77,7 +77,11 @@ export function ArchiveIssueModal(props: Props) {
       content={
         <>
           {t("issue.archive.confirm_message")}
-          <SubtreeWarning count={"sub_issues_count" in issue ? issue.sub_issues_count : undefined} />
+          <SubtreeWarning
+            projectId={issue.project_id}
+            issueId={issue.id}
+            fallbackCount={"sub_issues_count" in issue ? issue.sub_issues_count : undefined}
+          />
         </>
       }
       primaryButtonText={{ loading: t("common.archiving"), default: t("common.archive") }}

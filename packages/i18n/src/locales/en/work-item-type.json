@@ -572,7 +572,7 @@
     "children": "Child work items",
     "no_children": "No child work items",
     "quick_add_choose_type": "Choose a type",
-    "delete_subtree_warning": "{count, plural, one {This work item has # direct child work item. It and all its descendants will be removed too.} other {This work item has # direct child work items. They and all their descendants will be removed too.}}",
+    "delete_subtree_warning": "{count, plural, one {# work item below this one (at any level) is included too.} other {# work items below this one (at all levels) are included too.}}",
     "cycle_warning_title": "Cycle warning",
     "errors": {
       "fix_fields": "Fix the highlighted fields before saving.",
