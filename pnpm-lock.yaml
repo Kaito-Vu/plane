@@ -259,8 +259,8 @@ catalogs:
       specifier: ^0.3.0
       version: 0.3.0
     happy-dom:
-      specifier: 20.8.9
-      version: 20.8.9
+      specifier: 21.0.4
+      version: 21.0.4
     hast:
       specifier: ^1.0.0
       version: 1.0.0
@@ -617,7 +617,7 @@ importers:
         version: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       serve:
         specifier: 'catalog:'
-        version: 14.2.5
+        version: 14.2.5(supports-color@7.2.0)
       swr:
         specifier: 'catalog:'
         version: 2.4.2(react@19.2.8)
@@ -633,7 +633,7 @@ importers:
         version: link:../../packages/typescript-config
       '@react-router/dev':
         specifier: 'catalog:'
-        version: 8.3.0(@react-router/serve@8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 8.3.0(@react-router/serve@8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(supports-color@7.2.0)(typescript@5.8.3))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(supports-color@7.2.0)(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.1.17
@@ -660,7 +660,7 @@ importers:
         version: 8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)
       vite-tsconfig-paths:
         specifier: 'catalog:'
-        version: 5.1.4(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 5.1.4(supports-color@7.2.0)(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
 
   apps/live:
     dependencies:
@@ -669,7 +669,7 @@ importers:
         version: 0.94.1(effect@3.20.0)
       '@effect/platform-node':
         specifier: 'catalog:'
-        version: 0.104.0(@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
+        version: 0.104.0(@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
       '@fontsource/inter':
         specifier: 'catalog:'
         version: 5.2.8
@@ -681,7 +681,7 @@ importers:
         version: 3.4.4(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
       '@hocuspocus/extension-redis':
         specifier: 'catalog:'
-        version: 3.4.4(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
+        version: 3.4.4(supports-color@7.2.0)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
       '@hocuspocus/server':
         specifier: 'catalog:'
         version: 3.4.4(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
@@ -711,7 +711,7 @@ importers:
         version: 2.13.1
       '@sesamecare-oss/redlock':
         specifier: 'catalog:'
-        version: 1.4.0(ioredis@5.7.0)
+        version: 1.4.0(ioredis@5.7.0(supports-color@7.2.0))
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.31.3(@tiptap/pm@3.31.3)
@@ -726,10 +726,10 @@ importers:
         version: 3.0.9(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-view@1.42.6)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
       axios:
         specifier: 1.20.0
-        version: 1.20.0
+        version: 1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
       compression:
         specifier: 1.8.2
-        version: 1.8.2
+        version: 1.8.2(supports-color@7.2.0)
       cors:
         specifier: 'catalog:'
         version: 2.8.5
@@ -741,16 +741,16 @@ importers:
         version: 3.20.0
       express:
         specifier: 4.22.0
-        version: 4.22.0
+        version: 4.22.0(supports-color@7.2.0)
       express-ws:
         specifier: 'catalog:'
-        version: 5.0.2(express@4.22.0)
+        version: 5.0.2(express@4.22.0(supports-color@7.2.0))
       helmet:
         specifier: 'catalog:'
         version: 7.2.0
       ioredis:
         specifier: 'catalog:'
-        version: 5.7.0
+        version: 5.7.0(supports-color@7.2.0)
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -811,13 +811,13 @@ importers:
         version: 2.4.5
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.6)(jsdom@23.2.0)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.6)(jsdom@23.2.0(supports-color@7.2.0))(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
 
   apps/space:
     dependencies:
@@ -862,10 +862,10 @@ importers:
         version: 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)
       '@react-router/serve':
         specifier: 'catalog:'
-        version: 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)
+        version: 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(supports-color@7.2.0)(typescript@5.8.3)
       axios:
         specifier: 1.20.0
-        version: 1.20.0
+        version: 1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -923,13 +923,13 @@ importers:
         version: link:../../packages/typescript-config
       '@react-router/dev':
         specifier: 'catalog:'
-        version: 8.3.0(@react-router/serve@8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 8.3.0(@react-router/serve@8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(supports-color@7.2.0)(typescript@5.8.3))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(supports-color@7.2.0)(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.1.17
       '@tailwindcss/typography':
         specifier: 'catalog:'
-        version: 0.5.19
+        version: 0.5.19(tailwindcss@4.1.17)
       '@types/lodash-es':
         specifier: 'catalog:'
         version: 4.17.12
@@ -953,7 +953,7 @@ importers:
         version: 8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)
       vite-tsconfig-paths:
         specifier: 'catalog:'
-        version: 5.1.4(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 5.1.4(supports-color@7.2.0)(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
 
   apps/web:
     dependencies:
@@ -1152,7 +1152,7 @@ importers:
         version: 5.1.4(supports-color@7.2.0)(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
       vitest:
         specifier: 'catalog:'
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.6)(jsdom@23.2.0(supports-color@7.2.0))(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@23.2.0(supports-color@7.2.0))(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
 
   packages/blocks:
     dependencies:
@@ -1240,22 +1240,22 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       jsdom:
         specifier: 'catalog:'
-        version: 23.2.0
+        version: 23.2.0(supports-color@7.2.0)
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.6)(jsdom@23.2.0)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@23.2.0(supports-color@7.2.0))(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
 
   packages/codemods:
     devDependencies:
       '@hypermod/utils':
         specifier: 'catalog:'
-        version: 0.7.1
+        version: 0.7.1(supports-color@7.2.0)
       '@types/jscodeshift':
         specifier: 'catalog:'
         version: 17.3.0
@@ -1264,10 +1264,10 @@ importers:
         version: 0.14.2
       jscodeshift:
         specifier: 'catalog:'
-        version: 17.3.0
+        version: 17.3.0(supports-color@7.2.0)
       vitest:
         specifier: 'catalog:'
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.6)(jsdom@23.2.0)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@23.2.0(supports-color@7.2.0))(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
 
   packages/constants:
     dependencies:
@@ -1286,7 +1286,7 @@ importers:
         version: 19.2.17
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -1310,7 +1310,7 @@ importers:
         version: 0.2.2
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -1394,7 +1394,7 @@ importers:
         version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
       '@tiptap/html':
         specifier: 'catalog:'
-        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)(happy-dom@20.8.9)
+        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)(happy-dom@21.0.4)
       '@tiptap/pm':
         specifier: 'catalog:'
         version: 3.31.3
@@ -1418,7 +1418,7 @@ importers:
         version: 10.5.0
       happy-dom:
         specifier: 'catalog:'
-        version: 20.8.9
+        version: 21.0.4
       highlight.js:
         specifier: 'catalog:'
         version: 11.11.1
@@ -1491,13 +1491,13 @@ importers:
         version: 8.5.25
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.8.9)(jsdom@23.2.0)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@23.2.0(supports-color@7.2.0))(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
 
   packages/hooks:
     dependencies:
@@ -1516,7 +1516,7 @@ importers:
         version: 19.2.17
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -1537,7 +1537,7 @@ importers:
         version: 19.2.8
       react-i18next:
         specifier: 'catalog:'
-        version: 16.6.6(i18next@25.10.9(typescript@5.8.3))(react@19.2.8)(typescript@5.8.3)
+        version: 16.6.6(i18next@25.10.9(typescript@5.8.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.8.3)
     devDependencies:
       '@plane/typescript-config':
         specifier: workspace:*
@@ -1550,7 +1550,7 @@ importers:
         version: 19.2.17
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       tsx:
         specifier: 'catalog:'
         version: 4.20.6
@@ -1578,7 +1578,7 @@ importers:
         version: 22.12.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -1593,23 +1593,23 @@ importers:
         version: link:../types
       axios:
         specifier: 1.20.0
-        version: 1.20.0
+        version: 1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
       file-type:
         specifier: 'catalog:'
-        version: 21.3.3
+        version: 21.3.3(supports-color@7.2.0)
     devDependencies:
       '@plane/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.6)(jsdom@23.2.0)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@23.2.0(supports-color@7.2.0))(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
 
   packages/shared-state:
     dependencies:
@@ -1649,7 +1649,7 @@ importers:
         version: 22.12.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -1693,7 +1693,7 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -1746,7 +1746,7 @@ importers:
         version: 10.0.1
       remark-gfm:
         specifier: 'catalog:'
-        version: 4.0.1
+        version: 4.0.1(supports-color@7.2.0)
       remark-stringify:
         specifier: 'catalog:'
         version: 11.0.0
@@ -1789,7 +1789,7 @@ importers:
         version: 2.16.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3)
+        version: 0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -5782,8 +5782,8 @@ packages:
     resolution: {integrity: sha512-5DDsf4QmEIlRL6NkCv/fxSjYHHkZceL/IaYQdJc2h3G7DRTEai++VTjbfL0LB9geW2VrA3+vrjF3Efx+OTtX0Q==}
     engines: {node: '>=20.0.0'}
 
-  happy-dom@20.8.9:
-    resolution: {integrity: sha512-Tz23LR9T9jOGVZm2x1EPdXqwA37G/owYMxRwU0E4miurAtFsPMQ1d2Jc2okUaSjZqAFz2oEn3FLXC5a0a+siyA==}
+  happy-dom@21.0.4:
+    resolution: {integrity: sha512-tFm+GaLBgo6o0awHnvHaNoraVo27qJ+2tZEtZ+cIa08hXbeitrxAJajLI05hsUy/2/YTKcUjQYzHe5mCcraLBw==}
     engines: {node: '>=20.0.0'}
 
   has-flag@3.0.0:
@@ -8279,26 +8279,6 @@ snapshots:
 
   '@babel/compat-data@7.29.7': {}
 
-  '@babel/core@7.29.7':
-    dependencies:
-      '@babel/code-frame': 7.29.7
-      '@babel/generator': 7.29.7
-      '@babel/helper-compilation-targets': 7.29.7
-      '@babel/helper-module-transforms': 7.29.7(@babel/core@7.29.7)
-      '@babel/helpers': 7.29.7
-      '@babel/parser': 7.29.7
-      '@babel/template': 7.29.7
-      '@babel/traverse': 7.29.7
-      '@babel/types': 7.29.7
-      '@jridgewell/remapping': 2.3.5
-      convert-source-map: 2.0.0
-      debug: 4.4.3
-      gensync: 1.0.0-beta.2
-      json5: 2.2.3
-      semver: 6.3.1
-    transitivePeerDependencies:
-      - supports-color
-
   '@babel/core@7.29.7(supports-color@7.2.0)':
     dependencies:
       '@babel/code-frame': 7.29.7
@@ -8352,38 +8332,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/helper-create-class-features-plugin@7.29.7(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-annotate-as-pure': 7.29.7
-      '@babel/helper-member-expression-to-functions': 7.29.7
-      '@babel/helper-optimise-call-expression': 7.29.7
-      '@babel/helper-replace-supers': 7.29.7(@babel/core@7.29.7)
-      '@babel/helper-skip-transparent-expression-wrappers': 7.29.7
-      '@babel/traverse': 7.29.7
-      semver: 6.3.1
-    transitivePeerDependencies:
-      - supports-color
-
   '@babel/helper-globals@7.29.7': {}
-
-  '@babel/helper-member-expression-to-functions@7.29.7':
-    dependencies:
-      '@babel/traverse': 7.29.7
-      '@babel/types': 7.29.7
-    transitivePeerDependencies:
-      - supports-color
 
   '@babel/helper-member-expression-to-functions@7.29.7(supports-color@7.2.0)':
     dependencies:
       '@babel/traverse': 7.29.7(supports-color@7.2.0)
-      '@babel/types': 7.29.7
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/helper-module-imports@7.29.7':
-    dependencies:
-      '@babel/traverse': 7.29.7
       '@babel/types': 7.29.7
     transitivePeerDependencies:
       - supports-color
@@ -8404,15 +8357,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/helper-module-transforms@7.29.7(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-module-imports': 7.29.7
-      '@babel/helper-validator-identifier': 7.29.7
-      '@babel/traverse': 7.29.7
-    transitivePeerDependencies:
-      - supports-color
-
   '@babel/helper-optimise-call-expression@7.29.7':
     dependencies:
       '@babel/types': 7.29.7
@@ -8425,22 +8369,6 @@ snapshots:
       '@babel/helper-member-expression-to-functions': 7.29.7(supports-color@7.2.0)
       '@babel/helper-optimise-call-expression': 7.29.7
       '@babel/traverse': 7.29.7(supports-color@7.2.0)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/helper-replace-supers@7.29.7(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-member-expression-to-functions': 7.29.7
-      '@babel/helper-optimise-call-expression': 7.29.7
-      '@babel/traverse': 7.29.7
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/helper-skip-transparent-expression-wrappers@7.29.7':
-    dependencies:
-      '@babel/traverse': 7.29.7
-      '@babel/types': 7.29.7
     transitivePeerDependencies:
       - supports-color
 
@@ -8466,9 +8394,9 @@ snapshots:
     dependencies:
       '@babel/types': 7.29.7
 
-  '@babel/plugin-syntax-flow@7.27.1(@babel/core@7.29.7)':
+  '@babel/plugin-syntax-flow@7.27.1(@babel/core@7.29.7(supports-color@7.2.0))':
     dependencies:
-      '@babel/core': 7.29.7
+      '@babel/core': 7.29.7(supports-color@7.2.0)
       '@babel/helper-plugin-utils': 7.29.7
 
   '@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7(supports-color@7.2.0))':
@@ -8476,34 +8404,24 @@ snapshots:
       '@babel/core': 7.29.7(supports-color@7.2.0)
       '@babel/helper-plugin-utils': 7.29.7
 
-  '@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-plugin-utils': 7.29.7
-
   '@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7(supports-color@7.2.0))':
     dependencies:
       '@babel/core': 7.29.7(supports-color@7.2.0)
       '@babel/helper-plugin-utils': 7.29.7
 
-  '@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7)':
+  '@babel/plugin-transform-class-properties@7.27.1(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)':
     dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-plugin-utils': 7.29.7
-
-  '@babel/plugin-transform-class-properties@7.27.1(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-create-class-features-plugin': 7.29.7(@babel/core@7.29.7)
+      '@babel/core': 7.29.7(supports-color@7.2.0)
+      '@babel/helper-create-class-features-plugin': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
       '@babel/helper-plugin-utils': 7.29.7
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/plugin-transform-flow-strip-types@7.27.1(@babel/core@7.29.7)':
+  '@babel/plugin-transform-flow-strip-types@7.27.1(@babel/core@7.29.7(supports-color@7.2.0))':
     dependencies:
-      '@babel/core': 7.29.7
+      '@babel/core': 7.29.7(supports-color@7.2.0)
       '@babel/helper-plugin-utils': 7.29.7
-      '@babel/plugin-syntax-flow': 7.27.1(@babel/core@7.29.7)
+      '@babel/plugin-syntax-flow': 7.27.1(@babel/core@7.29.7(supports-color@7.2.0))
 
   '@babel/plugin-transform-modules-commonjs@7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)':
     dependencies:
@@ -8513,31 +8431,23 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/plugin-transform-modules-commonjs@7.29.7(@babel/core@7.29.7)':
+  '@babel/plugin-transform-nullish-coalescing-operator@7.27.1(@babel/core@7.29.7(supports-color@7.2.0))':
     dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-module-transforms': 7.29.7(@babel/core@7.29.7)
+      '@babel/core': 7.29.7(supports-color@7.2.0)
       '@babel/helper-plugin-utils': 7.29.7
+
+  '@babel/plugin-transform-optional-chaining@7.28.5(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)':
+    dependencies:
+      '@babel/core': 7.29.7(supports-color@7.2.0)
+      '@babel/helper-plugin-utils': 7.29.7
+      '@babel/helper-skip-transparent-expression-wrappers': 7.29.7(supports-color@7.2.0)
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/plugin-transform-nullish-coalescing-operator@7.27.1(@babel/core@7.29.7)':
+  '@babel/plugin-transform-private-methods@7.27.1(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)':
     dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-plugin-utils': 7.29.7
-
-  '@babel/plugin-transform-optional-chaining@7.28.5(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-plugin-utils': 7.29.7
-      '@babel/helper-skip-transparent-expression-wrappers': 7.29.7
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/plugin-transform-private-methods@7.27.1(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-create-class-features-plugin': 7.29.7(@babel/core@7.29.7)
+      '@babel/core': 7.29.7(supports-color@7.2.0)
+      '@babel/helper-create-class-features-plugin': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
       '@babel/helper-plugin-utils': 7.29.7
     transitivePeerDependencies:
       - supports-color
@@ -8553,23 +8463,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/plugin-transform-typescript@7.29.7(@babel/core@7.29.7)':
+  '@babel/preset-flow@7.27.1(@babel/core@7.29.7(supports-color@7.2.0))':
     dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-annotate-as-pure': 7.29.7
-      '@babel/helper-create-class-features-plugin': 7.29.7(@babel/core@7.29.7)
-      '@babel/helper-plugin-utils': 7.29.7
-      '@babel/helper-skip-transparent-expression-wrappers': 7.29.7
-      '@babel/plugin-syntax-typescript': 7.29.7(@babel/core@7.29.7)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/preset-flow@7.27.1(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
+      '@babel/core': 7.29.7(supports-color@7.2.0)
       '@babel/helper-plugin-utils': 7.29.7
       '@babel/helper-validator-option': 7.29.7
-      '@babel/plugin-transform-flow-strip-types': 7.27.1(@babel/core@7.29.7)
+      '@babel/plugin-transform-flow-strip-types': 7.27.1(@babel/core@7.29.7(supports-color@7.2.0))
 
   '@babel/preset-typescript@7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)':
     dependencies:
@@ -8582,20 +8481,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/preset-typescript@7.29.7(@babel/core@7.29.7)':
+  '@babel/register@7.28.3(@babel/core@7.29.7(supports-color@7.2.0))':
     dependencies:
-      '@babel/core': 7.29.7
-      '@babel/helper-plugin-utils': 7.29.7
-      '@babel/helper-validator-option': 7.29.7
-      '@babel/plugin-syntax-jsx': 7.29.7(@babel/core@7.29.7)
-      '@babel/plugin-transform-modules-commonjs': 7.29.7(@babel/core@7.29.7)
-      '@babel/plugin-transform-typescript': 7.29.7(@babel/core@7.29.7)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@babel/register@7.28.3(@babel/core@7.29.7)':
-    dependencies:
-      '@babel/core': 7.29.7
+      '@babel/core': 7.29.7(supports-color@7.2.0)
       clone-deep: 4.0.1
       find-cache-dir: 2.1.0
       make-dir: 2.1.0
@@ -8609,18 +8497,6 @@ snapshots:
       '@babel/code-frame': 7.29.7
       '@babel/parser': 7.29.7
       '@babel/types': 7.29.7
-
-  '@babel/traverse@7.29.7':
-    dependencies:
-      '@babel/code-frame': 7.29.7
-      '@babel/generator': 7.29.7
-      '@babel/helper-globals': 7.29.7
-      '@babel/parser': 7.29.7
-      '@babel/template': 7.29.7
-      '@babel/types': 7.29.7
-      debug: 4.4.3
-    transitivePeerDependencies:
-      - supports-color
 
   '@babel/traverse@7.29.7(supports-color@7.2.0)':
     dependencies:
@@ -8700,29 +8576,29 @@ snapshots:
 
   '@date-fns/tz@1.4.1': {}
 
-  '@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
+  '@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
     dependencies:
       '@effect/platform': 0.94.1(effect@3.20.0)
       '@effect/rpc': 0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
-      '@effect/sql': 0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
-      '@effect/workflow': 0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
+      '@effect/sql': 0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
+      '@effect/workflow': 0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
       effect: 3.20.0
       kubernetes-types: 1.30.0
 
-  '@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0)':
+  '@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0))':
     dependencies:
       '@effect/platform': 0.94.1(effect@3.20.0)
       effect: 3.20.0
       uuid: 14.0.0
     optionalDependencies:
-      ioredis: 5.7.0
+      ioredis: 5.7.0(supports-color@7.2.0)
 
-  '@effect/platform-node-shared@0.57.0(@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
+  '@effect/platform-node-shared@0.57.0(@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
     dependencies:
-      '@effect/cluster': 0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
+      '@effect/cluster': 0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
       '@effect/platform': 0.94.1(effect@3.20.0)
       '@effect/rpc': 0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
-      '@effect/sql': 0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
+      '@effect/sql': 0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
       '@parcel/watcher': 2.5.4
       effect: 3.20.0
       multipasta: 0.2.7
@@ -8740,13 +8616,13 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@effect/platform-node@0.104.0(@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
+  '@effect/platform-node@0.104.0(@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
     dependencies:
-      '@effect/cluster': 0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
+      '@effect/cluster': 0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
       '@effect/platform': 0.94.1(effect@3.20.0)
-      '@effect/platform-node-shared': 0.57.0(@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
+      '@effect/platform-node-shared': 0.57.0(@effect/cluster@0.56.1(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(effect@3.20.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)
       '@effect/rpc': 0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
-      '@effect/sql': 0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
+      '@effect/sql': 0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
       effect: 3.20.0
       mime: 3.0.0
       undici: 7.30.1
@@ -8768,16 +8644,16 @@ snapshots:
       effect: 3.20.0
       msgpackr: 1.11.8
 
-  '@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)':
+  '@effect/sql@0.49.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)':
     dependencies:
-      '@effect/experimental': 0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0)
+      '@effect/experimental': 0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0))
       '@effect/platform': 0.94.1(effect@3.20.0)
       effect: 3.20.0
       uuid: 14.0.0
 
-  '@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
+  '@effect/workflow@0.16.0(@effect/experimental@0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0)))(@effect/platform@0.94.1(effect@3.20.0))(@effect/rpc@0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0))(effect@3.20.0)':
     dependencies:
-      '@effect/experimental': 0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0)
+      '@effect/experimental': 0.58.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)(ioredis@5.7.0(supports-color@7.2.0))
       '@effect/platform': 0.94.1(effect@3.20.0)
       '@effect/rpc': 0.73.0(@effect/platform@0.94.1(effect@3.20.0))(effect@3.20.0)
       effect: 3.20.0
@@ -8992,11 +8868,11 @@ snapshots:
       - y-protocols
       - yjs
 
-  '@hocuspocus/extension-redis@3.4.4(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)':
+  '@hocuspocus/extension-redis@3.4.4(supports-color@7.2.0)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)':
     dependencies:
       '@hocuspocus/server': 3.4.4(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
-      '@sesamecare-oss/redlock': 1.4.0(ioredis@5.7.0)
-      ioredis: 5.7.0
+      '@sesamecare-oss/redlock': 1.4.0(ioredis@5.7.0(supports-color@7.2.0))
+      ioredis: 5.7.0(supports-color@7.2.0)
       kleur: 4.1.5
       lodash.debounce: 4.0.8
       y-protocols: 1.0.6(yjs@13.6.27)
@@ -9048,9 +8924,9 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@hypermod/utils@0.7.1':
+  '@hypermod/utils@0.7.1(supports-color@7.2.0)':
     dependencies:
-      jscodeshift: 17.3.0
+      jscodeshift: 17.3.0(supports-color@7.2.0)
     transitivePeerDependencies:
       - '@babel/preset-env'
       - supports-color
@@ -9976,55 +9852,10 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  '@react-router/dev@8.3.0(@react-router/serve@8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/generator': 7.29.7
-      '@babel/parser': 7.29.7
-      '@babel/plugin-syntax-jsx': 7.29.7(@babel/core@7.29.7)
-      '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7)
-      '@babel/traverse': 7.29.7
-      '@babel/types': 7.29.7
-      '@react-router/node': 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)
-      '@remix-run/node-fetch-server': 0.13.3
-      babel-dead-code-elimination: 1.0.12
-      chokidar: 3.6.0
-      dedent: 1.7.2
-      es-module-lexer: 2.3.1
-      exit-hook: 5.1.0
-      isbot: 5.2.1
-      jsesc: 3.1.0
-      lodash: 4.18.1
-      p-map: 7.0.6
-      pathe: 2.0.3
-      picocolors: 1.1.1
-      pkg-types: 2.3.1
-      prettier: 3.9.6
-      react-refresh: 0.18.0
-      react-router: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      semver: 7.8.5
-      tinyglobby: 0.2.17
-      valibot: 1.4.2(typescript@5.8.3)
-      vite: 8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)
-    optionalDependencies:
-      '@react-router/serve': 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)
-      typescript: 5.8.3
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
-
   '@react-router/express@8.3.0(express@5.2.1(supports-color@7.2.0))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)':
     dependencies:
       '@react-router/node': 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)
       express: 5.2.1(supports-color@7.2.0)
-      react-router: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-    optionalDependencies:
-      typescript: 5.8.3
-
-  '@react-router/express@8.3.0(express@5.2.1)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)':
-    dependencies:
-      '@react-router/node': 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)
-      express: 5.2.1
       react-router: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     optionalDependencies:
       typescript: 5.8.3
@@ -10044,20 +9875,6 @@ snapshots:
       compression: 1.8.2(supports-color@7.2.0)
       express: 5.2.1(supports-color@7.2.0)
       morgan: 1.12.1(supports-color@7.2.0)
-      react-router: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      source-map-support: 0.5.21
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
-  '@react-router/serve@8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)':
-    dependencies:
-      '@react-router/express': 8.3.0(express@5.2.1)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)
-      '@react-router/node': 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.8.3)
-      '@remix-run/node-fetch-server': 0.13.3
-      compression: 1.8.2
-      express: 5.2.1
-      morgan: 1.12.1
       react-router: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       source-map-support: 0.5.21
     transitivePeerDependencies:
@@ -10204,9 +10021,9 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.41.1
       '@sentry/core': 10.56.0
 
-  '@sesamecare-oss/redlock@1.4.0(ioredis@5.7.0)':
+  '@sesamecare-oss/redlock@1.4.0(ioredis@5.7.0(supports-color@7.2.0))':
     dependencies:
-      ioredis: 5.7.0
+      ioredis: 5.7.0(supports-color@7.2.0)
 
   '@standard-schema/spec@1.1.0': {}
 
@@ -10282,10 +10099,6 @@ snapshots:
       '@tailwindcss/oxide': 4.1.17
       postcss: 8.5.25
       tailwindcss: 4.1.17
-
-  '@tailwindcss/typography@0.5.19':
-    dependencies:
-      postcss-selector-parser: 7.1.6
 
   '@tailwindcss/typography@0.5.19(tailwindcss@4.1.17)':
     dependencies:
@@ -10496,11 +10309,11 @@ snapshots:
       '@tiptap/pm': 3.31.3
       happy-dom: 20.14.6
 
-  '@tiptap/html@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)(happy-dom@20.8.9)':
+  '@tiptap/html@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)(happy-dom@21.0.4)':
     dependencies:
       '@tiptap/core': 3.31.3(@tiptap/pm@3.31.3)
       '@tiptap/pm': 3.31.3
-      happy-dom: 20.8.9
+      happy-dom: 21.0.4
 
   '@tiptap/pm@3.31.3':
     dependencies:
@@ -10577,9 +10390,9 @@ snapshots:
       y-protocols: 1.0.6(yjs@13.6.27)
       yjs: 13.6.27
 
-  '@tokenizer/inflate@0.4.1':
+  '@tokenizer/inflate@0.4.1(supports-color@7.2.0)':
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@7.2.0)
       token-types: 6.1.1
     transitivePeerDependencies:
       - supports-color
@@ -10877,12 +10690,6 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  agent-base@6.0.2:
-    dependencies:
-      debug: 4.4.3
-    transitivePeerDependencies:
-      - supports-color
-
   agent-base@6.0.2(supports-color@7.2.0):
     dependencies:
       debug: 4.4.3(supports-color@7.2.0)
@@ -11001,16 +10808,6 @@ snapshots:
 
   attr-accept@2.2.5: {}
 
-  axios@1.20.0:
-    dependencies:
-      follow-redirects: 1.16.1
-      form-data: 4.0.6
-      https-proxy-agent: 5.0.1
-      proxy-from-env: 2.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
       follow-redirects: 1.16.1(debug@4.4.3(supports-color@7.2.0))
@@ -11019,15 +10816,6 @@ snapshots:
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
-      - supports-color
-
-  babel-dead-code-elimination@1.0.12:
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/parser': 7.29.7
-      '@babel/traverse': 7.29.7
-      '@babel/types': 7.29.7
-    transitivePeerDependencies:
       - supports-color
 
   babel-dead-code-elimination@1.0.12(supports-color@7.2.0):
@@ -11064,23 +10852,6 @@ snapshots:
   bind-event-listener@3.0.0: {}
 
   birpc@2.9.0: {}
-
-  body-parser@1.20.9:
-    dependencies:
-      bytes: 3.1.2
-      content-type: 1.0.5
-      debug: 2.6.9
-      depd: 2.0.0
-      destroy: 1.2.0
-      http-errors: 2.0.1
-      iconv-lite: 0.4.24
-      on-finished: 2.4.1
-      qs: 6.16.0
-      raw-body: 2.5.3
-      type-is: 1.6.18
-      unpipe: 1.0.0
-    transitivePeerDependencies:
-      - supports-color
 
   body-parser@1.20.9(supports-color@7.2.0):
     dependencies:
@@ -11307,19 +11078,6 @@ snapshots:
     dependencies:
       mime-db: 1.54.0
 
-  compression@1.8.2:
-    dependencies:
-      bytes: 3.1.2
-      compressible: 2.0.18
-      debug: 2.6.9
-      destroy: 1.2.0
-      negotiator: 0.6.4
-      on-headers: 1.1.0
-      safe-buffer: 5.2.1
-      vary: 1.1.2
-    transitivePeerDependencies:
-      - supports-color
-
   compression@1.8.2(supports-color@7.2.0):
     dependencies:
       bytes: 3.1.2
@@ -11467,19 +11225,11 @@ snapshots:
     dependencies:
       mimic-function: 5.0.1
 
-  debug@2.6.9:
-    dependencies:
-      ms: 2.0.0
-
   debug@2.6.9(supports-color@7.2.0):
     dependencies:
       ms: 2.0.0
     optionalDependencies:
       supports-color: 7.2.0
-
-  debug@4.4.3:
-    dependencies:
-      ms: 2.1.3
 
   debug@4.4.3(supports-color@7.2.0):
     dependencies:
@@ -11844,29 +11594,29 @@ snapshots:
       lodash: 4.18.1
       winston: 3.17.0
 
-  express-ws@5.0.2(express@4.22.0):
+  express-ws@5.0.2(express@4.22.0(supports-color@7.2.0)):
     dependencies:
-      express: 4.22.0
+      express: 4.22.0(supports-color@7.2.0)
       ws: 7.5.11
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  express@4.22.0:
+  express@4.22.0(supports-color@7.2.0):
     dependencies:
       accepts: 1.3.8
       array-flatten: 1.1.1
-      body-parser: 1.20.9
+      body-parser: 1.20.9(supports-color@7.2.0)
       content-disposition: 0.5.4
       content-type: 1.0.5
       cookie: 0.7.1
       cookie-signature: 1.0.6
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@7.2.0)
       depd: 2.0.0
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 1.3.1
+      finalhandler: 1.3.1(supports-color@7.2.0)
       fresh: 0.5.2
       http-errors: 2.0.1
       merge-descriptors: 1.0.3
@@ -11878,45 +11628,12 @@ snapshots:
       qs: 6.16.0
       range-parser: 1.2.1
       safe-buffer: 5.2.1
-      send: 0.19.0
-      serve-static: 1.16.2
+      send: 0.19.0(supports-color@7.2.0)
+      serve-static: 1.16.2(supports-color@7.2.0)
       setprototypeof: 1.2.0
       statuses: 2.0.2
       type-is: 1.6.18
       utils-merge: 1.0.1
-      vary: 1.1.2
-    transitivePeerDependencies:
-      - supports-color
-
-  express@5.2.1:
-    dependencies:
-      accepts: 2.0.0
-      body-parser: 1.20.9
-      content-disposition: 1.1.0
-      content-type: 1.0.5
-      cookie: 0.7.1
-      cookie-signature: 1.2.2
-      debug: 4.4.3
-      depd: 2.0.0
-      encodeurl: 2.0.0
-      escape-html: 1.0.3
-      etag: 1.8.1
-      finalhandler: 2.1.1
-      fresh: 2.0.0
-      http-errors: 2.0.1
-      merge-descriptors: 2.0.0
-      mime-types: 3.0.2
-      on-finished: 2.4.1
-      once: 1.4.0
-      parseurl: 1.3.3
-      proxy-addr: 2.0.8
-      qs: 6.16.0
-      range-parser: 1.2.1
-      router: 2.2.0
-      send: 1.2.1
-      serve-static: 2.2.1
-      statuses: 2.0.2
-      type-is: 2.1.0
       vary: 1.1.2
     transitivePeerDependencies:
       - supports-color
@@ -12006,9 +11723,9 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  file-type@21.3.3:
+  file-type@21.3.3(supports-color@7.2.0):
     dependencies:
-      '@tokenizer/inflate': 0.4.1
+      '@tokenizer/inflate': 0.4.1(supports-color@7.2.0)
       strtok3: 10.3.4
       token-types: 6.1.1
       uint8array-extras: 1.5.0
@@ -12019,26 +11736,15 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  finalhandler@1.3.1:
+  finalhandler@1.3.1(supports-color@7.2.0):
     dependencies:
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@7.2.0)
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
       parseurl: 1.3.3
       statuses: 2.0.1
       unpipe: 1.0.0
-    transitivePeerDependencies:
-      - supports-color
-
-  finalhandler@2.1.1:
-    dependencies:
-      debug: 4.4.3
-      encodeurl: 2.0.0
-      escape-html: 1.0.3
-      on-finished: 2.4.1
-      parseurl: 1.3.3
-      statuses: 2.0.2
     transitivePeerDependencies:
       - supports-color
 
@@ -12086,8 +11792,6 @@ snapshots:
   flow-parser@0.293.0: {}
 
   fn.name@1.1.0: {}
-
-  follow-redirects@1.16.1: {}
 
   follow-redirects@1.16.1(debug@4.4.3(supports-color@7.2.0)):
     optionalDependencies:
@@ -12191,11 +11895,12 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  happy-dom@20.8.9:
+  happy-dom@21.0.4:
     dependencies:
       '@types/node': 22.12.0
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
+      buffer-image-size: 0.6.4
       entities: 7.0.1
       whatwg-mimetype: 3.0.0
       ws: 8.21.0
@@ -12410,13 +12115,6 @@ snapshots:
       statuses: 2.0.2
       toidentifier: 1.0.1
 
-  http-proxy-agent@7.0.2:
-    dependencies:
-      agent-base: 7.1.4
-      debug: 4.4.3
-    transitivePeerDependencies:
-      - supports-color
-
   http-proxy-agent@7.0.2(supports-color@7.2.0):
     dependencies:
       agent-base: 7.1.4
@@ -12424,24 +12122,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@5.0.1:
-    dependencies:
-      agent-base: 6.0.2
-      debug: 4.4.3
-    transitivePeerDependencies:
-      - supports-color
-
   https-proxy-agent@5.0.1(supports-color@7.2.0):
     dependencies:
       agent-base: 6.0.2(supports-color@7.2.0)
       debug: 4.4.3(supports-color@7.2.0)
-    transitivePeerDependencies:
-      - supports-color
-
-  https-proxy-agent@7.0.6:
-    dependencies:
-      agent-base: 7.1.4
-      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -12514,11 +12198,11 @@ snapshots:
       '@formatjs/icu-messageformat-parser': 2.11.2
       tslib: 2.8.1
 
-  ioredis@5.7.0:
+  ioredis@5.7.0(supports-color@7.2.0):
     dependencies:
       '@ioredis/commands': 1.3.0
       cluster-key-slot: 1.1.2
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@7.2.0)
       denque: 2.1.0
       lodash.defaults: 4.2.0
       lodash.isarguments: 3.1.0
@@ -12618,18 +12302,18 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  jscodeshift@17.3.0:
+  jscodeshift@17.3.0(supports-color@7.2.0):
     dependencies:
-      '@babel/core': 7.29.7
+      '@babel/core': 7.29.7(supports-color@7.2.0)
       '@babel/parser': 7.29.7
-      '@babel/plugin-transform-class-properties': 7.27.1(@babel/core@7.29.7)
-      '@babel/plugin-transform-modules-commonjs': 7.29.7(@babel/core@7.29.7)
-      '@babel/plugin-transform-nullish-coalescing-operator': 7.27.1(@babel/core@7.29.7)
-      '@babel/plugin-transform-optional-chaining': 7.28.5(@babel/core@7.29.7)
-      '@babel/plugin-transform-private-methods': 7.27.1(@babel/core@7.29.7)
-      '@babel/preset-flow': 7.27.1(@babel/core@7.29.7)
-      '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7)
-      '@babel/register': 7.28.3(@babel/core@7.29.7)
+      '@babel/plugin-transform-class-properties': 7.27.1(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
+      '@babel/plugin-transform-modules-commonjs': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
+      '@babel/plugin-transform-nullish-coalescing-operator': 7.27.1(@babel/core@7.29.7(supports-color@7.2.0))
+      '@babel/plugin-transform-optional-chaining': 7.28.5(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
+      '@babel/plugin-transform-private-methods': 7.27.1(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
+      '@babel/preset-flow': 7.27.1(@babel/core@7.29.7(supports-color@7.2.0))
+      '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
+      '@babel/register': 7.28.3(@babel/core@7.29.7(supports-color@7.2.0))
       flow-parser: 0.293.0
       graceful-fs: 4.2.11
       micromatch: 4.0.8
@@ -12640,34 +12324,6 @@ snapshots:
       write-file-atomic: 5.0.1
     transitivePeerDependencies:
       - supports-color
-
-  jsdom@23.2.0:
-    dependencies:
-      '@asamuzakjp/dom-selector': 2.0.2
-      cssstyle: 4.6.0
-      data-urls: 5.0.0
-      decimal.js: 10.6.0
-      form-data: 4.0.6
-      html-encoding-sniffer: 4.0.0
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
-      is-potential-custom-element-name: 1.0.1
-      parse5: 7.3.0
-      rrweb-cssom: 0.6.0
-      saxes: 6.0.0
-      symbol-tree: 3.2.4
-      tough-cookie: 4.1.4
-      w3c-xmlserializer: 5.0.0
-      webidl-conversions: 7.0.0
-      whatwg-encoding: 3.1.1
-      whatwg-mimetype: 4.0.0
-      whatwg-url: 14.2.0
-      ws: 8.21.0
-      xml-name-validator: 5.0.0
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
 
   jsdom@23.2.0(supports-color@7.2.0):
     dependencies:
@@ -12982,23 +12638,6 @@ snapshots:
       unist-util-is: 6.0.0
       unist-util-visit-parents: 6.0.1
 
-  mdast-util-from-markdown@2.0.2:
-    dependencies:
-      '@types/mdast': 4.0.4
-      '@types/unist': 3.0.3
-      decode-named-character-reference: 1.2.0
-      devlop: 1.1.0
-      mdast-util-to-string: 4.0.0
-      micromark: 4.0.2
-      micromark-util-decode-numeric-character-reference: 2.0.2
-      micromark-util-decode-string: 2.0.1
-      micromark-util-normalize-identifier: 2.0.1
-      micromark-util-symbol: 2.0.1
-      micromark-util-types: 2.0.2
-      unist-util-stringify-position: 4.0.0
-    transitivePeerDependencies:
-      - supports-color
-
   mdast-util-from-markdown@2.0.2(supports-color@7.2.0):
     dependencies:
       '@types/mdast': 4.0.4
@@ -13024,51 +12663,51 @@ snapshots:
       mdast-util-find-and-replace: 3.0.2
       micromark-util-character: 2.1.1
 
-  mdast-util-gfm-footnote@2.1.0:
+  mdast-util-gfm-footnote@2.1.0(supports-color@7.2.0):
     dependencies:
       '@types/mdast': 4.0.4
       devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.2
+      mdast-util-from-markdown: 2.0.2(supports-color@7.2.0)
       mdast-util-to-markdown: 2.1.2
       micromark-util-normalize-identifier: 2.0.1
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm-strikethrough@2.0.0:
+  mdast-util-gfm-strikethrough@2.0.0(supports-color@7.2.0):
     dependencies:
       '@types/mdast': 4.0.4
-      mdast-util-from-markdown: 2.0.2
+      mdast-util-from-markdown: 2.0.2(supports-color@7.2.0)
       mdast-util-to-markdown: 2.1.2
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm-table@2.0.0:
+  mdast-util-gfm-table@2.0.0(supports-color@7.2.0):
     dependencies:
       '@types/mdast': 4.0.4
       devlop: 1.1.0
       markdown-table: 3.0.4
-      mdast-util-from-markdown: 2.0.2
+      mdast-util-from-markdown: 2.0.2(supports-color@7.2.0)
       mdast-util-to-markdown: 2.1.2
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm-task-list-item@2.0.0:
+  mdast-util-gfm-task-list-item@2.0.0(supports-color@7.2.0):
     dependencies:
       '@types/mdast': 4.0.4
       devlop: 1.1.0
-      mdast-util-from-markdown: 2.0.2
+      mdast-util-from-markdown: 2.0.2(supports-color@7.2.0)
       mdast-util-to-markdown: 2.1.2
     transitivePeerDependencies:
       - supports-color
 
-  mdast-util-gfm@3.1.0:
+  mdast-util-gfm@3.1.0(supports-color@7.2.0):
     dependencies:
-      mdast-util-from-markdown: 2.0.2
+      mdast-util-from-markdown: 2.0.2(supports-color@7.2.0)
       mdast-util-gfm-autolink-literal: 2.0.1
-      mdast-util-gfm-footnote: 2.1.0
-      mdast-util-gfm-strikethrough: 2.0.0
-      mdast-util-gfm-table: 2.0.0
-      mdast-util-gfm-task-list-item: 2.0.0
+      mdast-util-gfm-footnote: 2.1.0(supports-color@7.2.0)
+      mdast-util-gfm-strikethrough: 2.0.0(supports-color@7.2.0)
+      mdast-util-gfm-table: 2.0.0(supports-color@7.2.0)
+      mdast-util-gfm-task-list-item: 2.0.0(supports-color@7.2.0)
       mdast-util-to-markdown: 2.1.2
     transitivePeerDependencies:
       - supports-color
@@ -13338,28 +12977,6 @@ snapshots:
 
   micromark-util-types@2.0.2: {}
 
-  micromark@4.0.2:
-    dependencies:
-      '@types/debug': 4.1.12
-      debug: 4.4.3
-      decode-named-character-reference: 1.2.0
-      devlop: 1.1.0
-      micromark-core-commonmark: 2.0.3
-      micromark-factory-space: 2.0.1
-      micromark-util-character: 2.1.1
-      micromark-util-chunked: 2.0.1
-      micromark-util-combine-extensions: 2.0.1
-      micromark-util-decode-numeric-character-reference: 2.0.2
-      micromark-util-encode: 2.0.1
-      micromark-util-normalize-identifier: 2.0.1
-      micromark-util-resolve-all: 2.0.1
-      micromark-util-sanitize-uri: 2.0.1
-      micromark-util-subtokenize: 2.1.0
-      micromark-util-symbol: 2.0.1
-      micromark-util-types: 2.0.2
-    transitivePeerDependencies:
-      - supports-color
-
   micromark@4.0.2(supports-color@7.2.0):
     dependencies:
       '@types/debug': 4.1.12
@@ -13446,16 +13063,6 @@ snapshots:
   mobx@6.12.0: {}
 
   module-details-from-path@1.0.4: {}
-
-  morgan@1.12.1:
-    dependencies:
-      basic-auth: 2.0.1
-      debug: 2.6.9
-      depd: 2.0.0
-      on-finished: 2.4.1
-      on-headers: 1.1.0
-    transitivePeerDependencies:
-      - supports-color
 
   morgan@1.12.1(supports-color@7.2.0):
     dependencies:
@@ -14037,7 +13644,7 @@ snapshots:
     dependencies:
       react: 19.2.8
 
-  react-i18next@16.6.6(i18next@25.10.9(typescript@5.8.3))(react@19.2.8)(typescript@5.8.3):
+  react-i18next@16.6.6(i18next@25.10.9(typescript@5.8.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.8.3):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 3.0.1
@@ -14045,6 +13652,7 @@ snapshots:
       react: 19.2.8
       use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
+      react-dom: 19.2.8(react@19.2.8)
       typescript: 5.8.3
 
   react-is@19.2.8: {}
@@ -14210,22 +13818,13 @@ snapshots:
       unified: 11.0.5
       vfile: 6.0.3
 
-  remark-gfm@4.0.1:
+  remark-gfm@4.0.1(supports-color@7.2.0):
     dependencies:
       '@types/mdast': 4.0.4
-      mdast-util-gfm: 3.1.0
+      mdast-util-gfm: 3.1.0(supports-color@7.2.0)
       micromark-extension-gfm: 3.0.0
-      remark-parse: 11.0.0
+      remark-parse: 11.0.0(supports-color@7.2.0)
       remark-stringify: 11.0.0
-      unified: 11.0.5
-    transitivePeerDependencies:
-      - supports-color
-
-  remark-parse@11.0.0:
-    dependencies:
-      '@types/mdast': 4.0.4
-      mdast-util-from-markdown: 2.0.2
-      micromark-util-types: 2.0.2
       unified: 11.0.5
     transitivePeerDependencies:
       - supports-color
@@ -14342,16 +13941,6 @@ snapshots:
 
   rope-sequence@1.3.4: {}
 
-  router@2.2.0:
-    dependencies:
-      debug: 4.4.3
-      depd: 2.0.0
-      is-promise: 4.0.0
-      parseurl: 1.3.3
-      path-to-regexp: 8.4.2
-    transitivePeerDependencies:
-      - supports-color
-
   router@2.2.0(supports-color@7.2.0):
     dependencies:
       debug: 4.4.3(supports-color@7.2.0)
@@ -14405,9 +13994,9 @@ snapshots:
 
   semver@7.8.5: {}
 
-  send@0.19.0:
+  send@0.19.0(supports-color@7.2.0):
     dependencies:
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@7.2.0)
       depd: 2.0.0
       destroy: 1.2.0
       encodeurl: 1.0.2
@@ -14420,22 +14009,6 @@ snapshots:
       on-finished: 2.4.1
       range-parser: 1.2.1
       statuses: 2.0.1
-    transitivePeerDependencies:
-      - supports-color
-
-  send@1.2.1:
-    dependencies:
-      debug: 4.4.3
-      encodeurl: 2.0.0
-      escape-html: 1.0.3
-      etag: 1.8.1
-      fresh: 2.0.0
-      http-errors: 2.0.1
-      mime-types: 3.0.2
-      ms: 2.1.3
-      on-finished: 2.4.1
-      range-parser: 1.2.1
-      statuses: 2.0.2
     transitivePeerDependencies:
       - supports-color
 
@@ -14465,21 +14038,12 @@ snapshots:
       path-to-regexp: 0.1.13
       range-parser: 1.2.0
 
-  serve-static@1.16.2:
+  serve-static@1.16.2(supports-color@7.2.0):
     dependencies:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 0.19.0
-    transitivePeerDependencies:
-      - supports-color
-
-  serve-static@2.2.1:
-    dependencies:
-      encodeurl: 2.0.0
-      escape-html: 1.0.3
-      parseurl: 1.3.3
-      send: 1.2.1
+      send: 0.19.0(supports-color@7.2.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -14489,22 +14053,6 @@ snapshots:
       escape-html: 1.0.3
       parseurl: 1.3.3
       send: 1.2.1(supports-color@7.2.0)
-    transitivePeerDependencies:
-      - supports-color
-
-  serve@14.2.5:
-    dependencies:
-      '@zeit/schemas': 2.36.0
-      ajv: 8.18.0
-      arg: 5.0.2
-      boxen: 7.0.0
-      chalk: 5.0.1
-      chalk-template: 0.4.0
-      clipboardy: 3.0.0
-      compression: 1.8.2
-      is-port-reachable: 4.0.0
-      serve-handler: 6.1.6
-      update-check: 1.5.4
     transitivePeerDependencies:
       - supports-color
 
@@ -14809,12 +14357,12 @@ snapshots:
     optionalDependencies:
       typescript: 5.8.3
 
-  tsdown@0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(typescript@5.8.3):
+  tsdown@0.16.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.3)(oxc-resolver@11.20.0)(supports-color@7.2.0)(typescript@5.8.3):
     dependencies:
       ansis: 4.2.0
       cac: 6.7.14
       chokidar: 3.6.0
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@7.2.0)
       diff: 5.2.2
       empathic: 2.0.0
       hookable: 5.5.3
@@ -15049,17 +14597,6 @@ snapshots:
       - supports-color
       - typescript
 
-  vite-tsconfig-paths@5.1.4(typescript@5.8.3)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)):
-    dependencies:
-      debug: 4.4.3
-      globrex: 0.1.2
-      tsconfck: 3.1.6(typescript@5.8.3)
-    optionalDependencies:
-      vite: 8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.33.0
@@ -15107,7 +14644,7 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.6)(jsdom@23.2.0)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)):
+  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@23.2.0(supports-color@7.2.0))(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.11
       '@vitest/mocker': 4.1.11(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
@@ -15133,39 +14670,8 @@ snapshots:
       '@opentelemetry/api': 1.9.1
       '@types/node': 22.12.0
       '@vitest/coverage-v8': 4.1.11(vitest@4.1.11)
-      happy-dom: 20.14.6
-      jsdom: 23.2.0
-    transitivePeerDependencies:
-      - msw
-
-  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.12.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.8.9)(jsdom@23.2.0)(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)):
-    dependencies:
-      '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3))
-      '@vitest/pretty-format': 4.1.11
-      '@vitest/runner': 4.1.11
-      '@vitest/snapshot': 4.1.11
-      '@vitest/spy': 4.1.11
-      '@vitest/utils': 4.1.11
-      es-module-lexer: 2.3.1
-      expect-type: 1.3.0
-      magic-string: 0.30.21
-      obug: 2.1.1
-      pathe: 2.0.3
-      picomatch: 2.3.2
-      std-env: 4.1.0
-      tinybench: 2.9.0
-      tinyexec: 1.0.4
-      tinyglobby: 0.2.17
-      tinyrainbow: 3.1.0
-      vite: 8.2.4(@types/node@22.12.0)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.6)(yaml@2.8.3)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.1
-      '@types/node': 22.12.0
-      '@vitest/coverage-v8': 4.1.11(vitest@4.1.11)
-      happy-dom: 20.8.9
-      jsdom: 23.2.0
+      happy-dom: 21.0.4
+      jsdom: 23.2.0(supports-color@7.2.0)
     transitivePeerDependencies:
       - msw
 
