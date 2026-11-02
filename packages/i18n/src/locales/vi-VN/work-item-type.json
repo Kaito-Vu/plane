@@ -574,6 +574,12 @@
     "quick_add_choose_type": "Chọn loại",
     "delete_subtree_warning": "{count, plural, other {# mục công việc bên dưới (mọi cấp) cũng sẽ bị áp dụng theo.}}",
     "cycle_warning_title": "Cảnh báo chu kỳ",
+    "filter": {
+      "text": "văn bản",
+      "number": "số",
+      "from": "từ",
+      "to": "đến"
+    },
     "errors": {
       "fix_fields": "Hãy sửa các trường được đánh dấu trước khi lưu.",
       "field_required": "Trường này là bắt buộc.",
@@ -588,7 +594,9 @@
       "attribute_required": "Một số thuộc tính bắt buộc đang trống.",
       "open_children": "{count, plural, one {Còn # mục công việc con chưa hoàn thành. Hãy hoàn thành trước.} other {Còn # mục công việc con chưa hoàn thành. Hãy hoàn thành trước.}}",
       "cycle_type_not_allowed": "Không thể thêm loại mục công việc này vào chu kỳ.",
-      "quick_add_full_form": "Loại này có trường bắt buộc: hãy dùng biểu mẫu đầy đủ (Thêm work item)."
+      "quick_add_full_form": "Loại này có trường bắt buộc: hãy dùng biểu mẫu đầy đủ (Thêm work item).",
+      "parent_archived": "Mục công việc cha đang được lưu trữ. Hãy khôi phục mục cha trước.",
+      "parent_deleted": "Mục công việc cha đã bị xóa nên không thể khôi phục mục này."
     }
   },
   "agile_import": {

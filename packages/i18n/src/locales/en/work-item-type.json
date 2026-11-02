@@ -574,6 +574,12 @@
     "quick_add_choose_type": "Choose a type",
     "delete_subtree_warning": "{count, plural, one {# work item below this one (at any level) is included too.} other {# work items below this one (at all levels) are included too.}}",
     "cycle_warning_title": "Cycle warning",
+    "filter": {
+      "text": "text",
+      "number": "number",
+      "from": "from",
+      "to": "to"
+    },
     "errors": {
       "fix_fields": "Fix the highlighted fields before saving.",
       "field_required": "This field is required.",
@@ -588,7 +594,9 @@
       "attribute_required": "Some required attributes are empty.",
       "open_children": "{count, plural, one {# child work item is still open. Complete it first.} other {# child work items are still open. Complete them first.}}",
       "cycle_type_not_allowed": "This work item type cannot be added to a cycle.",
-      "quick_add_full_form": "This type has required fields: use the full form (Add work item) to create it."
+      "quick_add_full_form": "This type has required fields: use the full form (Add work item) to create it.",
+      "parent_archived": "The parent work item is archived. Restore the parent first.",
+      "parent_deleted": "The parent work item was deleted, so this work item cannot be restored."
     }
   },
   "agile_import": {

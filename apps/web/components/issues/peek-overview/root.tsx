@@ -128,11 +128,11 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
             title: t("issue.restore.success.title"),
             message: t("issue.restore.success.message"),
           });
-        } catch (_error) {
+        } catch (error) {
           setToast({
             type: "error",
             title: t("toast.error"),
-            message: t("issue.restore.failed.message"),
+            message: workItemErrorMessage(t, error) ?? t("issue.restore.failed.message"),
           });
         }
       },

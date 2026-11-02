@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { SingleOrArray, TFilterValue } from "@plane/types";
 import { FILTER_FIELD_TYPE } from "@plane/types";
+import { useTranslation } from "@plane/i18n";
 import { cn } from "@plane/utils";
 import { COMMON_FILTER_ITEM_BORDER_CLASSNAME } from "@/components/rich-filters/shared";
 import type { TFilterValueInputProps } from "@/components/rich-filters/shared";
@@ -35,12 +36,62 @@ function CommitInput(props: {
   );
 }
 
-/** Value inputs for the EE text / number / number-range filter field types (attribute filters). */
+const EE_TYPES = new Set<string>([FILTER_FIELD_TYPE.TEXT, FILTER_FIELD_TYPE.NUMBER, FILTER_FIELD_TYPE.NUMBER_RANGE]);
+
+/** True for the EE field types this file renders (lets the core switch render it as a component). */
+export const isAttributeFilterFieldType = (type: string | undefined) => !!type && EE_TYPES.has(type);
+
+/** Both ends of a between range, kept locally until complete: the backend rejects "5," with a 400. */
+function NumberRangeInput(props: {
+  values: string[];
+  disabled?: boolean;
+  onCommit: (v: string[] | undefined) => void;
+}) {
+  const { values, disabled, onCommit } = props;
+  const { t } = useTranslation();
+  const [range, setRange] = useState<[string, string]>([values[0] ?? "", values[1] ?? ""]);
+  const [from0, to0] = values;
+  useEffect(() => setRange([from0 ?? "", to0 ?? ""]), [from0, to0]);
+  const update = (index: 0 | 1, v: string) => {
+    const next: [string, string] = index === 0 ? [v, range[1]] : [range[0], v];
+    setRange(next);
+    if (next[0] && next[1]) onCommit(next);
+    else if (!next[0] && !next[1]) onCommit(undefined); // cleared: drop the condition
+    // one end only: no filter value yet, nothing is sent
+  };
+  return (
+    <>
+      <CommitInput
+        type="number"
+        value={range[0]}
+        placeholder={t("agile_work_item.filter.from")}
+        disabled={disabled}
+        onCommit={(v) => update(0, v)}
+      />
+      <span className="text-placeholder">–</span>
+      <CommitInput
+        type="number"
+        value={range[1]}
+        placeholder={t("agile_work_item.filter.to")}
+        disabled={disabled}
+        onCommit={(v) => update(1, v)}
+      />
+    </>
+  );
+}
+
+/** Value inputs for the EE text / number / number-range filter field types (attribute filters).
+ * Empty or incomplete values are never sent: "" drops the condition, half a range waits for the other end. */
 export function AttributeFilterValueInput<V extends TFilterValue>(props: TFilterValueInputProps<string, V>) {
   const { condition, filterFieldConfig, isDisabled, onChange } = props;
+  const { t } = useTranslation();
   const type = filterFieldConfig?.type;
-  const values = Array.isArray(condition.value) ? condition.value.map(String) : [String(condition.value ?? "")];
-  const set = (v: string | string[]) => onChange(v as unknown as SingleOrArray<V>);
+  const values = Array.isArray(condition.value)
+    ? condition.value.map(String)
+    : condition.value === null || condition.value === undefined
+      ? []
+      : [String(condition.value)];
+  const set = (v: string | string[] | undefined) => onChange(v as unknown as SingleOrArray<V>);
   const wrap = (children: React.ReactNode) => (
     <div className={cn("flex h-full items-center", { [COMMON_FILTER_ITEM_BORDER_CLASSNAME]: !isDisabled })}>
       {children}
@@ -51,26 +102,14 @@ export function AttributeFilterValueInput<V extends TFilterValue>(props: TFilter
       <CommitInput
         type={type === FILTER_FIELD_TYPE.TEXT ? "text" : "number"}
         value={values[0] ?? ""}
-        placeholder={type === FILTER_FIELD_TYPE.TEXT ? "text" : "number"}
+        placeholder={t(
+          type === FILTER_FIELD_TYPE.TEXT ? "agile_work_item.filter.text" : "agile_work_item.filter.number"
+        )}
         disabled={isDisabled}
-        onCommit={set}
+        onCommit={(v) => set(v === "" ? undefined : v)}
       />
     );
-  if (type === FILTER_FIELD_TYPE.NUMBER_RANGE) {
-    const [from = "", to = ""] = values;
-    return wrap(
-      <>
-        <CommitInput
-          type="number"
-          value={from}
-          placeholder="from"
-          disabled={isDisabled}
-          onCommit={(v) => set([v, to])}
-        />
-        <span className="text-placeholder">–</span>
-        <CommitInput type="number" value={to} placeholder="to" disabled={isDisabled} onCommit={(v) => set([from, v])} />
-      </>
-    );
-  }
+  if (type === FILTER_FIELD_TYPE.NUMBER_RANGE)
+    return wrap(<NumberRangeInput values={values} disabled={isDisabled} onCommit={set} />);
   return null;
 }

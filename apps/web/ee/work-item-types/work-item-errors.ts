@@ -16,6 +16,8 @@ export const WORK_ITEM_ERROR_CODES = [
   "invalid_value",
   "open_children",
   "cycle_type_not_allowed",
+  "parent_archived",
+  "parent_deleted",
 ] as const;
 
 export const asEeError = (err: unknown): TEeError | undefined => {

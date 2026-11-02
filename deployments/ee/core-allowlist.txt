@@ -123,3 +123,6 @@ packages/i18n/src/locales/tr-TR/work-item-type.json
 packages/i18n/src/locales/ua/work-item-type.json
 packages/i18n/src/locales/zh-CN/work-item-type.json
 packages/i18n/src/locales/zh-TW/work-item-type.json
+apps/web/components/issues/issue-detail/issue-detail-quick-actions.tsx
+apps/web/components/issues/issue-layouts/quick-action-dropdowns/helper.tsx
+apps/web/components/cycles/transfer-issues-modal.tsx

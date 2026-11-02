@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { workItemErrorMessage } from "@/ee/work-item-types/work-item-errors";
 import { useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -57,6 +58,7 @@ export const TransferIssuesModal = observer(function TransferIssuesModal(props: 
     if (!workspaceSlug || !projectId || !cycleId) return;
 
     await transferIssuesFromCycle(workspaceSlug.toString(), projectId.toString(), cycleId.toString(), payload)
+      // oxlint-disable-next-line promise/always-return
       .then(async () => {
         setToast({
           type: "success",
@@ -65,11 +67,12 @@ export const TransferIssuesModal = observer(function TransferIssuesModal(props: 
         });
         await getCycleDetails(payload.new_cycle_id);
       })
-      .catch(() => {
+      .catch((error) => {
         setToast({
           type: "error",
           title: "Error!",
-          message: "Unable to transfer work items. Please try again.",
+          // EE: e.g. cycle_type_not_allowed (an Epic/Feature cannot move into a cycle)
+          message: workItemErrorMessage(t, error) ?? "Unable to transfer work items. Please try again.",
         });
       });
   };

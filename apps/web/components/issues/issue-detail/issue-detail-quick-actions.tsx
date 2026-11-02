@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { workItemErrorMessage } from "@/ee/work-item-types/work-item-errors";
 import { useRef } from "react";
 import { observer } from "mobx-react";
 // plane imports
@@ -131,11 +132,12 @@ export const IssueDetailQuickActions = observer(function IssueDetailQuickActions
         message: t("issue.restore.success.message"),
       });
       router.push(workItemLink);
-    } catch (_error) {
+    } catch (error) {
       setToast({
         title: t("toast.error"),
         type: "error",
-        message: t("issue.restore.failed.message"),
+        // EE: e.g. "restore the parent first" (parent_archived / parent_deleted)
+        message: workItemErrorMessage(t, error) ?? t("issue.restore.failed.message"),
       });
     }
   };
