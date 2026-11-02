@@ -126,12 +126,20 @@ class Adapter:
             "github": "ENABLE_GITHUB_SYNC",
             "gitlab": "ENABLE_GITLAB_SYNC",
             "gitea": "ENABLE_GITEA_SYNC",
+            "entra": "ENABLE_ENTRA_SYNC",
         }
         config_key = provider_config_map.get(self.provider)
         if config_key:
             (enabled,) = get_configuration_value([{"key": config_key, "default": os.environ.get(config_key, "0")}])
             return enabled == "1"
         return False
+
+    def fetch_avatar(self, avatar_url):
+        """Fetch the avatar over the SSRF-safe client (overridable per provider)."""
+        response, _ = pinned_fetch_following_redirects(
+            "GET", avatar_url, headers=self.get_avatar_download_headers(), timeout=10, max_redirects=5, stream=True
+        )
+        return response
 
     def download_and_upload_avatar(self, avatar_url, user):
         """
@@ -142,7 +150,6 @@ class Adapter:
             return None
 
         try:
-            headers = self.get_avatar_download_headers()
             # Download the avatar image over an SSRF-safe client: the avatar URL
             # comes from the OAuth provider's (attacker-influenceable) profile
             # data, so it must not be allowed to reach internal addresses. The
@@ -153,9 +160,7 @@ class Adapter:
             # stream=True so the body is read incrementally and the size cap
             # below actually bounds memory (without it, requests buffers the
             # whole body before any check runs).
-            response, _ = pinned_fetch_following_redirects(
-                "GET", avatar_url, headers=headers, timeout=10, max_redirects=5, stream=True
-            )
+            response = self.fetch_avatar(avatar_url)
             try:
                 response.raise_for_status()
 
