@@ -89,3 +89,4 @@ apps/api/plane/api/views/project.py
 apps/api/plane/api/views/issue.py
 apps/api/plane/api/views/cycle.py
 apps/api/plane/app/views/intake/base.py
+packages/i18n/src/hooks/use-translation.ts

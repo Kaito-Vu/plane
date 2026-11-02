@@ -203,7 +203,23 @@ function ImportRowView(props: {
   return (
     <tr className={row.errors.length ? "bg-danger-subtle" : undefined}>
       <td className="p-1">{row.ref}</td>
-      <td className="p-1">{row.type}</td>
+      <td className="p-1">
+        {/* an unknown type in the file can only be fixed here (rows cannot be removed from a batch) */}
+        <select
+          aria-label="Type"
+          className="rounded-md border border-subtle bg-surface-1 px-1 py-1"
+          value={row.type}
+          disabled={busy}
+          onChange={(e) => void patchRow(row, { type: e.target.value })}
+        >
+          {!typeKey && <option value={row.type}>{row.type}</option>}
+          {TYPE_KEYS.map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
+        </select>
+      </td>
       <td className="p-1">
         <Input
           size="md"
