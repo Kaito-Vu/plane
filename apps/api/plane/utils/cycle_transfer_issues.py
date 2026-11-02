@@ -30,6 +30,7 @@ from plane.db.models import (
 from plane.utils.analytics_plot import burndown_plot
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.utils.host import base_host
+from plane.ee.work_item_types.scrum_rules import cycle_warnings
 
 
 def transfer_cycle_issues(
@@ -63,6 +64,14 @@ def transfer_cycle_issues(
             "success": False,
             "error": "The cycle where the issues are transferred is already completed",
         }
+
+    # EE: Epic/Feature never enter a cycle (raises a flat 400 before anything is written)
+    cycle_warnings(
+        CycleIssue.objects.filter(cycle_id=cycle_id, project_id=project_id, workspace__slug=slug).values_list(
+            "issue_id", flat=True
+        ),
+        new_cycle,
+    )
 
     # Get the old cycle with issue counts
     old_cycle = (

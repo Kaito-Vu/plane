@@ -110,3 +110,77 @@ def test_auto_archive_archives_candidate_subtree(project, story, mk, caplog):
     # fresh_task is too recent to be a candidate itself, but goes with its archived parent
     assert _row(done_story).archived_at is not None and _row(fresh_task).archived_at is not None
     assert str(open_story.id) in caplog.text
+
+
+def _archived_tree(session_client, workspace, project, story, mk):
+    task = mk(T.TASK, parent=story, state="done")
+    sub = mk(T.SUB_TASK, parent=task, state="done")
+    Issue.objects.filter(pk=story.pk).update(state=task.state)
+    r = session_client.post(_url(workspace, project, f"issues/{story.id}/archive/"))
+    assert r.status_code == status.HTTP_200_OK, r.data
+    return task, sub
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_unarchive_restores_same_cascade_only(session_client, workspace, project, story, mk):
+    task, sub = _archived_tree(session_client, workspace, project, story, mk)
+    other = mk(T.BUG, parent=story, state="done")
+    Issue.all_objects.filter(pk=other.pk).update(archived_at=timezone.now().date() - timedelta(days=3))
+    r = session_client.delete(_url(workspace, project, f"issues/{story.id}/archive/"))
+    assert r.status_code == status.HTTP_204_NO_CONTENT, getattr(r, "data", None)
+    assert _row(story).archived_at is None and _row(task).archived_at is None and _row(sub).archived_at is None
+    assert _row(other).archived_at is not None
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_unarchive_under_archived_or_deleted_parent_400(session_client, workspace, project, story, mk):
+    task, _ = _archived_tree(session_client, workspace, project, story, mk)
+    r = session_client.delete(_url(workspace, project, f"issues/{task.id}/archive/"))
+    assert r.status_code == status.HTTP_400_BAD_REQUEST and r.data["error_code"] == "parent_archived"
+    Issue.all_objects.filter(pk=story.pk).update(archived_at=None, deleted_at=timezone.now())
+    r = session_client.delete(_url(workspace, project, f"issues/{task.id}/archive/"))
+    assert r.status_code == status.HTTP_400_BAD_REQUEST and r.data["error_code"] == "parent_deleted"
+    assert _row(task).archived_at is not None
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_cascade_writes_descendant_activities(story, mk, create_user, django_capture_on_commit_callbacks):
+    from unittest import mock
+
+    task = mk(T.TASK, parent=story)
+    sub = mk(T.SUB_TASK, parent=task)
+    with mock.patch("plane.bgtasks.issue_activities_task.issue_activity.delay") as delay:
+        with django_capture_on_commit_callbacks(execute=True):
+            soft_delete_subtree(task, actor_id=create_user.id)
+    calls = [c.kwargs for c in delay.call_args_list]
+    assert [(c["type"], c["issue_id"]) for c in calls] == [("issue.activity.deleted", str(sub.id))]
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_archive_writes_descendant_activities(story, mk, create_user, django_capture_on_commit_callbacks):
+    from unittest import mock
+
+    from plane.ee.work_item_types.tree_ops import archive_subtree
+
+    task = mk(T.TASK, parent=story, state="done")
+    story.archived_at = timezone.now().date()
+    with mock.patch("plane.bgtasks.issue_activities_task.issue_activity.delay") as delay:
+        with django_capture_on_commit_callbacks(execute=True):
+            archive_subtree(story, actor_id=create_user.id)
+    (call,) = delay.call_args_list
+    assert call.kwargs["issue_id"] == str(task.id) and "archived_at" in call.kwargs["requested_data"]
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_subtree_count_endpoint(session_client, workspace, project, story, mk):
+    task = mk(T.TASK, parent=story)
+    mk(T.SUB_TASK, parent=task)
+    r = session_client.get(_url(workspace, project, f"issues/{story.id}/subtree-count/"))
+    assert r.status_code == status.HTTP_200_OK and r.data == {"count": 2}
+    r = session_client.get(_url(workspace, project, f"issues/{task.id}/subtree-count/"))
+    assert r.data == {"count": 1}

@@ -336,3 +336,27 @@ def test_filter_boolean_in(session_client, workspace, project, a_b):
     _val(b, attr, value_boolean=False)
     r = _list(session_client, workspace, project, filters={f"attribute:{attr.id}__in": ["true", "false"]})
     assert _ids(r) == {str(a.id), str(b.id)}
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_filter_number_date_gte_lte_and_text_icontains(session_client, workspace, project, a_b):
+    a, b = a_b
+    num, day, txt = _attr(project, "number"), _attr(project, "date"), _attr(project, "text")
+    _val(a, num, value_number=Decimal(3))
+    _val(b, num, value_number=Decimal(13))
+    _val(a, day, value_datetime=timezone.make_aware(dt.datetime(2026, 1, 10), dt.timezone.utc))
+    _val(b, day, value_datetime=timezone.make_aware(dt.datetime(2026, 3, 1), dt.timezone.utc))
+    _val(a, txt, value_text="Hello World")
+    _val(b, txt, value_text="bye")
+
+    def ids(key, value):
+        return _ids(_list(session_client, workspace, project, filters={key: value}))
+
+    assert ids(f"attribute:{num.id}__gte", "5") == {str(b.id)}
+    assert ids(f"attribute:{num.id}__lte", "3") == {str(a.id)}
+    assert ids(f"attribute:{num.id}", "13") == {str(b.id)}
+    assert ids(f"attribute:{day.id}__gte", "2026-02-01") == {str(b.id)}
+    assert ids(f"attribute:{day.id}__lte", "2026-01-10") == {str(a.id)}
+    assert ids(f"attribute:{day.id}", "2026-03-01") == {str(b.id)}
+    assert ids(f"attribute:{txt.id}__icontains", "WORLD") == {str(a.id)}

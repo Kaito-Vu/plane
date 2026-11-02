@@ -88,14 +88,14 @@ def build_attribute_q(attribute: Attribute, op: str, raw: Any) -> Q:
     """Q on Issue: issues whose value for `attribute` matches `op`/`raw`."""
     ft = attribute.field_type
     column = _COLUMN[ft]
-    if ft in ("text", "textarea", "url") and op == "contains":
+    if ft in ("text", "textarea", "url") and op in ("contains", "icontains"):
         lookup = {f"{column}__icontains": str(raw)}
-    elif ft == "number" and op == "exact":
-        lookup = {column: _number(raw)}
+    elif ft == "number" and op in ("exact", "gte", "lte"):
+        lookup = {column if op == "exact" else f"{column}__{op}": _number(raw)}
     elif ft == "number" and op == "range":
         lookup = {f"{column}__range": _range(attribute, raw, _number)}
-    elif ft in ("date", "datetime") and op == "exact":
-        lookup = {f"{column}__date": _date(raw)}
+    elif ft in ("date", "datetime") and op in ("exact", "gte", "lte"):
+        lookup = {f"{column}__date" if op == "exact" else f"{column}__date__{op}": _date(raw)}
     elif ft in ("date", "datetime") and op == "range":
         lookup = {f"{column}__date__range": _range(attribute, raw, _date)}
     elif ft == "boolean" and op in ("exact", "in"):
@@ -136,8 +136,9 @@ def _type_q(raw: Any) -> Q:
 def _isnull_q(attribute: Attribute, raw: Any) -> Q:
     """No value for `attribute` (the group-by "None" bucket) when raw is true, any value otherwise."""
     has = Q(
-        id__in=AttributeValue.objects.filter(attribute=attribute, **{f"{_COLUMN[attribute.field_type]}__isnull": False})
-        .values("issue_id")
+        id__in=AttributeValue.objects.filter(
+            attribute=attribute, **{f"{_COLUMN[attribute.field_type]}__isnull": False}
+        ).values("issue_id")
     )
     return ~has if _boolean(raw) else has
 

@@ -723,7 +723,7 @@ class IssueViewSet(BaseViewSet):
     def destroy(self, request, slug, project_id, pk=None):
         issue = Issue.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
 
-        soft_delete_subtree(issue)  # EE: whole subtree, one deleted_at
+        soft_delete_subtree(issue, actor_id=request.user.id)  # EE: whole subtree, one deleted_at
         # delete the issue from recent visits
         UserRecentVisit.objects.filter(
             project_id=project_id,
@@ -796,7 +796,7 @@ class BulkDeleteIssuesEndpoint(BaseAPIView):
 
         # Finally, delete the issues themselves
         with transaction.atomic():  # EE: whole subtrees, all or nothing
-            [soft_delete_subtree(issue) for issue in issues]
+            [soft_delete_subtree(issue, actor_id=request.user.id) for issue in issues]
 
         return Response(
             {"message": f"{total_issues} issues were deleted"},

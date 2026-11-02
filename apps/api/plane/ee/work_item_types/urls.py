@@ -24,7 +24,7 @@ from .views.templates import (
     AttributeTemplateReorderEndpoint,
 )
 from .views.types import ProjectTypesEndpoint
-from .views.values import IssueAttributeValuesEndpoint
+from .views.values import IssueAttributeValuesEndpoint, IssueSubtreeCountEndpoint
 
 W = "workspaces/<str:slug>/"
 I = W + "projects/<uuid:project_id>/imports/"  # noqa: E741
@@ -41,6 +41,10 @@ urlpatterns = [
     path(
         W + "projects/<uuid:project_id>/issues/<uuid:issue_id>/attribute-values/",
         IssueAttributeValuesEndpoint.as_view(),
+    ),
+    path(
+        W + "projects/<uuid:project_id>/issues/<uuid:issue_id>/subtree-count/",
+        IssueSubtreeCountEndpoint.as_view(),
     ),
     path(W + "projects/<uuid:project_id>/issues/bulk-tree/", BulkTreeEndpoint.as_view()),
     path(I, ImportBatchEndpoint.as_view()),

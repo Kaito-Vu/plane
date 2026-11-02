@@ -147,3 +147,31 @@ def test_v1_cycle_rejects_epic(api_key_client, workspace, project, create_user):
     )
     _flat(r, "cycle_type_not_allowed")
     assert not CycleIssue.objects.filter(cycle=cycle).exists()
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_v1_cycle_transfer_rejects_epic(api_key_client, workspace, project, create_user):
+    import datetime as dt
+
+    from django.utils import timezone
+
+    from plane.db.models import Cycle, CycleIssue
+
+    past = timezone.now() - dt.timedelta(days=2)
+    old = Cycle.objects.create(
+        name="Old",
+        project=project,
+        workspace=workspace,
+        owned_by=create_user,
+        start_date=past - dt.timedelta(days=7),
+        end_date=past,
+    )
+    new = Cycle.objects.create(name="New", project=project, workspace=workspace, owned_by=create_user)
+    epic = Issue.objects.create(name="E", project=project, type=get_type(workspace.id, T.EPIC))
+    CycleIssue.objects.create(cycle=old, issue=epic, project=project, workspace=workspace)
+    r = api_key_client.post(
+        _url(workspace, project, f"cycles/{old.id}/transfer-issues/"), {"new_cycle_id": str(new.id)}, format="json"
+    )
+    _flat(r, "cycle_type_not_allowed")
+    assert CycleIssue.objects.get(issue=epic).cycle_id == old.id

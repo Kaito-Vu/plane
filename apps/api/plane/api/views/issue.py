@@ -933,7 +933,7 @@ class IssueDetailAPIEndpoint(BaseAPIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
         current_instance = json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder)
-        soft_delete_subtree(issue)  # EE: whole subtree, one deleted_at
+        soft_delete_subtree(issue, actor_id=request.user.id)  # EE: whole subtree, one deleted_at
         issue_activity.delay(
             type="issue.activity.deleted",
             requested_data=json.dumps({"issue_id": str(pk)}),

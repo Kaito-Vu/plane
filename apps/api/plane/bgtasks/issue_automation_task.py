@@ -72,7 +72,10 @@ def archive_old_issues():
                 # Bulk Update the issues and log the activity
                 if issues_to_update:
                     Issue.objects.bulk_update(issues_to_update, ["archived_at"], batch_size=100)
-                    [archive_subtree(issue) for issue in issues_to_update]  # EE: no live children under archived
+                    [
+                        archive_subtree(issue, actor_id=project.created_by_id, automation=True)
+                        for issue in issues_to_update
+                    ]  # EE: no live children under archived
                     _ = [
                         issue_activity.delay(
                             type="issue.activity.updated",

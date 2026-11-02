@@ -25,7 +25,7 @@ from plane.app.serializers import (
     IssueDetailSerializer,
 )
 from plane.bgtasks.issue_activities_task import issue_activity
-from plane.ee.work_item_types.tree_ops import archive_subtree
+from plane.ee.work_item_types.tree_ops import archive_subtree, assert_can_unarchive, unarchive_subtree
 from plane.db.models import (
     Issue,
     FileAsset,
@@ -277,7 +277,7 @@ class IssueArchiveViewSet(BaseViewSet):
         issue.archived_at = timezone.now().date()
         with transaction.atomic():  # EE: root + subtree together
             issue.save()
-            archive_subtree(issue)
+            archive_subtree(issue, actor_id=request.user.id)
 
         return Response({"archived_at": str(issue.archived_at)}, status=status.HTTP_200_OK)
 
@@ -289,6 +289,7 @@ class IssueArchiveViewSet(BaseViewSet):
             archived_at__isnull=False,
             pk=pk,
         )
+        assert_can_unarchive(issue)  # EE: not under an archived/deleted parent
         issue_activity.delay(
             type="issue.activity.updated",
             requested_data=json.dumps({"archived_at": None}),
@@ -300,8 +301,10 @@ class IssueArchiveViewSet(BaseViewSet):
             notification=True,
             origin=base_host(request=request, is_app=True),
         )
-        issue.archived_at = None
-        issue.save()
+        archived_at, issue.archived_at = issue.archived_at, None
+        with transaction.atomic():  # EE: root + the subtree archived with it
+            issue.save()
+            unarchive_subtree(issue, archived_at, actor_id=request.user.id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -344,6 +347,6 @@ class BulkArchiveIssuesEndpoint(BaseAPIView):
             bulk_archive_issues.append(issue)
         with transaction.atomic():  # EE: roots + subtrees together
             Issue.objects.bulk_update(bulk_archive_issues, ["archived_at"])
-            [archive_subtree(issue) for issue in bulk_archive_issues]
+            [archive_subtree(issue, actor_id=request.user.id) for issue in bulk_archive_issues]
 
         return Response({"archived_at": str(timezone.now().date())}, status=status.HTTP_200_OK)
