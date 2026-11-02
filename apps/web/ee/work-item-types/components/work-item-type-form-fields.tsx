@@ -8,7 +8,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { childTypesOf, TYPE_KEYS } from "../constants";
 import { useAttributes, useEnsureProjectTypes } from "../hooks/use-attributes";
 import { AttributeService } from "../services/attribute.service";
-import type { TWorkItemTypeKey } from "../types";
+import type { TAttribute, TWorkItemTypeKey } from "../types";
 import { PARENT_FIELD, TYPE_FIELD } from "../work-item-errors";
 import { AttributeFields } from "./attribute-fields";
 import { ParentPicker } from "./parent-picker";
@@ -16,10 +16,19 @@ import { TypeSelector } from "./type-selector";
 
 const service = new AttributeService();
 
-type TProps = { issueId?: string };
+type TProps = {
+  issueId?: string;
+  /** "type": the type selector (top of the form); "details": type attributes, then parent (bottom). */
+  part: "type" | "details";
+};
 
-/** Type → parent → attributes block of the issue modal (must live inside the form's FormProvider). */
-export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({ issueId }: TProps) {
+// story points belong to user stories only; spent time / remaining work are tracked after creation
+const hideAttribute = (typeKey: TWorkItemTypeKey, creating: boolean) => (a: TAttribute) =>
+  (a.system_key === "story_points" && typeKey !== "user_story") ||
+  (creating && (a.system_key === "spent_time" || a.system_key === "remaining_work"));
+
+/** Type / attributes / parent blocks of the issue modal (must live inside the form's FormProvider). */
+export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({ issueId, part }: TProps) {
   const { workspaceSlug } = useParams();
   const slug = workspaceSlug?.toString() ?? "";
   const { watch, setValue } = useFormContext<TIssue>();
@@ -31,7 +40,7 @@ export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({
     issuePropertyValueErrors: errors,
     setIssuePropertyValueErrors,
   } = useIssueModal();
-  const { getTypeKey, getTypeId } = useAttributes();
+  const { getTypeKey, getTypeId, getAttributesByType } = useAttributes();
   const {
     issue: { getIssueById },
   } = useIssueDetail();
@@ -43,9 +52,9 @@ export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({
 
   // edit: load current values
   useEffect(() => {
-    if (!issueId || !projectId || !slug) return;
+    if (part !== "details" || !issueId || !projectId || !slug) return;
     service.getAttributeValues(slug, projectId, issueId).then(setIssuePropertyValues).catch(console.error);
-  }, [issueId, projectId, slug, setIssuePropertyValues]);
+  }, [part, issueId, projectId, slug, setIssuePropertyValues]);
 
   if (!projectId) return null;
 
@@ -56,8 +65,8 @@ export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({
   const fieldError = (k: string) => (typeof errors[k] === "string" ? errors[k] : undefined);
   const clearError = (k: string) => setIssuePropertyValueErrors((prev) => ({ ...prev, [k]: undefined }));
 
-  return (
-    <div className="flex flex-col gap-3">
+  if (part === "type")
+    return (
       <TypeSelector
         value={typeKey}
         allowed={allowed}
@@ -69,33 +78,45 @@ export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({
           clearError(PARENT_FIELD); // parent requirement depends on the type
         }}
       />
-      {typeKey && (
-        <>
-          <ParentPicker
-            workspaceSlug={slug}
-            projectId={projectId}
-            typeKey={typeKey}
-            issueId={issueId}
-            value={parentId ? selectedParentIssue : null}
-            error={fieldError(PARENT_FIELD)}
-            onChange={(issue) => {
-              setValue("parent_id", issue?.id ?? null, { shouldDirty: true });
-              setSelectedParentIssue(issue);
-              clearError(PARENT_FIELD);
-            }}
-          />
-          <AttributeFields
-            projectId={projectId}
-            typeKey={typeKey}
-            values={issuePropertyValues}
-            errors={errors}
-            onChange={(id, v) => {
-              setIssuePropertyValues((prev) => ({ ...prev, [id]: v }));
-              clearError(id);
-            }}
-          />
-        </>
-      )}
+    );
+
+  if (!typeKey) return null;
+  return (
+    <div className="flex flex-col gap-3">
+      <AttributeFields
+        projectId={projectId}
+        typeKey={typeKey}
+        values={issuePropertyValues}
+        errors={errors}
+        hide={hideAttribute(typeKey, !issueId)}
+        onChange={(id, v) => {
+          setIssuePropertyValues((prev) => {
+            const next = { ...prev, [id]: v };
+            // new work item: remaining work starts equal to the original estimate
+            if (!issueId) {
+              const attrs = getAttributesByType(projectId, typeKey);
+              const est = attrs.find((a) => a.system_key === "original_estimate");
+              const rem = attrs.find((a) => a.system_key === "remaining_work");
+              if (est && rem && est.id === id) next[rem.id] = v;
+            }
+            return next;
+          });
+          clearError(id);
+        }}
+      />
+      <ParentPicker
+        workspaceSlug={slug}
+        projectId={projectId}
+        typeKey={typeKey}
+        issueId={issueId}
+        value={parentId ? selectedParentIssue : null}
+        error={fieldError(PARENT_FIELD)}
+        onChange={(issue) => {
+          setValue("parent_id", issue?.id ?? null, { shouldDirty: true });
+          setSelectedParentIssue(issue);
+          clearError(PARENT_FIELD);
+        }}
+      />
     </div>
   );
 });

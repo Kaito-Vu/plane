@@ -12,6 +12,8 @@ type TProps = {
   /** attribute id -> i18n key */
   errors?: Record<string, unknown>;
   disabled?: boolean;
+  /** attributes to leave out of the form */
+  hide?: (a: TAttribute) => boolean;
 };
 
 export const isEmptyValue = (v: unknown) => v == null || v === "" || (Array.isArray(v) && v.length === 0);
@@ -22,10 +24,10 @@ export const missingRequired = (attrs: TAttribute[], values: TAttributeValues) =
 
 /** System + custom attribute editors of the chosen type (core fields stay in the default properties). */
 export const AttributeFields = observer(function AttributeFields(props: TProps) {
-  const { projectId, typeKey, values, onChange, errors = {}, disabled = false } = props;
+  const { projectId, typeKey, values, onChange, errors = {}, disabled = false, hide } = props;
   const { t } = useTranslation();
   const { getAttributesByType } = useAttributes();
-  const attrs = getAttributesByType(projectId, typeKey);
+  const attrs = getAttributesByType(projectId, typeKey).filter((a) => !hide?.(a));
   if (attrs.length === 0) return null;
   return (
     <fieldset disabled={disabled} className="grid grid-cols-1 gap-2 sm:grid-cols-2">

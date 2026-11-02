@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { observer } from "mobx-react";
 import { BorderedInput as Input } from "./attribute-form/bordered-input";
 import { useTranslation } from "@plane/i18n";
@@ -30,10 +31,35 @@ export const ParentPicker = observer(function ParentPicker(props: TProps) {
   const { allowedParentTypes, getTypeKey } = useAttributes();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ host: Element; style: React.CSSProperties } | null>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const [results, setResults] = useState<ISearchIssueResponse[]>([]);
   const debounced = useDebounce(search, 400);
   const allowed = allowedParentTypes(typeKey);
   const optional = typeKey === "epic";
+
+  // The modal body scrolls and clips, so the list is portaled into the dialog and flipped above the input when short on room.
+  useEffect(() => {
+    const el = anchorRef.current;
+    if (!open || !el) return setPos(null);
+    const host = el.closest('[role="dialog"]') ?? document.body;
+    const a = el.getBoundingClientRect();
+    const h = host.getBoundingClientRect();
+    const MAX = 224;
+    const up = h.bottom - a.bottom < MAX && a.top - h.top > h.bottom - a.bottom;
+    setPos({
+      host,
+      style: {
+        position: host === document.body ? "fixed" : "absolute",
+        left: a.left - h.left,
+        width: a.width,
+        ...(up ? { bottom: h.bottom - a.top + 4 } : { top: a.bottom - h.top + 4 }),
+        ...(host === document.body
+          ? { left: a.left, top: up ? undefined : a.bottom + 4, bottom: up ? innerHeight - a.top + 4 : undefined }
+          : {}),
+      },
+    });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -81,7 +107,7 @@ export const ParentPicker = observer(function ParentPicker(props: TProps) {
           )}
         </div>
       ) : (
-        <div className="relative">
+        <div ref={anchorRef}>
           <Input
             size="md"
             value={search}
@@ -93,34 +119,40 @@ export const ParentPicker = observer(function ParentPicker(props: TProps) {
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             onChange={(e) => setSearch(e.target.value)}
           />
-          {open && (
-            <ul className="shadow-md absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-subtle bg-surface-1 py-1">
-              {results.length === 0 ? (
-                <li className="px-2 py-1 text-12 text-tertiary">{t("agile_work_item.no_parent_found")}</li>
-              ) : (
-                results.map((i) => (
-                  <li key={i.id}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 px-2 py-1 text-left text-13 hover:bg-layer-1-hover"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        onChange(i);
-                        setSearch("");
-                        setOpen(false);
-                      }}
-                    >
-                      <TypeBadge projectId={projectId} typeId={i.type_id} />
-                      <span className="shrink-0 text-tertiary">
-                        {i.project__identifier}-{i.sequence_id}
-                      </span>
-                      <span className="truncate">{i.name}</span>
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          )}
+          {open &&
+            pos &&
+            createPortal(
+              <ul
+                style={pos.style}
+                className="shadow-md z-50 max-h-56 overflow-auto rounded-md border border-subtle bg-surface-1 py-1"
+              >
+                {results.length === 0 ? (
+                  <li className="px-2 py-1 text-12 text-tertiary">{t("agile_work_item.no_parent_found")}</li>
+                ) : (
+                  results.map((i) => (
+                    <li key={i.id}>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-2 py-1 text-left text-13 hover:bg-layer-1-hover"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          onChange(i);
+                          setSearch("");
+                          setOpen(false);
+                        }}
+                      >
+                        <TypeBadge projectId={projectId} typeId={i.type_id} />
+                        <span className="shrink-0 text-tertiary">
+                          {i.project__identifier}-{i.sequence_id}
+                        </span>
+                        <span className="truncate">{i.name}</span>
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>,
+              pos.host
+            )}
         </div>
       )}
       {error && <span className="text-11 text-danger-primary">{t(error)}</span>}

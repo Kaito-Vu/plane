@@ -379,7 +379,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                   />
                 </div>
               </div>
-              <WorkItemTypeFormFields issueId={data?.id} />
+              <WorkItemTypeFormFields issueId={data?.id} part="type" />
               <IssueTitleInput
                 control={control}
                 issueTitleRef={issueTitleRef}
@@ -408,6 +408,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                 onAssetUpload={onAssetUpload}
                 onClose={onClose}
               />
+              <WorkItemTypeFormFields issueId={data?.id} part="details" />
             </DialogBody>
             <div className="shrink-0">
               <IssueDefaultProperties
