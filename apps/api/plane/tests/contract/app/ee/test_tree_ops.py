@@ -184,3 +184,32 @@ def test_subtree_count_endpoint(session_client, workspace, project, story, mk):
     assert r.status_code == status.HTTP_200_OK and r.data == {"count": 2}
     r = session_client.get(_url(workspace, project, f"issues/{task.id}/subtree-count/"))
     assert r.data == {"count": 1}
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_subtree_count_for_archive_skips_archived(session_client, workspace, project, story, mk):
+    mk(T.TASK, parent=story)
+    old = mk(T.TASK, parent=story)
+    Issue.all_objects.filter(pk=old.pk).update(archived_at=timezone.now().date())
+    url = _url(workspace, project, f"issues/{story.id}/subtree-count/")
+    assert session_client.get(url).data == {"count": 2}
+    assert session_client.get(url + "?for=archive").data == {"count": 1}
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_subtree_count_restricted_guest_404(workspace, project, story):
+    from rest_framework.test import APIClient
+
+    from plane.tests.factories import ProjectMemberFactory, UserFactory, WorkspaceMemberFactory
+
+    project.guest_view_all_features = False
+    project.save()
+    guest = UserFactory()
+    WorkspaceMemberFactory(workspace=workspace, member=guest, role=5)
+    ProjectMemberFactory(project=project, member=guest, workspace=workspace, role=5)
+    c = APIClient()
+    c.force_authenticate(user=guest)
+    r = c.get(_url(workspace, project, f"issues/{story.id}/subtree-count/"))
+    assert r.status_code == status.HTTP_404_NOT_FOUND

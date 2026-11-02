@@ -149,14 +149,12 @@ def test_v1_cycle_rejects_epic(api_key_client, workspace, project, create_user):
     assert not CycleIssue.objects.filter(cycle=cycle).exists()
 
 
-@pytest.mark.contract
-@pytest.mark.django_db
-def test_v1_cycle_transfer_rejects_epic(api_key_client, workspace, project, create_user):
+def _transfer_setup(workspace, project, create_user, group):
     import datetime as dt
 
     from django.utils import timezone
 
-    from plane.db.models import Cycle, CycleIssue
+    from plane.db.models import Cycle, CycleIssue, State
 
     past = timezone.now() - dt.timedelta(days=2)
     old = Cycle.objects.create(
@@ -168,10 +166,26 @@ def test_v1_cycle_transfer_rejects_epic(api_key_client, workspace, project, crea
         end_date=past,
     )
     new = Cycle.objects.create(name="New", project=project, workspace=workspace, owned_by=create_user)
-    epic = Issue.objects.create(name="E", project=project, type=get_type(workspace.id, T.EPIC))
+    state = State.objects.create(name=group, group=group, project=project, workspace=workspace)
+    epic = Issue.objects.create(name="E", project=project, type=get_type(workspace.id, T.EPIC), state=state)
     CycleIssue.objects.create(cycle=old, issue=epic, project=project, workspace=workspace)
-    r = api_key_client.post(
-        _url(workspace, project, f"cycles/{old.id}/transfer-issues/"), {"new_cycle_id": str(new.id)}, format="json"
-    )
-    _flat(r, "cycle_type_not_allowed")
+    url = _url(workspace, project, f"cycles/{old.id}/transfer-issues/")
+    return url, {"new_cycle_id": str(new.id)}, epic, old
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_v1_cycle_transfer_rejects_open_epic(api_key_client, workspace, project, create_user):
+    from plane.db.models import CycleIssue
+
+    url, body, epic, old = _transfer_setup(workspace, project, create_user, "started")
+    _flat(api_key_client.post(url, body, format="json"), "cycle_type_not_allowed")
     assert CycleIssue.objects.get(issue=epic).cycle_id == old.id
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_v1_cycle_transfer_ignores_completed_legacy_epic(api_key_client, workspace, project, create_user):
+    url, body, _, _ = _transfer_setup(workspace, project, create_user, "completed")
+    r = api_key_client.post(url, body, format="json")
+    assert r.status_code == status.HTTP_200_OK, r.data

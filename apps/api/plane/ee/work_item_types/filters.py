@@ -58,13 +58,19 @@ def _uuid(raw: Any) -> uuid.UUID:
 
 def _number(raw: Any) -> Decimal:
     try:
-        return Decimal(str(raw))
+        value = Decimal(str(raw))
     except InvalidOperation:
-        raise _bad("invalid_filter", "Expected a number", value=str(raw)) from None
+        value = None
+    if value is None or not value.is_finite():  # NaN/Infinity: not comparable in a filter
+        raise _bad("invalid_filter", "Expected a number", value=str(raw))
+    return value
 
 
 def _date(raw: Any):
-    value = parse_date(str(raw))
+    try:
+        value = parse_date(str(raw))
+    except ValueError:  # well-formed but not a calendar date, e.g. 2026-02-30
+        value = None
     if value is None:
         raise _bad("invalid_filter", "Expected a date (YYYY-MM-DD)", value=str(raw))
     return value

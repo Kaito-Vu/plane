@@ -49,9 +49,13 @@ def _log_descendants(ids, issue: Issue, actor_id, type_: str, requested: dict, c
         )
 
 
-def subtree_count(issue: Issue) -> int:
-    """Live descendants that a delete/archive of issue would take with it (for the confirm dialog)."""
-    return len(_descendant_ids([issue.id], deleted_at__isnull=True))
+def subtree_count(issue: Issue, for_archive: bool = False) -> int:
+    """Live descendants that a delete (or, for_archive, an archive) of issue would take with it.
+    The walk stays on live rows; for_archive then drops descendants that are already archived."""
+    ids = _descendant_ids([issue.id], deleted_at__isnull=True)
+    if not for_archive:
+        return len(ids)
+    return Issue.all_objects.filter(id__in=ids, archived_at__isnull=True).count()
 
 
 def soft_delete_subtree(issue: Issue, actor_id=None) -> int:

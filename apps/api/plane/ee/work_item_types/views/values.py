@@ -34,7 +34,7 @@ class IssueSubtreeCountEndpoint(BaseAPIView):
         issue = _visible_issue(request, slug, project_id, issue_id)
         if issue is None:
             return Response({"error": "Issue not found"}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"count": subtree_count(issue)})
+        return Response({"count": subtree_count(issue, for_archive=request.query_params.get("for") == "archive")})
 
 
 class IssueAttributeValuesEndpoint(BaseAPIView):

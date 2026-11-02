@@ -15,6 +15,24 @@ def assert_type_can_enter_cycle(issue_type: IssueType | None) -> None:
         )
 
 
+# Mirrors the set core's transfer_cycle_issues moves (open, unarchived, non-draft).
+TRANSFER_GROUPS = ("backlog", "unstarted", "started")
+
+
+def assert_transfer_types(cycle_id, project_id, slug) -> None:
+    """Cycle transfer: refuse when an issue that would move is an Epic/Feature (one query, no warnings)."""
+    moving = CycleIssue.objects.filter(
+        cycle_id=cycle_id,
+        project_id=project_id,
+        workspace__slug=slug,
+        issue__archived_at__isnull=True,
+        issue__is_draft=False,
+        issue__state__group__in=TRANSFER_GROUPS,
+    ).values("issue__type_id")
+    for issue_type in IssueType.objects.filter(pk__in=moving):
+        assert_type_can_enter_cycle(issue_type)
+
+
 def assert_can_enter_cycle(issue: Issue, cycle: Cycle) -> list[str]:
     """Raise for Epic/Feature; return warnings when a Task/Sub-task lands in another cycle than its Story."""
     assert_type_can_enter_cycle(issue.type)

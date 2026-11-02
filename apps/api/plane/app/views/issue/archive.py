@@ -290,21 +290,26 @@ class IssueArchiveViewSet(BaseViewSet):
             pk=pk,
         )
         assert_can_unarchive(issue)  # EE: not under an archived/deleted parent
-        issue_activity.delay(
-            type="issue.activity.updated",
-            requested_data=json.dumps({"archived_at": None}),
-            actor_id=str(request.user.id),
-            issue_id=str(issue.id),
-            project_id=str(project_id),
-            current_instance=json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder),
-            epoch=int(timezone.now().timestamp()),
-            notification=True,
-            origin=base_host(request=request, is_app=True),
-        )
+        current_instance = json.dumps(IssueSerializer(issue).data, cls=DjangoJSONEncoder)
+        origin = base_host(request=request, is_app=True)
         archived_at, issue.archived_at = issue.archived_at, None
         with transaction.atomic():  # EE: root + the subtree archived with it
             issue.save()
             unarchive_subtree(issue, archived_at, actor_id=request.user.id)
+            # EE: history only once the restore is committed
+            transaction.on_commit(
+                lambda: issue_activity.delay(
+                    type="issue.activity.updated",
+                    requested_data=json.dumps({"archived_at": None}),
+                    actor_id=str(request.user.id),
+                    issue_id=str(issue.id),
+                    project_id=str(project_id),
+                    current_instance=current_instance,
+                    epoch=int(timezone.now().timestamp()),
+                    notification=True,
+                    origin=origin,
+                )
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

@@ -360,3 +360,24 @@ def test_filter_number_date_gte_lte_and_text_icontains(session_client, workspace
     assert ids(f"attribute:{day.id}__lte", "2026-01-10") == {str(a.id)}
     assert ids(f"attribute:{day.id}", "2026-03-01") == {str(b.id)}
     assert ids(f"attribute:{txt.id}__icontains", "WORLD") == {str(a.id)}
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "op,value",
+    [("", "2026-02-30"), ("__gte", "2026-02-30"), ("__lte", "2026-13-01"), ("__range", "2026-01-01,2026-02-30")],
+)
+def test_filter_invalid_calendar_date_400(session_client, workspace, project, op, value):
+    day = _attr(project, "date")
+    r = _list(session_client, workspace, project, filters={f"attribute:{day.id}{op}": value})
+    assert r.status_code == status.HTTP_400_BAD_REQUEST and r.data["error_code"] == "invalid_filter", r.data
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+@pytest.mark.parametrize("op,value", [("", "NaN"), ("__gte", "Infinity"), ("__lte", "abc"), ("__range", "1,x")])
+def test_filter_invalid_number_400(session_client, workspace, project, op, value):
+    num = _attr(project, "number")
+    r = _list(session_client, workspace, project, filters={f"attribute:{num.id}{op}": value})
+    assert r.status_code == status.HTTP_400_BAD_REQUEST and r.data["error_code"] == "invalid_filter", r.data
