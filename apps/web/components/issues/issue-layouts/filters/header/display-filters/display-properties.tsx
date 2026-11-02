@@ -13,6 +13,7 @@ import { useTranslation } from "@plane/i18n";
 // types
 import type { IIssueDisplayProperties } from "@plane/types";
 // components
+import { AttributeDisplayPropertyToggles } from "@/ee/work-item-types/components/attribute-columns";
 import { FilterHeader } from "../helpers/filter-header";
 
 type Props = {
@@ -50,6 +51,7 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
       default:
         return true;
     }
+    // oxlint-disable-next-line no-map-spread
   }).map((property) => {
     if (isEpic && property.key === "sub_issue_count") {
       return { ...property, titleTranslationKey: "issue.display.properties.work_item_count" };
@@ -67,25 +69,24 @@ export const FilterDisplayProperties = observer(function FilterDisplayProperties
       {previewEnabled && (
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {filteredDisplayProperties.map((displayProperty) => (
-            <>
-              <button
-                key={displayProperty.key}
-                type="button"
-                className={`rounded-sm border px-2 py-0.5 text-11 transition-all ${
-                  displayProperties?.[displayProperty.key]
-                    ? "border-accent-strong bg-accent-primary text-on-color"
-                    : "border-subtle hover:bg-layer-1"
-                }`}
-                onClick={() =>
-                  handleUpdate({
-                    [displayProperty.key]: !displayProperties?.[displayProperty.key],
-                  })
-                }
-              >
-                {t(displayProperty.titleTranslationKey)}
-              </button>
-            </>
+            <button
+              key={displayProperty.key}
+              type="button"
+              className={`rounded-sm border px-2 py-0.5 text-11 transition-all ${
+                displayProperties?.[displayProperty.key]
+                  ? "border-accent-strong bg-accent-primary text-on-color"
+                  : "border-subtle hover:bg-layer-1"
+              }`}
+              onClick={() =>
+                handleUpdate({
+                  [displayProperty.key]: !displayProperties?.[displayProperty.key],
+                })
+              }
+            >
+              {t(displayProperty.titleTranslationKey)}
+            </button>
           ))}
+          <AttributeDisplayPropertyToggles displayProperties={displayProperties} handleUpdate={handleUpdate} />
         </div>
       )}
     </>

@@ -473,5 +473,151 @@
         "message": "Work item type cannot be updated since it breaks the hierarchy rules."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Attributes",
+    "library_title": "Attribute library",
+    "project_description": "Configure the attributes of each work item type in this project. Drag rows to reorder.",
+    "library_description": "Reusable attribute templates. Applying a template to a project creates an independent copy.",
+    "library_no_project": "Create a project first to manage the attribute library.",
+    "type_select": "Work item type",
+    "empty": "No attributes for this work item type yet.",
+    "delete_confirm": "Delete the attribute \"{name}\"? Existing values will no longer be shown.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Feature",
+      "user_story": "User Story",
+      "task": "Task",
+      "bug": "Bug",
+      "sub_task": "Sub-task"
+    },
+    "field_types": {
+      "text": "Text",
+      "textarea": "Paragraph",
+      "number": "Number",
+      "boolean": "Yes/No",
+      "date": "Date",
+      "datetime": "Date and time",
+      "url": "URL",
+      "select": "Single select",
+      "multi_select": "Multi select",
+      "member": "Member",
+      "multi_member": "Multiple members"
+    },
+    "badges": {
+      "system": "System",
+      "required": "Required",
+      "hidden": "Hidden"
+    },
+    "actions": {
+      "add": "Add attribute",
+      "edit": "Edit",
+      "hide": "Hide",
+      "show": "Show",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "form": {
+      "create_title": "New attribute",
+      "edit_title": "Edit attribute",
+      "name": "Name",
+      "description": "Description",
+      "field_type": "Field type",
+      "is_required": "Required",
+      "default_value": "Default value"
+    },
+    "options": {
+      "title": "Options",
+      "name": "Option name",
+      "default": "Default",
+      "add": "Add option",
+      "add_placeholder": "New option",
+      "save_first": "Save the attribute first, then add options."
+    },
+    "apply_template": {
+      "open": "Apply from workspace library",
+      "title": "Apply from workspace library",
+      "template": "Template",
+      "apply": "Apply",
+      "hint": "The attribute is copied into this project. Later changes to the template do not affect the copy."
+    },
+    "errors": {
+      "title": "Could not save",
+      "unknown": "Something went wrong. Please try again.",
+      "duplicate_name": "An attribute with this name already exists for this work item type.",
+      "system_attribute_locked": "System attributes can't be changed this way. Only Required can be toggled.",
+      "attribute_type_immutable": "An attribute can't be moved to another work item type.",
+      "type_change_blocked": "The field type can't change because work items already have values for this attribute.",
+      "invalid_reorder_ids": "The list is out of date. Reload the page and try again.",
+      "invalid_issue_type": "This work item type doesn't belong to the workspace.",
+      "issue_type_not_in_project": "This work item type isn't enabled in this project.",
+      "options_not_allowed": "Only Single select and Multi select attributes have options.",
+      "invalid_value": "The default value is not valid for this field type.",
+      "template_type_mismatch": "The template belongs to another work item type."
+    },
+    "boolean": {
+      "yes": "Yes",
+      "no": "No"
+    }
+  },
+  "agile_work_item": {
+    "type": "Work item type",
+    "parent": "Parent",
+    "clear": "Clear",
+    "parent_search": "Search {types}…",
+    "no_parent_found": "No matching parent found",
+    "attributes": "Attributes",
+    "ancestors": "Hierarchy",
+    "children": "Child work items",
+    "no_children": "No child work items",
+    "quick_add_choose_type": "Choose a type",
+    "delete_subtree_warning": "{count, plural, one {# work item below this one (at any level) is included too.} other {# work items below this one (at all levels) are included too.}}",
+    "cycle_warning_title": "Cycle warning",
+    "filter": {
+      "text": "text",
+      "number": "number",
+      "from": "from",
+      "to": "to"
+    },
+    "errors": {
+      "fix_fields": "Fix the highlighted fields before saving.",
+      "field_required": "This field is required.",
+      "invalid_value": "This value is not valid.",
+      "type_required": "Choose a work item type.",
+      "type_immutable": "The type of a work item cannot be changed after it is created.",
+      "parent_required": "This work item type needs a parent.",
+      "parent_invalid": "The selected parent is not valid.",
+      "parent_type_invalid": "The parent's type is not allowed for this work item type.",
+      "parent_cycle": "A work item cannot be its own ancestor.",
+      "max_depth_exceeded": "The hierarchy is too deep.",
+      "attribute_required": "Some required attributes are empty.",
+      "open_children": "{count, plural, one {# child work item is still open. Complete it first.} other {# child work items are still open. Complete them first.}}",
+      "cycle_type_not_allowed": "This work item type cannot be added to a cycle.",
+      "quick_add_full_form": "This type has required fields: use the full form (Add work item) to create it.",
+      "parent_archived": "The parent work item is archived. Restore the parent first.",
+      "parent_deleted": "The parent work item was deleted, so this work item cannot be restored."
+    }
+  },
+  "agile_import": {
+    "open": "Import CSV",
+    "title_upload": "Import: upload CSV",
+    "title_review": "Import: review rows",
+    "help": "Columns: {columns}. Any column named like an attribute of the row's type fills that attribute (separate multiple values with \";\"). Other columns (for example {example}) go to the work item as-is.",
+    "columns": {
+      "ref": "Ref",
+      "type": "Type",
+      "name": "Name",
+      "parent_ref": "Parent ref (in file)",
+      "existing_parent": "Existing parent",
+      "errors": "Errors"
+    },
+    "request_failed": "Request failed",
+    "empty_csv": "The CSV has no data rows",
+    "dry_run": "Dry-run",
+    "commit": "Commit",
+    "dry_run_passed": "Dry-run passed: ready to commit.",
+    "complete_title": "Import complete",
+    "complete_message": "{count, plural, one {# work item created} other {# work items created}}"
   }
 }

@@ -32,6 +32,7 @@ from plane.db.models import (
     User,
     EstimatePoint,
 )
+from plane.ee.work_item_types.activity import track_attribute_values
 from plane.settings.redis import redis_instance
 from plane.utils.exception_logger import log_exception
 from plane.utils.issue_relation_mapper import get_inverse_relation
@@ -621,6 +622,10 @@ def create_issue_activity(
             issue_activities,
             epoch,
         )
+    if requested_data.get("attribute_values"):  # EE attribute.updated on create
+        track_attribute_values(
+            requested_data, current_instance, issue_id, project_id, workspace_id, actor_id, issue_activities, epoch
+        )
 
 
 def update_issue_activity(
@@ -646,6 +651,7 @@ def update_issue_activity(
         "estimate_point": track_estimate_points,
         "archived_at": track_archive_at,
         "closed_to": track_closed_to,
+        "attribute_values": track_attribute_values,  # EE attribute.updated (parent.updated = track_parent)
         # External endpoint keys
         "parent": track_parent,
         "state": track_state,

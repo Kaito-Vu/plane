@@ -29,7 +29,7 @@ import { IconButton } from "@makeplane/propel/components/icon-button";
 import { Icon } from "@makeplane/propel/components/icon";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@makeplane/propel/components/menu";
 import { setToast } from "@plane/blocks/toast";
-import type { TNameDescriptionLoader } from "@plane/types";
+import type { TIssue, TNameDescriptionLoader } from "@plane/types";
 import { EInboxIssueStatus } from "@plane/types";
 import { Row } from "@plane/blocks/layout";
 import { copyUrlToClipboard, findHowManyDaysLeft, generateWorkItemLink } from "@plane/utils";
@@ -44,6 +44,7 @@ import { useAppRouter } from "@/hooks/use-app-router";
 // store
 import type { IInboxIssueStore } from "@/store/inbox/inbox-issue.store";
 // local imports
+import { workItemErrorMessage } from "@/ee/work-item-types/work-item-errors";
 import { InboxIssueStatus } from "../inbox-issue-status";
 import { DeclineIssueModal } from "../modals/decline-issue-modal";
 import { DeleteInboxIssueModal } from "../modals/delete-issue-modal";
@@ -138,16 +139,23 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
     }
   };
 
-  const handleInboxIssueAccept = async () => {
+  // EE: one intake PATCH saves the form (parent, attribute_values, ...) then accepts; the backend validates
+  // fully on accept and throws the flat EE error body, which the modal shows.
+  const handleInboxIssueAccept = async (payload: Partial<TIssue>) => {
     const nextOrPreviousIssueId = redirectIssue();
-    await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.ACCEPTED);
+    await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.ACCEPTED, payload);
     setAcceptIssueModal(false);
     handleRedirection(nextOrPreviousIssueId);
   };
 
   const handleInboxIssueDecline = async () => {
     const nextOrPreviousIssueId = redirectIssue();
-    await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.DECLINED);
+    try {
+      await inboxIssue?.updateInboxIssueStatus(EInboxIssueStatus.DECLINED);
+    } catch (error) {
+      setToast({ type: "error", title: t("error"), message: workItemErrorMessage(t, error) ?? t("error") });
+      return;
+    }
     setDeclineIssueModal(false);
     handleRedirection(nextOrPreviousIssueId);
   };
@@ -165,6 +173,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
 
   const handleInboxIssueDelete = async () => {
     if (!inboxIssue || !currentInboxIssueId) return;
+    // oxlint-disable-next-line promise/always-return
     await deleteInboxIssue(workspaceSlug, projectId, currentInboxIssueId).then(() => {
       if (!isNotificationEmbed) router.push(`/${workspaceSlug}/projects/${projectId}/intake`);
     });
@@ -267,7 +276,7 @@ export const InboxIssueActionsHeader = observer(function InboxIssueActionsHeader
           data={inboxIssue?.issue}
           isOpen={acceptIssueModal}
           onClose={() => setAcceptIssueModal(false)}
-          beforeFormSubmit={handleInboxIssueAccept}
+          updateOverride={handleInboxIssueAccept}
           withDraftIssueWrapper={false}
           fetchIssueDetails={false}
           showActionItemsOnUpdate

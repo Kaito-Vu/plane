@@ -6,6 +6,9 @@ import pytest
 
 from plane.api.serializers.issue import IssueSerializer
 from plane.db.models import Project, ProjectMember, Label, User
+from plane.ee.work_item_types.constants import TypeKey
+from plane.ee.work_item_types.registry import get_type
+from plane.ee.work_item_types.seed import seed_project
 
 
 @pytest.mark.unit
@@ -51,9 +54,14 @@ class TestIssueSerializerAssigneeAndLabelValidation:
         """A valid active project member id should still be accepted"""
         project = Project.objects.create(name="Test Project", identifier="TEST", workspace=workspace)
         ProjectMember.objects.create(project=project, member=create_user, role=15, is_active=True)
+        seed_project(project)
 
         serializer = IssueSerializer(
-            data={"name": "Test Issue", "assignees": [str(create_user.id)]},
+            data={
+                "name": "Test Issue",
+                "assignees": [str(create_user.id)],
+                "type_id": str(get_type(workspace.id, TypeKey.EPIC).id),
+            },
             context={"project_id": project.id, "workspace_id": workspace.id},
         )
 

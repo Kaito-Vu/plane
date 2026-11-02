@@ -7,7 +7,7 @@
 import type { FC } from "react";
 import { useEffect, useRef } from "react";
 import { observer } from "mobx-react";
-import type { UseFormRegister, UseFormSetFocus } from "react-hook-form";
+import type { Control, UseFormRegister, UseFormSetFocus } from "react-hook-form";
 // plane constants
 // plane helpers
 import { useOutsideClickDetector } from "@plane/hooks";
@@ -26,6 +26,7 @@ import {
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import useKeypress from "@/hooks/use-keypress";
+import { QuickAddTypeFields } from "@/ee/work-item-types/components/quick-add-type-fields";
 
 export type TQuickAddIssueFormRoot = {
   isOpen: boolean;
@@ -35,22 +36,24 @@ export type TQuickAddIssueFormRoot = {
   hasError?: boolean;
   setFocus: UseFormSetFocus<TIssue>;
   register: UseFormRegister<TIssue>;
+  control: Control<TIssue>;
   onSubmit: () => void;
   onClose: () => void;
   isEpic: boolean;
 };
 
 export const QuickAddIssueFormRoot = observer(function QuickAddIssueFormRoot(props: TQuickAddIssueFormRoot) {
-  const { isOpen, layout, projectId, hasError = false, setFocus, register, onSubmit, onClose, isEpic } = props;
+  const { isOpen, layout, projectId, hasError = false, setFocus, register, control, onSubmit, onClose, isEpic } = props;
   // store hooks
   const { getProjectById } = useProject();
   // derived values
   const projectDetail = getProjectById(projectId);
   // refs
   const ref = useRef<HTMLFormElement>(null);
-  // click detection
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // click detection (wrapper also covers the EE type/parent row)
   useKeypress("Escape", onClose);
-  useOutsideClickDetector(ref, onClose);
+  useOutsideClickDetector(wrapperRef, onClose);
   // set focus on name input
   useEffect(() => {
     setFocus("name");
@@ -71,14 +74,17 @@ export const QuickAddIssueFormRoot = observer(function QuickAddIssueFormRoot(pro
   if (!CurrentLayoutQuickAddIssueForm) return <></>;
 
   return (
-    <CurrentLayoutQuickAddIssueForm
-      ref={ref}
-      isOpen={isOpen}
-      projectDetail={projectDetail}
-      hasError={hasError}
-      register={register}
-      onSubmit={onSubmit}
-      isEpic={isEpic}
-    />
+    <div ref={wrapperRef}>
+      <QuickAddTypeFields projectId={projectId} control={control} />
+      <CurrentLayoutQuickAddIssueForm
+        ref={ref}
+        isOpen={isOpen}
+        projectDetail={projectDetail}
+        hasError={hasError}
+        register={register}
+        onSubmit={onSubmit}
+        isEpic={isEpic}
+      />
+    </div>
   );
 });

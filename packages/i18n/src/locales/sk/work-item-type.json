@@ -473,5 +473,143 @@
         "message": "Typ pracovnej položky nie je možné aktualizovať, pretože to porušuje pravidlá hierarchie."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Atribúty",
+    "library_title": "Knižnica atribútov",
+    "project_description": "Nakonfigurujte atribúty každého typu pracovnej položky v tomto projekte. Riadky presunutím zmeníte poradie.",
+    "library_description": "Opakovane použiteľné šablóny atribútov. Použitím šablóny v projekte vznikne nezávislá kópia.",
+    "library_no_project": "Najprv vytvorte projekt, aby ste mohli spravovať knižnicu atribútov.",
+    "type_select": "Typ pracovnej položky",
+    "empty": "Tento typ pracovnej položky zatiaľ nemá žiadne atribúty.",
+    "delete_confirm": "Odstrániť atribút „{name}“? Existujúce hodnoty sa už nebudú zobrazovať.",
+    "types": {
+      "epic": "Epik",
+      "feature": "Funkcia",
+      "user_story": "User Story",
+      "task": "Úloha",
+      "bug": "Chyba",
+      "sub_task": "Podúloha"
+    },
+    "field_types": {
+      "text": "Text",
+      "textarea": "Odsek",
+      "number": "Číslo",
+      "boolean": "Áno/Nie",
+      "date": "Dátum",
+      "datetime": "Dátum a čas",
+      "url": "URL",
+      "select": "Jednoduchý výber",
+      "multi_select": "Viacnásobný výber",
+      "member": "Člen",
+      "multi_member": "Viac členov"
+    },
+    "badges": {
+      "system": "Systémový",
+      "required": "Povinný",
+      "hidden": "Skrytý"
+    },
+    "actions": {
+      "add": "Pridať atribút",
+      "edit": "Upraviť",
+      "hide": "Skryť",
+      "show": "Zobraziť",
+      "delete": "Odstrániť",
+      "save": "Uložiť",
+      "cancel": "Zrušiť"
+    },
+    "form": {
+      "create_title": "Nový atribút",
+      "edit_title": "Upraviť atribút",
+      "name": "Názov",
+      "description": "Popis",
+      "field_type": "Typ poľa",
+      "is_required": "Povinný",
+      "default_value": "Predvolená hodnota"
+    },
+    "options": {
+      "title": "Možnosti",
+      "name": "Názov možnosti",
+      "default": "Predvolená",
+      "add": "Pridať možnosť",
+      "add_placeholder": "Nová možnosť",
+      "save_first": "Najprv atribút uložte, potom pridajte možnosti."
+    },
+    "apply_template": {
+      "open": "Použiť z knižnice pracovného priestoru",
+      "title": "Použiť z knižnice pracovného priestoru",
+      "template": "Šablóna",
+      "apply": "Použiť",
+      "hint": "Atribút sa skopíruje do tohto projektu. Neskoršie zmeny šablóny kópiu neovplyvnia."
+    },
+    "errors": {
+      "title": "Uloženie zlyhalo",
+      "unknown": "Niečo sa pokazilo. Skúste to prosím znova.",
+      "duplicate_name": "Atribút s týmto názvom už pre tento typ pracovnej položky existuje.",
+      "system_attribute_locked": "Systémové atribúty sa takto nedajú meniť. Prepnúť sa dá iba Povinný.",
+      "attribute_type_immutable": "Atribút nie je možné presunúť do iného typu pracovnej položky.",
+      "type_change_blocked": "Typ poľa nie je možné zmeniť, pretože pracovné položky už majú hodnoty tohto atribútu.",
+      "invalid_reorder_ids": "Zoznam je zastaraný. Obnovte stránku a skúste to znova.",
+      "invalid_issue_type": "Tento typ pracovnej položky nepatrí do pracovného priestoru.",
+      "issue_type_not_in_project": "Tento typ pracovnej položky nie je v tomto projekte povolený.",
+      "options_not_allowed": "Možnosti majú iba atribúty s jednoduchým a viacnásobným výberom.",
+      "invalid_value": "Predvolená hodnota nie je pre tento typ poľa platná.",
+      "template_type_mismatch": "Šablóna patrí k inému typu pracovnej položky."
+    },
+    "boolean": {
+      "yes": "Áno",
+      "no": "Nie"
+    }
+  },
+  "agile_work_item": {
+    "type": "Typ pracovnej položky",
+    "parent": "Nadradená položka",
+    "clear": "Vymazať",
+    "parent_search": "Hľadať: {types}…",
+    "no_parent_found": "Nenašla sa žiadna zodpovedajúca nadradená položka",
+    "attributes": "Atribúty",
+    "ancestors": "Hierarchia",
+    "children": "Podriadené pracovné položky",
+    "no_children": "Žiadne podriadené pracovné položky",
+    "quick_add_choose_type": "Vyberte typ",
+    "delete_subtree_warning": "{count, plural, one {# pracovná položka pod touto (na ktorejkoľvek úrovni) je tiež zahrnutá.} few {# pracovné položky pod touto (na všetkých úrovniach) sú tiež zahrnuté.} many {# pracovnej položky pod touto (na všetkých úrovniach) je tiež zahrnutých.} other {# pracovných položiek pod touto (na všetkých úrovniach) je tiež zahrnutých.}}",
+    "cycle_warning_title": "Upozornenie k Cyklu",
+    "errors": {
+      "fix_fields": "Pred uložením opravte zvýraznené polia.",
+      "field_required": "Toto pole je povinné.",
+      "invalid_value": "Táto hodnota nie je platná.",
+      "type_required": "Vyberte typ pracovnej položky.",
+      "type_immutable": "Typ pracovnej položky nie je možné po vytvorení zmeniť.",
+      "parent_required": "Tento typ pracovnej položky vyžaduje nadradenú položku.",
+      "parent_invalid": "Vybraná nadradená položka nie je platná.",
+      "parent_type_invalid": "Typ nadradenej položky nie je pre tento typ pracovnej položky povolený.",
+      "parent_cycle": "Pracovná položka nemôže byť svojím vlastným predkom.",
+      "max_depth_exceeded": "Hierarchia je príliš hlboká.",
+      "attribute_required": "Niektoré povinné atribúty sú prázdne.",
+      "open_children": "{count, plural, one {# podriadená pracovná položka je stále otvorená. Najprv ju dokončite.} few {# podriadené pracovné položky sú stále otvorené. Najprv ich dokončite.} many {# podriadenej pracovnej položky je stále otvorených. Najprv ich dokončite.} other {# podriadených pracovných položiek je stále otvorených. Najprv ich dokončite.}}",
+      "cycle_type_not_allowed": "Tento typ pracovnej položky nie je možné pridať do Cyklu.",
+      "quick_add_full_form": "Tento typ má povinné polia: na jeho vytvorenie použite úplný formulár (Pridať pracovnú položku)."
+    }
+  },
+  "agile_import": {
+    "open": "Importovať CSV",
+    "title_upload": "Import: nahranie CSV",
+    "title_review": "Import: kontrola riadkov",
+    "help": "Stĺpce: {columns}. Každý stĺpec pomenovaný rovnako ako atribút typu daného riadka vyplní tento atribút (viac hodnôt oddeľte znakom „;“). Ostatné stĺpce (napríklad {example}) sa do pracovnej položky prenesú bez zmeny.",
+    "columns": {
+      "ref": "Ref.",
+      "type": "Typ",
+      "name": "Názov",
+      "parent_ref": "Ref. nadradenej položky (v súbore)",
+      "existing_parent": "Existujúca nadradená položka",
+      "errors": "Chyby"
+    },
+    "request_failed": "Požiadavka zlyhala",
+    "empty_csv": "CSV neobsahuje žiadne dátové riadky",
+    "dry_run": "Skúšobný beh",
+    "commit": "Potvrdiť",
+    "dry_run_passed": "Skúšobný beh prebehol úspešne: pripravené na potvrdenie.",
+    "complete_title": "Import dokončený",
+    "complete_message": "{count, plural, one {Vytvorená # pracovná položka} few {Vytvorené # pracovné položky} many {Vytvorenej # pracovnej položky} other {Vytvorených # pracovných položiek}}"
   }
 }

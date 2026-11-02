@@ -473,5 +473,143 @@
         "message": "工作項目類型無法更新，因為它違反了層級規則。"
       }
     }
+  },
+  "agile_attributes": {
+    "title": "屬性",
+    "library_title": "屬性庫",
+    "project_description": "設定此專案中每種工作事項類型的屬性。拖曳列以重新排序。",
+    "library_description": "可重複使用的屬性範本。將範本套用至專案會建立獨立的副本。",
+    "library_no_project": "請先建立專案以管理屬性庫。",
+    "type_select": "工作事項類型",
+    "empty": "此工作事項類型尚無屬性。",
+    "delete_confirm": "要刪除屬性「{name}」嗎？現有值將不再顯示。",
+    "types": {
+      "epic": "史詩",
+      "feature": "功能",
+      "user_story": "使用者故事",
+      "task": "任務",
+      "bug": "缺陷",
+      "sub_task": "子任務"
+    },
+    "field_types": {
+      "text": "文字",
+      "textarea": "段落",
+      "number": "數字",
+      "boolean": "是/否",
+      "date": "日期",
+      "datetime": "日期和時間",
+      "url": "URL",
+      "select": "單選",
+      "multi_select": "多選",
+      "member": "成員",
+      "multi_member": "多位成員"
+    },
+    "badges": {
+      "system": "系統",
+      "required": "必填",
+      "hidden": "已隱藏"
+    },
+    "actions": {
+      "add": "新增屬性",
+      "edit": "編輯",
+      "hide": "隱藏",
+      "show": "顯示",
+      "delete": "刪除",
+      "save": "儲存",
+      "cancel": "取消"
+    },
+    "form": {
+      "create_title": "新增屬性",
+      "edit_title": "編輯屬性",
+      "name": "名稱",
+      "description": "描述",
+      "field_type": "欄位類型",
+      "is_required": "必填",
+      "default_value": "預設值"
+    },
+    "options": {
+      "title": "選項",
+      "name": "選項名稱",
+      "default": "預設",
+      "add": "新增選項",
+      "add_placeholder": "新選項",
+      "save_first": "請先儲存屬性，再新增選項。"
+    },
+    "apply_template": {
+      "open": "從工作區庫套用",
+      "title": "從工作區庫套用",
+      "template": "範本",
+      "apply": "套用",
+      "hint": "屬性會複製到此專案。之後對範本的變更不會影響該副本。"
+    },
+    "errors": {
+      "title": "無法儲存",
+      "unknown": "發生錯誤。請再試一次。",
+      "duplicate_name": "此工作事項類型已存在同名屬性。",
+      "system_attribute_locked": "系統屬性無法透過此方式變更。只能切換「必填」。",
+      "attribute_type_immutable": "屬性無法移至其他工作事項類型。",
+      "type_change_blocked": "無法變更欄位類型，因為工作事項已有此屬性的值。",
+      "invalid_reorder_ids": "清單已過期。請重新整理頁面後再試一次。",
+      "invalid_issue_type": "此工作事項類型不屬於該工作區。",
+      "issue_type_not_in_project": "此工作事項類型未在此專案中啟用。",
+      "options_not_allowed": "只有單選和多選屬性才有選項。",
+      "invalid_value": "預設值對此欄位類型無效。",
+      "template_type_mismatch": "該範本屬於其他工作事項類型。"
+    },
+    "boolean": {
+      "yes": "是",
+      "no": "否"
+    }
+  },
+  "agile_work_item": {
+    "type": "工作事項類型",
+    "parent": "父項",
+    "clear": "清除",
+    "parent_search": "搜尋{types}…",
+    "no_parent_found": "找不到相符的父項",
+    "attributes": "屬性",
+    "ancestors": "階層",
+    "children": "子工作事項",
+    "no_children": "沒有子工作事項",
+    "quick_add_choose_type": "選擇類型",
+    "delete_subtree_warning": "{count, plural, one {此項以下（所有階層）的 # 個工作事項也會包含在內。} other {此項以下（所有階層）的 # 個工作事項也會包含在內。}}",
+    "cycle_warning_title": "週期警告",
+    "errors": {
+      "fix_fields": "請在儲存前修正標示的欄位。",
+      "field_required": "此欄位為必填。",
+      "invalid_value": "此值無效。",
+      "type_required": "請選擇工作事項類型。",
+      "type_immutable": "工作事項的類型在建立後無法變更。",
+      "parent_required": "此工作事項類型需要父項。",
+      "parent_invalid": "所選父項無效。",
+      "parent_type_invalid": "此工作事項類型不允許使用該父項的類型。",
+      "parent_cycle": "工作事項不能成為其自身的祖先。",
+      "max_depth_exceeded": "階層過深。",
+      "attribute_required": "部分必填屬性為空。",
+      "open_children": "{count, plural, one {仍有 # 個子工作事項未完成。請先完成它。} other {仍有 # 個子工作事項未完成。請先完成它們。}}",
+      "cycle_type_not_allowed": "此工作事項類型無法加入週期。",
+      "quick_add_full_form": "此類型有必填欄位：請使用完整表單（新增工作事項）來建立。"
+    }
+  },
+  "agile_import": {
+    "open": "匯入 CSV",
+    "title_upload": "匯入：上傳 CSV",
+    "title_review": "匯入：檢查列",
+    "help": "欄：{columns}。名稱與該列類型的某個屬性相同的欄會填入該屬性（多個值以「;」分隔）。其他欄（例如 {example}）會原樣寫入工作事項。",
+    "columns": {
+      "ref": "引用",
+      "type": "類型",
+      "name": "名稱",
+      "parent_ref": "父項引用（檔案內）",
+      "existing_parent": "現有父項",
+      "errors": "錯誤"
+    },
+    "request_failed": "要求失敗",
+    "empty_csv": "CSV 中沒有資料列",
+    "dry_run": "試執行",
+    "commit": "提交",
+    "dry_run_passed": "試執行通過：可以提交。",
+    "complete_title": "匯入完成",
+    "complete_message": "{count, plural, one {已建立 # 個工作事項} other {已建立 # 個工作事項}}"
   }
 }

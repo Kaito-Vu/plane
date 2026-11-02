@@ -4,6 +4,10 @@
  * See the LICENSE file for details.
  */
 
+// upstream callbacks shadow props/state by design; lint-staged denies warnings on touched files
+/* oxlint-disable no-shadow */
+
+import { asEeError, workItemErrorMessage } from "@/ee/work-item-types/work-item-errors";
 import { useMemo } from "react";
 import { observer } from "mobx-react";
 // plane imports
@@ -99,7 +103,9 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
           setToast({
             title: t("common.error.label"),
             type: "error",
-            message: t("entity.update.failed", { entity: t("issue.label") }),
+            // EE: show why (e.g. open children, parent rules); count fixes the raw plural in the fallback
+            message:
+              workItemErrorMessage(t, error) ?? t("entity.update.failed", { entity: t("issue.label", { count: 1 }) }),
           });
         }
       },
@@ -131,7 +137,8 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
       addCycleToIssue: async (workspaceSlug: string, projectId: string, cycleId: string, issueId: string) => {
         try {
           await addCycleToIssue(workspaceSlug, projectId, cycleId, issueId);
-        } catch (_error) {
+        } catch (error) {
+          if (asEeError(error)) return; // EE refusal already toasted by the issue service
           setToast({
             type: "error",
             title: t("common.error.label"),
@@ -142,7 +149,8 @@ export const IssueDetailRoot = observer(function IssueDetailRoot(props: TIssueDe
       addIssueToCycle: async (workspaceSlug: string, projectId: string, cycleId: string, issueIds: string[]) => {
         try {
           await addIssueToCycle(workspaceSlug, projectId, cycleId, issueIds);
-        } catch (_error) {
+        } catch (error) {
+          if (asEeError(error)) return; // EE refusal already toasted by the issue service
           setToast({
             type: "error",
             title: t("common.error.label"),

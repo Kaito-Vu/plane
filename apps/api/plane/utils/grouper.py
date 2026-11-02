@@ -22,6 +22,7 @@ from plane.db.models import (
     ModuleIssue,
     IssueLabel,
 )
+from plane.ee.work_item_types.filters import extra_result_fields, group_values
 from typing import Optional, Dict, Tuple, Any, Union, List
 
 
@@ -105,6 +106,7 @@ def issue_on_results(
 
     required_fields: List[str] = [
         "id",
+        "type_id",
         "name",
         "state_id",
         "sort_order",
@@ -137,7 +139,7 @@ def issue_on_results(
         original_list.remove(FIELD_MAPPER[sub_group_by])
         original_list.append(sub_group_by)
 
-    required_fields.extend(original_list)
+    required_fields.extend(original_list + extra_result_fields(group_by, sub_group_by))
     return list(issues.values(*required_fields))
 
 
@@ -216,4 +218,4 @@ def issue_group_values(
         else:
             return list(queryset)
 
-    return []
+    return group_values(field, project_id)

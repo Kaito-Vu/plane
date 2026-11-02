@@ -27,6 +27,9 @@ from plane.utils.content_validator import validate_html_content
 from plane.utils.issue_filters import issue_filters
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models.intake import SourceType
+from plane.ee.work_item_types.constants import TypeKey as T
+from plane.ee.work_item_types.registry import get_type
+from plane.ee.work_item_types.validators import validate_work_item
 
 
 class IntakeIssuePublicViewSet(BaseViewSet):
@@ -156,6 +159,15 @@ class IntakeIssuePublicViewSet(BaseViewSet):
         safe_description_html = sanitized_description_html if sanitized_description_html is not None else "<p></p>"
 
         # create an issue
+        # EE: intake submitters pick Bug (default) or User Story; triage mode allows no parent/attributes
+        type_id = request.data.get("issue", {}).get("type_id") or get_type(project_deploy_board.workspace_id, T.BUG).id
+        validate_work_item(
+            project=project_deploy_board.project_id,
+            issue_type_id=type_id,
+            parent_id=None,
+            attribute_values=None,
+            triage=True,
+        )
         issue = Issue.objects.create(
             name=request.data.get("issue", {}).get("name"),
             description_json=request.data.get("issue", {}).get("description_json", {}),
@@ -163,6 +175,7 @@ class IntakeIssuePublicViewSet(BaseViewSet):
             priority=request.data.get("issue", {}).get("priority", "low"),
             project_id=project_deploy_board.project_id,
             state_id=triage_state.id,
+            type_id=type_id,
         )
 
         # Create an Issue Activity

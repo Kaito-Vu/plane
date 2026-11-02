@@ -43,6 +43,9 @@ from plane.db.models import (
     User,
     BotTypeEnum,
 )
+from plane.ee.work_item_types.constants import TypeKey
+from plane.ee.work_item_types.registry import get_type
+from plane.ee.work_item_types.seed import seed_project
 
 logger = logging.getLogger("plane.worker")
 
@@ -111,6 +114,7 @@ def create_project_and_member(workspace: Workspace, bot_user: User) -> Dict[int,
             issue_views_view=True,
         )
         project.save(created_by_id=bot_user.id, disable_auto_set_user=True)
+        seed_project(project)
 
         # Create project members
         ProjectMember.objects.bulk_create(
@@ -289,6 +293,7 @@ def create_project_issues(
             project_id=project_map[project_id],
             workspace=workspace,
             created_by_id=bot_user.id,
+            type=get_type(workspace.id, TypeKey.EPIC),  # sample issues have no parent; Epic is the only root type
         )
         issue.save(created_by_id=bot_user.id, disable_auto_set_user=True)
         IssueSequence.objects.create(
@@ -318,8 +323,9 @@ def create_project_issues(
                 created_by_id=bot_user.id,
             )
 
-        # Create cycle issues
-        if cycle_id:
+        # Create cycle issues. EE: sample issues are Epics, which may not enter a cycle (spec §6),
+        # so they are not linked. ponytail: seed a typed tree with Tasks in cycles if demo cycles need content.
+        if cycle_id and issue.type.external_id not in (TypeKey.EPIC.value, TypeKey.FEATURE.value):
             CycleIssue.objects.create(
                 issue=issue,
                 cycle_id=cycles_map[cycle_id],

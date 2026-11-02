@@ -13,6 +13,7 @@ import { setToast } from "@plane/blocks/toast";
 import type { TDeDupeIssue, TIssue } from "@plane/types";
 // hooks
 import { useIssues } from "@/hooks/store/use-issues";
+import { SubtreeWarning } from "@/ee/work-item-types/components/subtree-warning";
 import { useProject } from "@/hooks/store/use-project";
 
 type Props = {
@@ -73,7 +74,17 @@ export function ArchiveIssueModal(props: Props) {
       isSubmitting={isArchiving}
       variant="primary"
       title={`${t("issue.archive.label")} ${projectDetails?.identifier ?? ""} ${issue.sequence_id}`}
-      content={t("issue.archive.confirm_message")}
+      content={
+        <>
+          {t("issue.archive.confirm_message")}
+          <SubtreeWarning
+            projectId={issue.project_id}
+            issueId={issue.id}
+            forArchive
+            fallbackCount={"sub_issues_count" in issue ? issue.sub_issues_count : undefined}
+          />
+        </>
+      }
       primaryButtonText={{ loading: t("common.archiving"), default: t("common.archive") }}
       secondaryButtonText={t("common.cancel")}
     />

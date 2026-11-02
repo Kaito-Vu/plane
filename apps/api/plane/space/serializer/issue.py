@@ -32,6 +32,7 @@ from plane.db.models import (
     IssueVote,
     IssueRelation,
 )
+from plane.ee.work_item_types.validators import validate_issue_payload
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
@@ -299,6 +300,11 @@ class IssueCreateSerializer(BaseSerializer):
                 raise serializers.ValidationError({"description_binary": "Invalid binary data"})
 
         return data
+
+    def run_validation(self, data=serializers.empty):
+        attrs = super().run_validation(data)
+        validate_issue_payload(self, attrs)  # EE gate
+        return attrs
 
     def create(self, validated_data):
         assignees = validated_data.pop("assignees", None)

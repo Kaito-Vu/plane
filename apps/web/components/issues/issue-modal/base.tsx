@@ -1,3 +1,4 @@
+// oxlint-disable no-shadow
 /**
  * Copyright (c) 2023-present Plane Software, Inc. and contributors
  * SPDX-License-Identifier: AGPL-3.0-only
@@ -25,6 +26,7 @@ import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // services
 import { FileService } from "@/services/file.service";
+import { workItemErrorMessage, workItemFieldErrors } from "@/ee/work-item-types/work-item-errors";
 const fileService = new FileService();
 // local imports
 import { useCreateIssueToastActions } from "../create-issue-toast-action-items";
@@ -40,6 +42,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     onClose,
     beforeFormSubmit,
     onSubmit,
+    updateOverride,
     withDraftIssueWrapper = true,
     storeType: issueStoreFromProps,
     isDraft = false,
@@ -75,7 +78,8 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
   const { issues: projectIssues } = useIssues(EIssuesStoreType.PROJECT);
   const { issues: draftIssues } = useIssues(EIssuesStoreType.WORKSPACE_DRAFT);
   const { fetchIssue } = useIssueDetail();
-  const { allowedProjectIds, handleCreateUpdatePropertyValues, handleCreateSubWorkItem } = useIssueModal();
+  const { allowedProjectIds, handleCreateUpdatePropertyValues, handleCreateSubWorkItem, setIssuePropertyValueErrors } =
+    useIssueModal();
   const { getProjectByIdentifier } = useProject();
   // current store details
   const { createIssue, updateIssue } = useIssuesActions(storeType);
@@ -250,10 +254,14 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       setChangesMade(null);
       return response;
     } catch (error: any) {
+      setIssuePropertyValueErrors(workItemFieldErrors(error));
       setToast({
         type: "error",
         title: t("error"),
-        message: error?.error ?? t(is_draft_issue ? "draft_creation_failed" : "issue_creation_failed"),
+        message:
+          workItemErrorMessage(t, error) ??
+          error?.error ??
+          t(is_draft_issue ? "draft_creation_failed" : "issue_creation_failed"),
       });
       throw error;
     }
@@ -324,7 +332,8 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     if (!workspaceSlug || !payload.project_id || !data?.id) return;
 
     try {
-      if (isDraft) await draftIssues.updateIssue(workspaceSlug.toString(), data.id, payload);
+      if (updateOverride) await updateOverride(payload);
+      else if (isDraft) await draftIssues.updateIssue(workspaceSlug.toString(), data.id, payload);
       else if (updateIssue) await updateIssue(payload.project_id, data.id, payload);
 
       // Run cycle, module, and property changes sequentially to avoid
@@ -351,10 +360,11 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       handleClose();
     } catch (error: any) {
       console.error(error);
+      setIssuePropertyValueErrors(workItemFieldErrors(error));
       setToast({
         type: "error",
         title: t("error"),
-        message: error?.error ?? t("issue_could_not_be_updated"),
+        message: workItemErrorMessage(t, error) ?? error?.error ?? t("issue_could_not_be_updated"),
       });
     }
   };

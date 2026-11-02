@@ -473,5 +473,151 @@
         "message": "Không thể cập nhật loại mục công việc vì vi phạm quy tắc phân cấp."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Thuộc tính",
+    "library_title": "Thư viện thuộc tính",
+    "project_description": "Cấu hình thuộc tính của từng loại mục công việc trong dự án này. Kéo các hàng để sắp xếp lại.",
+    "library_description": "Các mẫu thuộc tính dùng lại được. Áp dụng một mẫu vào dự án sẽ tạo một bản sao độc lập.",
+    "library_no_project": "Hãy tạo một dự án trước để quản lý thư viện thuộc tính.",
+    "type_select": "Loại mục công việc",
+    "empty": "Loại mục công việc này chưa có thuộc tính nào.",
+    "delete_confirm": "Xóa thuộc tính \"{name}\"? Các giá trị hiện có sẽ không còn được hiển thị.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Tính năng",
+      "user_story": "User Story",
+      "task": "Nhiệm vụ",
+      "bug": "Lỗi",
+      "sub_task": "Nhiệm vụ con"
+    },
+    "field_types": {
+      "text": "Văn bản",
+      "textarea": "Đoạn văn",
+      "number": "Số",
+      "boolean": "Có/Không",
+      "date": "Ngày",
+      "datetime": "Ngày và giờ",
+      "url": "URL",
+      "select": "Chọn một",
+      "multi_select": "Chọn nhiều",
+      "member": "Thành viên",
+      "multi_member": "Nhiều thành viên"
+    },
+    "badges": {
+      "system": "Hệ thống",
+      "required": "Bắt buộc",
+      "hidden": "Đã ẩn"
+    },
+    "actions": {
+      "add": "Thêm thuộc tính",
+      "edit": "Sửa",
+      "hide": "Ẩn",
+      "show": "Hiện",
+      "delete": "Xóa",
+      "save": "Lưu",
+      "cancel": "Hủy"
+    },
+    "form": {
+      "create_title": "Thuộc tính mới",
+      "edit_title": "Sửa thuộc tính",
+      "name": "Tên",
+      "description": "Mô tả",
+      "field_type": "Kiểu trường",
+      "is_required": "Bắt buộc",
+      "default_value": "Giá trị mặc định"
+    },
+    "options": {
+      "title": "Tùy chọn",
+      "name": "Tên tùy chọn",
+      "default": "Mặc định",
+      "add": "Thêm tùy chọn",
+      "add_placeholder": "Tùy chọn mới",
+      "save_first": "Hãy lưu thuộc tính trước, sau đó thêm tùy chọn."
+    },
+    "apply_template": {
+      "open": "Áp dụng từ thư viện không gian làm việc",
+      "title": "Áp dụng từ thư viện không gian làm việc",
+      "template": "Mẫu",
+      "apply": "Áp dụng",
+      "hint": "Thuộc tính được sao chép vào dự án này. Các thay đổi sau này của mẫu không ảnh hưởng đến bản sao."
+    },
+    "errors": {
+      "title": "Không thể lưu",
+      "unknown": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "duplicate_name": "Loại mục công việc này đã có thuộc tính trùng tên.",
+      "system_attribute_locked": "Không thể thay đổi thuộc tính hệ thống theo cách này. Chỉ có thể bật/tắt Bắt buộc.",
+      "attribute_type_immutable": "Không thể chuyển thuộc tính sang loại mục công việc khác.",
+      "type_change_blocked": "Không thể đổi kiểu trường vì đã có mục công việc chứa giá trị của thuộc tính này.",
+      "invalid_reorder_ids": "Danh sách đã cũ. Hãy tải lại trang và thử lại.",
+      "invalid_issue_type": "Loại mục công việc này không thuộc không gian làm việc.",
+      "issue_type_not_in_project": "Loại mục công việc này chưa được bật trong dự án.",
+      "options_not_allowed": "Chỉ thuộc tính Chọn một và Chọn nhiều mới có tùy chọn.",
+      "invalid_value": "Giá trị mặc định không hợp lệ với kiểu trường này.",
+      "template_type_mismatch": "Mẫu này thuộc về một loại mục công việc khác."
+    },
+    "boolean": {
+      "yes": "Có",
+      "no": "Không"
+    }
+  },
+  "agile_work_item": {
+    "type": "Loại mục công việc",
+    "parent": "Mục cha",
+    "clear": "Xóa",
+    "parent_search": "Tìm {types}…",
+    "no_parent_found": "Không tìm thấy mục cha phù hợp",
+    "attributes": "Thuộc tính",
+    "ancestors": "Phân cấp",
+    "children": "Mục công việc con",
+    "no_children": "Không có mục công việc con",
+    "quick_add_choose_type": "Chọn loại",
+    "delete_subtree_warning": "{count, plural, other {# mục công việc bên dưới (mọi cấp) cũng sẽ bị áp dụng theo.}}",
+    "cycle_warning_title": "Cảnh báo chu kỳ",
+    "filter": {
+      "text": "văn bản",
+      "number": "số",
+      "from": "từ",
+      "to": "đến"
+    },
+    "errors": {
+      "fix_fields": "Hãy sửa các trường được đánh dấu trước khi lưu.",
+      "field_required": "Trường này là bắt buộc.",
+      "invalid_value": "Giá trị này không hợp lệ.",
+      "type_required": "Hãy chọn loại mục công việc.",
+      "type_immutable": "Không thể đổi loại của mục công việc sau khi đã tạo.",
+      "parent_required": "Loại mục công việc này cần có mục cha.",
+      "parent_invalid": "Mục cha đã chọn không hợp lệ.",
+      "parent_type_invalid": "Loại của mục cha không được phép cho loại mục công việc này.",
+      "parent_cycle": "Một mục công việc không thể là tổ tiên của chính nó.",
+      "max_depth_exceeded": "Phân cấp quá sâu.",
+      "attribute_required": "Một số thuộc tính bắt buộc đang trống.",
+      "open_children": "{count, plural, one {Còn # mục công việc con chưa hoàn thành. Hãy hoàn thành trước.} other {Còn # mục công việc con chưa hoàn thành. Hãy hoàn thành trước.}}",
+      "cycle_type_not_allowed": "Không thể thêm loại mục công việc này vào chu kỳ.",
+      "quick_add_full_form": "Loại này có trường bắt buộc: hãy dùng biểu mẫu đầy đủ (Thêm work item).",
+      "parent_archived": "Mục công việc cha đang được lưu trữ. Hãy khôi phục mục cha trước.",
+      "parent_deleted": "Mục công việc cha đã bị xóa nên không thể khôi phục mục này."
+    }
+  },
+  "agile_import": {
+    "open": "Nhập CSV",
+    "title_upload": "Nhập: tải lên CSV",
+    "title_review": "Nhập: xem lại các hàng",
+    "help": "Các cột: {columns}. Cột nào trùng tên với một thuộc tính của loại ở hàng đó sẽ điền vào thuộc tính ấy (phân tách nhiều giá trị bằng \";\"). Các cột khác (ví dụ {example}) được đưa nguyên vào mục công việc.",
+    "columns": {
+      "ref": "Ref",
+      "type": "Loại",
+      "name": "Tên",
+      "parent_ref": "Ref mục cha (trong tệp)",
+      "existing_parent": "Mục cha có sẵn",
+      "errors": "Lỗi"
+    },
+    "request_failed": "Yêu cầu thất bại",
+    "empty_csv": "Tệp CSV không có hàng dữ liệu nào",
+    "dry_run": "Chạy thử",
+    "commit": "Xác nhận nhập",
+    "dry_run_passed": "Chạy thử thành công: sẵn sàng xác nhận nhập.",
+    "complete_title": "Đã nhập xong",
+    "complete_message": "{count, plural, one {Đã tạo # mục công việc} other {Đã tạo # mục công việc}}"
   }
 }

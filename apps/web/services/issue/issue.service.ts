@@ -5,6 +5,7 @@
  */
 
 // plane imports
+import { notifyCycleError, notifyCycleWarnings } from "@/ee/work-item-types/cycle-feedback";
 import { API_BASE_URL } from "@plane/constants";
 import { EIssueServiceType } from "@plane/types";
 import type {
@@ -153,8 +154,12 @@ export class IssueService extends APIService {
     }
   ) {
     return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/cycles/${cycleId}/cycle-issues/`, data)
-      .then((response) => response?.data)
+      .then((response) => {
+        notifyCycleWarnings(response?.data); // EE: story/cycle mismatch warnings
+        return response?.data;
+      })
       .catch((error) => {
+        notifyCycleError(error?.response?.data); // EE: e.g. cycle_type_not_allowed
         throw error?.response?.data;
       });
   }

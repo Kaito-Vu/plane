@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { asEeError } from "@/ee/work-item-types/work-item-errors";
 import { useMemo } from "react";
 import {
   ArchiveOutline,
@@ -157,11 +158,12 @@ export const useIssueActionHandlers = (props: MenuItemFactoryProps) => {
           message: "Your work item can be found in project work items.",
         });
       })
-      .catch(() => {
+      .catch((error) => {
         setToast({
           type: "error",
           title: "Error!",
-          message: "Work item could not be restored. Please try again.",
+          // EE: backend reason (parent_archived / parent_deleted); hook-less, so the server's English text
+          message: asEeError(error)?.message ?? "Work item could not be restored. Please try again.",
         });
       });
   };

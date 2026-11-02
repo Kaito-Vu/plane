@@ -473,5 +473,143 @@
         "message": "Tipul elementului de lucru nu poate fi actualizat deoarece încalcă regulile de ierarhie."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Atribute",
+    "library_title": "Biblioteca de atribute",
+    "project_description": "Configurați atributele fiecărui tip de activitate din acest proiect. Trageți rândurile pentru a le reordona.",
+    "library_description": "Șabloane de atribute reutilizabile. Aplicarea unui șablon într-un proiect creează o copie independentă.",
+    "library_no_project": "Creați mai întâi un proiect pentru a gestiona biblioteca de atribute.",
+    "type_select": "Tip de activitate",
+    "empty": "Acest tip de activitate nu are încă atribute.",
+    "delete_confirm": "Ștergeți atributul „{name}”? Valorile existente nu vor mai fi afișate.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Funcționalitate",
+      "user_story": "User Story",
+      "task": "Sarcină",
+      "bug": "Eroare",
+      "sub_task": "Subsarcină"
+    },
+    "field_types": {
+      "text": "Text",
+      "textarea": "Paragraf",
+      "number": "Număr",
+      "boolean": "Da/Nu",
+      "date": "Dată",
+      "datetime": "Dată și oră",
+      "url": "URL",
+      "select": "Selecție unică",
+      "multi_select": "Selecție multiplă",
+      "member": "Membru",
+      "multi_member": "Mai mulți membri"
+    },
+    "badges": {
+      "system": "Sistem",
+      "required": "Obligatoriu",
+      "hidden": "Ascuns"
+    },
+    "actions": {
+      "add": "Adăugați atribut",
+      "edit": "Editați",
+      "hide": "Ascundeți",
+      "show": "Afișați",
+      "delete": "Ștergeți",
+      "save": "Salvați",
+      "cancel": "Anulați"
+    },
+    "form": {
+      "create_title": "Atribut nou",
+      "edit_title": "Editați atributul",
+      "name": "Nume",
+      "description": "Descriere",
+      "field_type": "Tip de câmp",
+      "is_required": "Obligatoriu",
+      "default_value": "Valoare implicită"
+    },
+    "options": {
+      "title": "Opțiuni",
+      "name": "Numele opțiunii",
+      "default": "Implicită",
+      "add": "Adăugați opțiune",
+      "add_placeholder": "Opțiune nouă",
+      "save_first": "Salvați mai întâi atributul, apoi adăugați opțiuni."
+    },
+    "apply_template": {
+      "open": "Aplicați din biblioteca spațiului de lucru",
+      "title": "Aplicați din biblioteca spațiului de lucru",
+      "template": "Șablon",
+      "apply": "Aplicați",
+      "hint": "Atributul este copiat în acest proiect. Modificările ulterioare ale șablonului nu afectează copia."
+    },
+    "errors": {
+      "title": "Nu s-a putut salva",
+      "unknown": "Ceva nu a funcționat. Încercați din nou.",
+      "duplicate_name": "Există deja un atribut cu acest nume pentru acest tip de activitate.",
+      "system_attribute_locked": "Atributele de sistem nu pot fi modificate astfel. Doar Obligatoriu poate fi comutat.",
+      "attribute_type_immutable": "Un atribut nu poate fi mutat într-un alt tip de activitate.",
+      "type_change_blocked": "Tipul de câmp nu poate fi schimbat deoarece activitățile au deja valori pentru acest atribut.",
+      "invalid_reorder_ids": "Lista este depășită. Reîncărcați pagina și încercați din nou.",
+      "invalid_issue_type": "Acest tip de activitate nu aparține spațiului de lucru.",
+      "issue_type_not_in_project": "Acest tip de activitate nu este activat în acest proiect.",
+      "options_not_allowed": "Doar atributele cu selecție unică și selecție multiplă au opțiuni.",
+      "invalid_value": "Valoarea implicită nu este validă pentru acest tip de câmp.",
+      "template_type_mismatch": "Șablonul aparține unui alt tip de activitate."
+    },
+    "boolean": {
+      "yes": "Da",
+      "no": "Nu"
+    }
+  },
+  "agile_work_item": {
+    "type": "Tip de activitate",
+    "parent": "Părinte",
+    "clear": "Ștergeți selecția",
+    "parent_search": "Căutați {types}…",
+    "no_parent_found": "Nu s-a găsit niciun părinte potrivit",
+    "attributes": "Atribute",
+    "ancestors": "Ierarhie",
+    "children": "Activități copil",
+    "no_children": "Nicio activitate copil",
+    "quick_add_choose_type": "Alegeți un tip",
+    "delete_subtree_warning": "{count, plural, one {# activitate de sub aceasta (la orice nivel) este inclusă și ea.} few {# activități de sub aceasta (la toate nivelurile) sunt incluse și ele.} other {# de activități de sub aceasta (la toate nivelurile) sunt incluse și ele.}}",
+    "cycle_warning_title": "Avertisment privind Ciclul",
+    "errors": {
+      "fix_fields": "Corectați câmpurile evidențiate înainte de a salva.",
+      "field_required": "Acest câmp este obligatoriu.",
+      "invalid_value": "Această valoare nu este validă.",
+      "type_required": "Alegeți un tip de activitate.",
+      "type_immutable": "Tipul unei activități nu poate fi schimbat după creare.",
+      "parent_required": "Acest tip de activitate necesită un părinte.",
+      "parent_invalid": "Părintele selectat nu este valid.",
+      "parent_type_invalid": "Tipul părintelui nu este permis pentru acest tip de activitate.",
+      "parent_cycle": "O activitate nu poate fi propriul ei strămoș.",
+      "max_depth_exceeded": "Ierarhia este prea adâncă.",
+      "attribute_required": "Unele atribute obligatorii sunt goale.",
+      "open_children": "{count, plural, one {# activitate copil este încă deschisă. Finalizați-o mai întâi.} few {# activități copil sunt încă deschise. Finalizați-le mai întâi.} other {# de activități copil sunt încă deschise. Finalizați-le mai întâi.}}",
+      "cycle_type_not_allowed": "Acest tip de activitate nu poate fi adăugat într-un Ciclu.",
+      "quick_add_full_form": "Acest tip are câmpuri obligatorii: utilizați formularul complet (Adăugați activitate) pentru a-l crea."
+    }
+  },
+  "agile_import": {
+    "open": "Importați CSV",
+    "title_upload": "Import: încărcați CSV",
+    "title_review": "Import: verificați rândurile",
+    "help": "Coloane: {columns}. Orice coloană denumită ca un atribut al tipului rândului completează acel atribut (separați mai multe valori cu „;”). Celelalte coloane (de exemplu {example}) ajung în activitate ca atare.",
+    "columns": {
+      "ref": "Ref.",
+      "type": "Tip",
+      "name": "Nume",
+      "parent_ref": "Ref. părinte (în fișier)",
+      "existing_parent": "Părinte existent",
+      "errors": "Erori"
+    },
+    "request_failed": "Cererea a eșuat",
+    "empty_csv": "CSV-ul nu conține rânduri de date",
+    "dry_run": "Rulare de probă",
+    "commit": "Confirmați",
+    "dry_run_passed": "Rularea de probă a reușit: gata de confirmare.",
+    "complete_title": "Import finalizat",
+    "complete_message": "{count, plural, one {# activitate creată} few {# activități create} other {# de activități create}}"
   }
 }

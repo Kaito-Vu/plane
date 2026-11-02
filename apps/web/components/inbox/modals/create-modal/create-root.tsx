@@ -147,6 +147,7 @@ export const InboxIssueCreateRoot = observer(function InboxIssueCreateRoot(props
       label_ids: formData.label_ids || [],
       assignee_ids: formData.assignee_ids || [],
       target_date: formData.target_date || null,
+      ...(formData.type_id ? { type_id: formData.type_id } : {}), // EE: Bug (backend default) or User Story
     };
     setFormSubmitting(true);
 

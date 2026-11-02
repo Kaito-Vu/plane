@@ -473,5 +473,143 @@
         "message": "Il tipo di elemento di lavoro non può essere aggiornato poiché viola le regole della gerarchia."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Attributi",
+    "library_title": "Libreria degli attributi",
+    "project_description": "Configura gli attributi di ogni tipo di elemento di lavoro in questo progetto. Trascina le righe per riordinarle.",
+    "library_description": "Modelli di attributi riutilizzabili. Applicare un modello a un progetto crea una copia indipendente.",
+    "library_no_project": "Crea prima un progetto per gestire la libreria degli attributi.",
+    "type_select": "Tipo di elemento di lavoro",
+    "empty": "Non ci sono ancora attributi per questo tipo di elemento di lavoro.",
+    "delete_confirm": "Eliminare l’attributo «{name}»? I valori esistenti non verranno più mostrati.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Funzionalità",
+      "user_story": "User Story",
+      "task": "Attività",
+      "bug": "Bug",
+      "sub_task": "Sotto-attività"
+    },
+    "field_types": {
+      "text": "Testo",
+      "textarea": "Paragrafo",
+      "number": "Numero",
+      "boolean": "Sì/No",
+      "date": "Data",
+      "datetime": "Data e ora",
+      "url": "URL",
+      "select": "Selezione singola",
+      "multi_select": "Selezione multipla",
+      "member": "Membro",
+      "multi_member": "Più membri"
+    },
+    "badges": {
+      "system": "Sistema",
+      "required": "Obbligatorio",
+      "hidden": "Nascosto"
+    },
+    "actions": {
+      "add": "Aggiungi attributo",
+      "edit": "Modifica",
+      "hide": "Nascondi",
+      "show": "Mostra",
+      "delete": "Elimina",
+      "save": "Salva",
+      "cancel": "Annulla"
+    },
+    "form": {
+      "create_title": "Nuovo attributo",
+      "edit_title": "Modifica attributo",
+      "name": "Nome",
+      "description": "Descrizione",
+      "field_type": "Tipo di campo",
+      "is_required": "Obbligatorio",
+      "default_value": "Valore predefinito"
+    },
+    "options": {
+      "title": "Opzioni",
+      "name": "Nome opzione",
+      "default": "Predefinita",
+      "add": "Aggiungi opzione",
+      "add_placeholder": "Nuova opzione",
+      "save_first": "Salva prima l’attributo, poi aggiungi le opzioni."
+    },
+    "apply_template": {
+      "open": "Applica dalla libreria dello spazio di lavoro",
+      "title": "Applica dalla libreria dello spazio di lavoro",
+      "template": "Modello",
+      "apply": "Applica",
+      "hint": "L’attributo viene copiato in questo progetto. Le modifiche successive al modello non influiscono sulla copia."
+    },
+    "errors": {
+      "title": "Impossibile salvare",
+      "unknown": "Qualcosa è andato storto. Riprova.",
+      "duplicate_name": "Esiste già un attributo con questo nome per questo tipo di elemento di lavoro.",
+      "system_attribute_locked": "Gli attributi di sistema non possono essere modificati in questo modo. Si può solo attivare o disattivare Obbligatorio.",
+      "attribute_type_immutable": "Un attributo non può essere spostato in un altro tipo di elemento di lavoro.",
+      "type_change_blocked": "Il tipo di campo non può cambiare perché alcuni elementi di lavoro hanno già valori per questo attributo.",
+      "invalid_reorder_ids": "L’elenco non è aggiornato. Ricarica la pagina e riprova.",
+      "invalid_issue_type": "Questo tipo di elemento di lavoro non appartiene allo spazio di lavoro.",
+      "issue_type_not_in_project": "Questo tipo di elemento di lavoro non è abilitato in questo progetto.",
+      "options_not_allowed": "Solo gli attributi a Selezione singola e Selezione multipla hanno opzioni.",
+      "invalid_value": "Il valore predefinito non è valido per questo tipo di campo.",
+      "template_type_mismatch": "Il modello appartiene a un altro tipo di elemento di lavoro."
+    },
+    "boolean": {
+      "yes": "Sì",
+      "no": "No"
+    }
+  },
+  "agile_work_item": {
+    "type": "Tipo di elemento di lavoro",
+    "parent": "Genitore",
+    "clear": "Cancella",
+    "parent_search": "Cerca {types}…",
+    "no_parent_found": "Nessun genitore corrispondente trovato",
+    "attributes": "Attributi",
+    "ancestors": "Gerarchia",
+    "children": "Elementi di lavoro figli",
+    "no_children": "Nessun elemento di lavoro figlio",
+    "quick_add_choose_type": "Scegli un tipo",
+    "delete_subtree_warning": "{count, plural, one {# elemento di lavoro sotto questo (a qualsiasi livello) è incluso a sua volta.} many {# di elementi di lavoro sotto questo (a tutti i livelli) sono inclusi a loro volta.} other {# elementi di lavoro sotto questo (a tutti i livelli) sono inclusi a loro volta.}}",
+    "cycle_warning_title": "Avviso Ciclo",
+    "errors": {
+      "fix_fields": "Correggi i campi evidenziati prima di salvare.",
+      "field_required": "Questo campo è obbligatorio.",
+      "invalid_value": "Questo valore non è valido.",
+      "type_required": "Scegli un tipo di elemento di lavoro.",
+      "type_immutable": "Il tipo di un elemento di lavoro non può essere modificato dopo la creazione.",
+      "parent_required": "Questo tipo di elemento di lavoro richiede un genitore.",
+      "parent_invalid": "Il genitore selezionato non è valido.",
+      "parent_type_invalid": "Il tipo del genitore non è consentito per questo tipo di elemento di lavoro.",
+      "parent_cycle": "Un elemento di lavoro non può essere antenato di sé stesso.",
+      "max_depth_exceeded": "La gerarchia è troppo profonda.",
+      "attribute_required": "Alcuni attributi obbligatori sono vuoti.",
+      "open_children": "{count, plural, one {# elemento di lavoro figlio è ancora aperto. Completalo prima.} many {# di elementi di lavoro figli sono ancora aperti. Completali prima.} other {# elementi di lavoro figli sono ancora aperti. Completali prima.}}",
+      "cycle_type_not_allowed": "Questo tipo di elemento di lavoro non può essere aggiunto a un Ciclo.",
+      "quick_add_full_form": "Questo tipo ha campi obbligatori: usa il modulo completo (Aggiungi elemento di lavoro) per crearlo."
+    }
+  },
+  "agile_import": {
+    "open": "Importa CSV",
+    "title_upload": "Importazione: carica CSV",
+    "title_review": "Importazione: verifica le righe",
+    "help": "Colonne: {columns}. Ogni colonna con il nome di un attributo del tipo della riga compila quell’attributo (separa più valori con «;»). Le altre colonne (ad esempio {example}) passano così come sono all’elemento di lavoro.",
+    "columns": {
+      "ref": "Rif.",
+      "type": "Tipo",
+      "name": "Nome",
+      "parent_ref": "Rif. genitore (nel file)",
+      "existing_parent": "Genitore esistente",
+      "errors": "Errori"
+    },
+    "request_failed": "Richiesta non riuscita",
+    "empty_csv": "Il CSV non contiene righe di dati",
+    "dry_run": "Prova a secco",
+    "commit": "Conferma",
+    "dry_run_passed": "Prova a secco superata: pronto per la conferma.",
+    "complete_title": "Importazione completata",
+    "complete_message": "{count, plural, one {# elemento di lavoro creato} many {# di elementi di lavoro creati} other {# elementi di lavoro creati}}"
   }
 }

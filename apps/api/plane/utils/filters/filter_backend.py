@@ -14,6 +14,7 @@ from django_filters.utils import translate_validation
 from rest_framework import filters
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
+from plane.ee.work_item_types.filters import is_ee_filter_key, split_ee_conditions
 from plane.utils.exception_logger import log_exception
 
 
@@ -118,7 +119,7 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
             # Field keys must match FilterSet filter names (including any lookups)
             # Example: 'sequence_id__gte' should be declared in base_filters
             # Special-case __range: require the '<base>__range' filter itself
-            if field not in allowed_fields:
+            if field not in allowed_fields and not is_ee_filter_key(field):
                 raise DRFValidationError(
                     {
                         "message": f"Filtering on field '{field}' is not allowed",
@@ -241,8 +242,9 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
 
         Returns a Q object representing all the field conditions in the leaf.
         """
+        ee_q, leaf_conditions = split_ee_conditions(leaf_conditions, view)
         if not leaf_conditions:
-            return Q()
+            return ee_q
 
         # Get the filterset class from the view
         filterset_class = getattr(view, "filterset_class", None)
@@ -293,7 +295,7 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
                 }
             )
 
-        return fs.build_combined_q()
+        return fs.build_combined_q() & ee_q
 
     def _get_max_depth(self, view):
         """Return the maximum allowed nesting depth for complex filters.

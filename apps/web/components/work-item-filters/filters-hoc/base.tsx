@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { observer } from "mobx-react";
 import { v4 as uuidv4 } from "uuid";
 // plane imports
@@ -91,13 +91,20 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
     [entityType, workItemEntityID, saveViewOptions, updateViewOptions, updateFilters]
   );
 
-  // delete filter instance when component unmounts
-  useEffect(
-    () => () => {
-      deleteFilter(entityType, workItemEntityID);
-    },
-    [deleteFilter, entityType, workItemEntityID]
-  );
+  // delete filter instance when component unmounts. Deferred: StrictMode (dev) runs cleanup + re-mount
+  // back to back, and the instance is created in useMemo (not re-run), so an immediate delete left the
+  // page without a filter ("filter instance not available").
+  const liveKeyRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const key = `${entityType}:${workItemEntityID}`;
+    liveKeyRef.current = key;
+    return () => {
+      liveKeyRef.current = undefined;
+      setTimeout(() => {
+        if (liveKeyRef.current !== key) deleteFilter(entityType, workItemEntityID);
+      }, 0);
+    };
+  }, [deleteFilter, entityType, workItemEntityID]);
 
   useEffect(() => {
     workItemLayoutFilter.configManager.setAreConfigsReady(workItemFiltersConfig.areAllConfigsInitialized);

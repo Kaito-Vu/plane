@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { SlidersHorizontal } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import {
   BillingsOutline,
@@ -22,4 +23,5 @@ export const WORKSPACE_SETTINGS_ICONS: Record<TWorkspaceSettingsTabs, LucideIcon
   export: ExportOutline,
   "billing-and-plans": BillingsOutline,
   webhooks: WebhooksOutline,
+  "attribute-library": SlidersHorizontal,
 };

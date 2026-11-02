@@ -473,5 +473,143 @@
         "message": "Le type d'élément de travail ne peut pas être mis à jour car cela enfreint les règles de hiérarchie."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Attributs",
+    "library_title": "Bibliothèque d’attributs",
+    "project_description": "Configurez les attributs de chaque type d’élément de travail de ce projet. Faites glisser les lignes pour les réorganiser.",
+    "library_description": "Modèles d’attributs réutilisables. L’application d’un modèle à un projet crée une copie indépendante.",
+    "library_no_project": "Créez d’abord un projet pour gérer la bibliothèque d’attributs.",
+    "type_select": "Type d’élément de travail",
+    "empty": "Aucun attribut pour ce type d’élément de travail pour le moment.",
+    "delete_confirm": "Supprimer l’attribut « {name} » ? Les valeurs existantes ne seront plus affichées.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Fonctionnalité",
+      "user_story": "User Story",
+      "task": "Tâche",
+      "bug": "Bug",
+      "sub_task": "Sous-tâche"
+    },
+    "field_types": {
+      "text": "Texte",
+      "textarea": "Paragraphe",
+      "number": "Nombre",
+      "boolean": "Oui/Non",
+      "date": "Date",
+      "datetime": "Date et heure",
+      "url": "URL",
+      "select": "Sélection unique",
+      "multi_select": "Sélection multiple",
+      "member": "Membre",
+      "multi_member": "Plusieurs membres"
+    },
+    "badges": {
+      "system": "Système",
+      "required": "Obligatoire",
+      "hidden": "Masqué"
+    },
+    "actions": {
+      "add": "Ajouter un attribut",
+      "edit": "Modifier",
+      "hide": "Masquer",
+      "show": "Afficher",
+      "delete": "Supprimer",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "form": {
+      "create_title": "Nouvel attribut",
+      "edit_title": "Modifier l’attribut",
+      "name": "Nom",
+      "description": "Description",
+      "field_type": "Type de champ",
+      "is_required": "Obligatoire",
+      "default_value": "Valeur par défaut"
+    },
+    "options": {
+      "title": "Options",
+      "name": "Nom de l’option",
+      "default": "Par défaut",
+      "add": "Ajouter une option",
+      "add_placeholder": "Nouvelle option",
+      "save_first": "Enregistrez d’abord l’attribut, puis ajoutez des options."
+    },
+    "apply_template": {
+      "open": "Appliquer depuis la bibliothèque de l’espace de travail",
+      "title": "Appliquer depuis la bibliothèque de l’espace de travail",
+      "template": "Modèle",
+      "apply": "Appliquer",
+      "hint": "L’attribut est copié dans ce projet. Les modifications ultérieures du modèle n’affectent pas la copie."
+    },
+    "errors": {
+      "title": "Enregistrement impossible",
+      "unknown": "Une erreur s’est produite. Veuillez réessayer.",
+      "duplicate_name": "Un attribut portant ce nom existe déjà pour ce type d’élément de travail.",
+      "system_attribute_locked": "Les attributs système ne peuvent pas être modifiés ainsi. Seul « Obligatoire » peut être basculé.",
+      "attribute_type_immutable": "Un attribut ne peut pas être déplacé vers un autre type d’élément de travail.",
+      "type_change_blocked": "Le type de champ ne peut pas changer car des éléments de travail ont déjà des valeurs pour cet attribut.",
+      "invalid_reorder_ids": "La liste n’est plus à jour. Rechargez la page et réessayez.",
+      "invalid_issue_type": "Ce type d’élément de travail n’appartient pas à l’espace de travail.",
+      "issue_type_not_in_project": "Ce type d’élément de travail n’est pas activé dans ce projet.",
+      "options_not_allowed": "Seuls les attributs de type Sélection unique et Sélection multiple ont des options.",
+      "invalid_value": "La valeur par défaut n’est pas valide pour ce type de champ.",
+      "template_type_mismatch": "Le modèle appartient à un autre type d’élément de travail."
+    },
+    "boolean": {
+      "yes": "Oui",
+      "no": "Non"
+    }
+  },
+  "agile_work_item": {
+    "type": "Type d’élément de travail",
+    "parent": "Parent",
+    "clear": "Effacer",
+    "parent_search": "Rechercher {types}…",
+    "no_parent_found": "Aucun parent correspondant trouvé",
+    "attributes": "Attributs",
+    "ancestors": "Hiérarchie",
+    "children": "Éléments de travail enfants",
+    "no_children": "Aucun élément de travail enfant",
+    "quick_add_choose_type": "Choisissez un type",
+    "delete_subtree_warning": "{count, plural, one {# élément de travail sous celui-ci (à tous les niveaux) est également inclus.} many {# d’éléments de travail sous celui-ci (à tous les niveaux) sont également inclus.} other {# éléments de travail sous celui-ci (à tous les niveaux) sont également inclus.}}",
+    "cycle_warning_title": "Avertissement de Cycle",
+    "errors": {
+      "fix_fields": "Corrigez les champs en surbrillance avant d’enregistrer.",
+      "field_required": "Ce champ est obligatoire.",
+      "invalid_value": "Cette valeur n’est pas valide.",
+      "type_required": "Choisissez un type d’élément de travail.",
+      "type_immutable": "Le type d’un élément de travail ne peut pas être modifié après sa création.",
+      "parent_required": "Ce type d’élément de travail nécessite un parent.",
+      "parent_invalid": "Le parent sélectionné n’est pas valide.",
+      "parent_type_invalid": "Le type du parent n’est pas autorisé pour ce type d’élément de travail.",
+      "parent_cycle": "Un élément de travail ne peut pas être son propre ancêtre.",
+      "max_depth_exceeded": "La hiérarchie est trop profonde.",
+      "attribute_required": "Certains attributs obligatoires sont vides.",
+      "open_children": "{count, plural, one {# élément de travail enfant est encore ouvert. Terminez-le d’abord.} many {# d’éléments de travail enfants sont encore ouverts. Terminez-les d’abord.} other {# éléments de travail enfants sont encore ouverts. Terminez-les d’abord.}}",
+      "cycle_type_not_allowed": "Ce type d’élément de travail ne peut pas être ajouté à un Cycle.",
+      "quick_add_full_form": "Ce type comporte des champs obligatoires : utilisez le formulaire complet (Ajouter un élément de travail) pour le créer."
+    }
+  },
+  "agile_import": {
+    "open": "Importer un CSV",
+    "title_upload": "Import : téléverser le CSV",
+    "title_review": "Import : vérifier les lignes",
+    "help": "Colonnes : {columns}. Toute colonne nommée comme un attribut du type de la ligne remplit cet attribut (séparez plusieurs valeurs par « ; »). Les autres colonnes (par exemple {example}) sont transmises telles quelles à l’élément de travail.",
+    "columns": {
+      "ref": "Réf.",
+      "type": "Type",
+      "name": "Nom",
+      "parent_ref": "Réf. du parent (dans le fichier)",
+      "existing_parent": "Parent existant",
+      "errors": "Erreurs"
+    },
+    "request_failed": "Échec de la requête",
+    "empty_csv": "Le CSV ne contient aucune ligne de données",
+    "dry_run": "Simulation",
+    "commit": "Valider",
+    "dry_run_passed": "Simulation réussie : prêt à valider.",
+    "complete_title": "Import terminé",
+    "complete_message": "{count, plural, one {# élément de travail créé} many {# d’éléments de travail créés} other {# éléments de travail créés}}"
   }
 }

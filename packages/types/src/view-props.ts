@@ -23,6 +23,9 @@ export type TIssueGroupByOptions =
   | "module"
   | "target_date"
   | "team_project"
+  // EE work item types: group by type / attribute:<id> (project issue list only)
+  | "type"
+  | `attribute:${string}`
   | null;
 
 export type TIssueOrderByOptions =

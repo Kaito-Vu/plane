@@ -34,6 +34,7 @@ from plane.utils.content_validator import validate_html_content
 from .base import BaseAPIView
 from .issue import is_restricted_guest
 from plane.db.models.intake import SourceType
+from plane.ee.work_item_types.validators import validate_intake_type
 from plane.utils.openapi import (
     intake_docs,
     WORKSPACE_SLUG_PARAMETER,
@@ -198,7 +199,9 @@ class IntakeIssueListCreateAPIEndpoint(BaseAPIView):
         raw_description_html = issue_data.get("description_html", "<p></p>")
         _, _, sanitized_description_html = validate_html_content(raw_description_html)
         safe_description_html = sanitized_description_html if sanitized_description_html is not None else "<p></p>"
+        issue_type = validate_intake_type(project, issue_data.get("type_id"))  # EE: Bug/User Story, triage mode
         issue = Issue.objects.create(
+            type=issue_type,
             name=issue_data.get("name"),
             description_json=description_json,
             description_html=safe_description_html,

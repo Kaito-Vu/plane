@@ -473,5 +473,143 @@
         "message": "Typ elementu pracy nie może zostać zaktualizowany, ponieważ narusza zasady hierarchii."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Atrybuty",
+    "library_title": "Biblioteka atrybutów",
+    "project_description": "Skonfiguruj atrybuty każdego typu elementu pracy w tym projekcie. Przeciągnij wiersze, aby zmienić kolejność.",
+    "library_description": "Szablony atrybutów wielokrotnego użytku. Zastosowanie szablonu w projekcie tworzy niezależną kopię.",
+    "library_no_project": "Najpierw utwórz projekt, aby zarządzać biblioteką atrybutów.",
+    "type_select": "Typ elementu pracy",
+    "empty": "Ten typ elementu pracy nie ma jeszcze atrybutów.",
+    "delete_confirm": "Usunąć atrybut „{name}”? Istniejące wartości nie będą już wyświetlane.",
+    "types": {
+      "epic": "Epik",
+      "feature": "Funkcja",
+      "user_story": "User Story",
+      "task": "Zadanie",
+      "bug": "Błąd",
+      "sub_task": "Podzadanie"
+    },
+    "field_types": {
+      "text": "Tekst",
+      "textarea": "Akapit",
+      "number": "Liczba",
+      "boolean": "Tak/Nie",
+      "date": "Data",
+      "datetime": "Data i godzina",
+      "url": "URL",
+      "select": "Wybór pojedynczy",
+      "multi_select": "Wybór wielokrotny",
+      "member": "Członek",
+      "multi_member": "Wielu członków"
+    },
+    "badges": {
+      "system": "Systemowy",
+      "required": "Wymagany",
+      "hidden": "Ukryty"
+    },
+    "actions": {
+      "add": "Dodaj atrybut",
+      "edit": "Edytuj",
+      "hide": "Ukryj",
+      "show": "Pokaż",
+      "delete": "Usuń",
+      "save": "Zapisz",
+      "cancel": "Anuluj"
+    },
+    "form": {
+      "create_title": "Nowy atrybut",
+      "edit_title": "Edytuj atrybut",
+      "name": "Nazwa",
+      "description": "Opis",
+      "field_type": "Typ pola",
+      "is_required": "Wymagany",
+      "default_value": "Wartość domyślna"
+    },
+    "options": {
+      "title": "Opcje",
+      "name": "Nazwa opcji",
+      "default": "Domyślna",
+      "add": "Dodaj opcję",
+      "add_placeholder": "Nowa opcja",
+      "save_first": "Najpierw zapisz atrybut, a następnie dodaj opcje."
+    },
+    "apply_template": {
+      "open": "Zastosuj z biblioteki przestrzeni roboczej",
+      "title": "Zastosuj z biblioteki przestrzeni roboczej",
+      "template": "Szablon",
+      "apply": "Zastosuj",
+      "hint": "Atrybut zostanie skopiowany do tego projektu. Późniejsze zmiany szablonu nie wpływają na kopię."
+    },
+    "errors": {
+      "title": "Nie udało się zapisać",
+      "unknown": "Coś poszło nie tak. Spróbuj ponownie.",
+      "duplicate_name": "Atrybut o tej nazwie już istnieje dla tego typu elementu pracy.",
+      "system_attribute_locked": "Atrybutów systemowych nie można zmieniać w ten sposób. Można przełączać tylko opcję Wymagany.",
+      "attribute_type_immutable": "Atrybutu nie można przenieść do innego typu elementu pracy.",
+      "type_change_blocked": "Nie można zmienić typu pola, ponieważ elementy pracy mają już wartości tego atrybutu.",
+      "invalid_reorder_ids": "Lista jest nieaktualna. Odśwież stronę i spróbuj ponownie.",
+      "invalid_issue_type": "Ten typ elementu pracy nie należy do przestrzeni roboczej.",
+      "issue_type_not_in_project": "Ten typ elementu pracy nie jest włączony w tym projekcie.",
+      "options_not_allowed": "Opcje mają tylko atrybuty z wyborem pojedynczym i wielokrotnym.",
+      "invalid_value": "Wartość domyślna jest nieprawidłowa dla tego typu pola.",
+      "template_type_mismatch": "Szablon należy do innego typu elementu pracy."
+    },
+    "boolean": {
+      "yes": "Tak",
+      "no": "Nie"
+    }
+  },
+  "agile_work_item": {
+    "type": "Typ elementu pracy",
+    "parent": "Element nadrzędny",
+    "clear": "Wyczyść",
+    "parent_search": "Szukaj: {types}…",
+    "no_parent_found": "Nie znaleziono pasującego elementu nadrzędnego",
+    "attributes": "Atrybuty",
+    "ancestors": "Hierarchia",
+    "children": "Podrzędne elementy pracy",
+    "no_children": "Brak podrzędnych elementów pracy",
+    "quick_add_choose_type": "Wybierz typ",
+    "delete_subtree_warning": "{count, plural, one {# element pracy poniżej tego (na dowolnym poziomie) jest również uwzględniony.} few {# elementy pracy poniżej tego (na wszystkich poziomach) są również uwzględnione.} many {# elementów pracy poniżej tego (na wszystkich poziomach) jest również uwzględnionych.} other {# elementu pracy poniżej tego (na wszystkich poziomach) jest również uwzględnione.}}",
+    "cycle_warning_title": "Ostrzeżenie dotyczące Cyklu",
+    "errors": {
+      "fix_fields": "Przed zapisaniem popraw wyróżnione pola.",
+      "field_required": "To pole jest wymagane.",
+      "invalid_value": "Ta wartość jest nieprawidłowa.",
+      "type_required": "Wybierz typ elementu pracy.",
+      "type_immutable": "Typu elementu pracy nie można zmienić po jego utworzeniu.",
+      "parent_required": "Ten typ elementu pracy wymaga elementu nadrzędnego.",
+      "parent_invalid": "Wybrany element nadrzędny jest nieprawidłowy.",
+      "parent_type_invalid": "Typ elementu nadrzędnego jest niedozwolony dla tego typu elementu pracy.",
+      "parent_cycle": "Element pracy nie może być własnym przodkiem.",
+      "max_depth_exceeded": "Hierarchia jest zbyt głęboka.",
+      "attribute_required": "Niektóre wymagane atrybuty są puste.",
+      "open_children": "{count, plural, one {# podrzędny element pracy jest nadal otwarty. Najpierw go ukończ.} few {# podrzędne elementy pracy są nadal otwarte. Najpierw je ukończ.} many {# podrzędnych elementów pracy jest nadal otwartych. Najpierw je ukończ.} other {# podrzędnego elementu pracy jest nadal otwarte. Najpierw je ukończ.}}",
+      "cycle_type_not_allowed": "Tego typu elementu pracy nie można dodać do Cyklu.",
+      "quick_add_full_form": "Ten typ ma wymagane pola: użyj pełnego formularza (Dodaj element pracy), aby go utworzyć."
+    }
+  },
+  "agile_import": {
+    "open": "Importuj CSV",
+    "title_upload": "Import: prześlij plik CSV",
+    "title_review": "Import: przejrzyj wiersze",
+    "help": "Kolumny: {columns}. Każda kolumna nazwana jak atrybut typu danego wiersza wypełnia ten atrybut (wiele wartości rozdziel znakiem „;”). Pozostałe kolumny (na przykład {example}) trafiają do elementu pracy bez zmian.",
+    "columns": {
+      "ref": "Ref.",
+      "type": "Typ",
+      "name": "Nazwa",
+      "parent_ref": "Ref. elementu nadrzędnego (w pliku)",
+      "existing_parent": "Istniejący element nadrzędny",
+      "errors": "Błędy"
+    },
+    "request_failed": "Żądanie nie powiodło się",
+    "empty_csv": "Plik CSV nie zawiera wierszy z danymi",
+    "dry_run": "Próba bez zapisu",
+    "commit": "Zatwierdź",
+    "dry_run_passed": "Próba bez zapisu zakończona powodzeniem: gotowe do zatwierdzenia.",
+    "complete_title": "Import zakończony",
+    "complete_message": "{count, plural, one {Utworzono # element pracy} few {Utworzono # elementy pracy} many {Utworzono # elementów pracy} other {Utworzono # elementu pracy}}"
   }
 }

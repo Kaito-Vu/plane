@@ -4,6 +4,10 @@
  * See the LICENSE file for details.
  */
 
+// upstream callbacks shadow props/state by design; lint-staged denies warnings on touched files
+/* oxlint-disable no-shadow */
+
+import { asEeError, workItemErrorMessage } from "@/ee/work-item-types/work-item-errors";
 import { useState, useMemo, useCallback } from "react";
 import { observer } from "mobx-react";
 import { usePathname } from "next/navigation";
@@ -83,11 +87,13 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
               fetchActivities(workspaceSlug, projectId, issueId);
               return;
             })
-            .catch((_error) => {
+            .catch((error) => {
               setToast({
                 title: t("toast.error"),
                 type: "error",
-                message: t("entity.update.failed", { entity: t("issue.label", { count: 1 }) }),
+                message:
+                  workItemErrorMessage(t, error) ?? // EE: why (open children, parent rules)
+                  t("entity.update.failed", { entity: t("issue.label", { count: 1 }) }),
               });
             });
         }
@@ -122,11 +128,11 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
             title: t("issue.restore.success.title"),
             message: t("issue.restore.success.message"),
           });
-        } catch (_error) {
+        } catch (error) {
           setToast({
             type: "error",
             title: t("toast.error"),
-            message: t("issue.restore.failed.message"),
+            message: workItemErrorMessage(t, error) ?? t("issue.restore.failed.message"),
           });
         }
       },
@@ -134,7 +140,8 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
         try {
           await issues.addCycleToIssue(workspaceSlug, projectId, cycleId, issueId);
           fetchActivities(workspaceSlug, projectId, issueId);
-        } catch (_error) {
+        } catch (error) {
+          if (asEeError(error)) return; // EE refusal already toasted by the issue service
           setToast({
             type: "error",
             title: t("toast.error"),
@@ -145,7 +152,8 @@ export const IssuePeekOverview = observer(function IssuePeekOverview(props: IWor
       addIssueToCycle: async (workspaceSlug: string, projectId: string, cycleId: string, issueIds: string[]) => {
         try {
           await issues.addIssueToCycle(workspaceSlug, projectId, cycleId, issueIds);
-        } catch (_error) {
+        } catch (error) {
+          if (asEeError(error)) return; // EE refusal already toasted by the issue service
           setToast({
             type: "error",
             title: t("toast.error"),

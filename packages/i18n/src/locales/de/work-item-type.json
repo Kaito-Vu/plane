@@ -473,5 +473,143 @@
         "message": "Der Arbeitselement-Typ kann nicht aktualisiert werden, da dies die Hierarchieregeln verletzt."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Attribute",
+    "library_title": "Attributbibliothek",
+    "project_description": "Konfigurieren Sie die Attribute jedes Arbeitselementtyps in diesem Projekt. Ziehen Sie Zeilen, um sie neu anzuordnen.",
+    "library_description": "Wiederverwendbare Attributvorlagen. Das Anwenden einer Vorlage auf ein Projekt erstellt eine unabhängige Kopie.",
+    "library_no_project": "Erstellen Sie zuerst ein Projekt, um die Attributbibliothek zu verwalten.",
+    "type_select": "Arbeitselementtyp",
+    "empty": "Für diesen Arbeitselementtyp gibt es noch keine Attribute.",
+    "delete_confirm": "Attribut „{name}“ löschen? Vorhandene Werte werden nicht mehr angezeigt.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Feature",
+      "user_story": "User Story",
+      "task": "Aufgabe",
+      "bug": "Fehler",
+      "sub_task": "Teilaufgabe"
+    },
+    "field_types": {
+      "text": "Text",
+      "textarea": "Absatz",
+      "number": "Zahl",
+      "boolean": "Ja/Nein",
+      "date": "Datum",
+      "datetime": "Datum und Uhrzeit",
+      "url": "URL",
+      "select": "Einfachauswahl",
+      "multi_select": "Mehrfachauswahl",
+      "member": "Mitglied",
+      "multi_member": "Mehrere Mitglieder"
+    },
+    "badges": {
+      "system": "System",
+      "required": "Erforderlich",
+      "hidden": "Ausgeblendet"
+    },
+    "actions": {
+      "add": "Attribut hinzufügen",
+      "edit": "Bearbeiten",
+      "hide": "Ausblenden",
+      "show": "Einblenden",
+      "delete": "Löschen",
+      "save": "Speichern",
+      "cancel": "Abbrechen"
+    },
+    "form": {
+      "create_title": "Neues Attribut",
+      "edit_title": "Attribut bearbeiten",
+      "name": "Name",
+      "description": "Beschreibung",
+      "field_type": "Feldtyp",
+      "is_required": "Erforderlich",
+      "default_value": "Standardwert"
+    },
+    "options": {
+      "title": "Optionen",
+      "name": "Optionsname",
+      "default": "Standard",
+      "add": "Option hinzufügen",
+      "add_placeholder": "Neue Option",
+      "save_first": "Speichern Sie zuerst das Attribut und fügen Sie dann Optionen hinzu."
+    },
+    "apply_template": {
+      "open": "Aus Workspace-Bibliothek anwenden",
+      "title": "Aus Workspace-Bibliothek anwenden",
+      "template": "Vorlage",
+      "apply": "Anwenden",
+      "hint": "Das Attribut wird in dieses Projekt kopiert. Spätere Änderungen an der Vorlage wirken sich nicht auf die Kopie aus."
+    },
+    "errors": {
+      "title": "Speichern nicht möglich",
+      "unknown": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+      "duplicate_name": "Für diesen Arbeitselementtyp existiert bereits ein Attribut mit diesem Namen.",
+      "system_attribute_locked": "Systemattribute können nicht auf diese Weise geändert werden. Nur „Erforderlich“ kann umgeschaltet werden.",
+      "attribute_type_immutable": "Ein Attribut kann nicht in einen anderen Arbeitselementtyp verschoben werden.",
+      "type_change_blocked": "Der Feldtyp kann nicht geändert werden, da Arbeitselemente bereits Werte für dieses Attribut haben.",
+      "invalid_reorder_ids": "Die Liste ist veraltet. Laden Sie die Seite neu und versuchen Sie es erneut.",
+      "invalid_issue_type": "Dieser Arbeitselementtyp gehört nicht zum Workspace.",
+      "issue_type_not_in_project": "Dieser Arbeitselementtyp ist in diesem Projekt nicht aktiviert.",
+      "options_not_allowed": "Nur Attribute vom Typ Einfachauswahl und Mehrfachauswahl haben Optionen.",
+      "invalid_value": "Der Standardwert ist für diesen Feldtyp nicht gültig.",
+      "template_type_mismatch": "Die Vorlage gehört zu einem anderen Arbeitselementtyp."
+    },
+    "boolean": {
+      "yes": "Ja",
+      "no": "Nein"
+    }
+  },
+  "agile_work_item": {
+    "type": "Arbeitselementtyp",
+    "parent": "Übergeordnet",
+    "clear": "Leeren",
+    "parent_search": "{types} suchen…",
+    "no_parent_found": "Kein passendes übergeordnetes Element gefunden",
+    "attributes": "Attribute",
+    "ancestors": "Hierarchie",
+    "children": "Untergeordnete Arbeitselemente",
+    "no_children": "Keine untergeordneten Arbeitselemente",
+    "quick_add_choose_type": "Typ auswählen",
+    "delete_subtree_warning": "{count, plural, one {# Arbeitselement unterhalb dieses Elements (auf jeder Ebene) wird ebenfalls einbezogen.} other {# Arbeitselemente unterhalb dieses Elements (auf allen Ebenen) werden ebenfalls einbezogen.}}",
+    "cycle_warning_title": "Zyklus-Warnung",
+    "errors": {
+      "fix_fields": "Korrigieren Sie die markierten Felder vor dem Speichern.",
+      "field_required": "Dieses Feld ist erforderlich.",
+      "invalid_value": "Dieser Wert ist ungültig.",
+      "type_required": "Wählen Sie einen Arbeitselementtyp aus.",
+      "type_immutable": "Der Typ eines Arbeitselements kann nach der Erstellung nicht geändert werden.",
+      "parent_required": "Dieser Arbeitselementtyp benötigt ein übergeordnetes Element.",
+      "parent_invalid": "Das ausgewählte übergeordnete Element ist ungültig.",
+      "parent_type_invalid": "Der Typ des übergeordneten Elements ist für diesen Arbeitselementtyp nicht zulässig.",
+      "parent_cycle": "Ein Arbeitselement kann nicht sein eigener Vorfahre sein.",
+      "max_depth_exceeded": "Die Hierarchie ist zu tief.",
+      "attribute_required": "Einige erforderliche Attribute sind leer.",
+      "open_children": "{count, plural, one {# untergeordnetes Arbeitselement ist noch offen. Schließen Sie es zuerst ab.} other {# untergeordnete Arbeitselemente sind noch offen. Schließen Sie sie zuerst ab.}}",
+      "cycle_type_not_allowed": "Dieser Arbeitselementtyp kann keinem Zyklus hinzugefügt werden.",
+      "quick_add_full_form": "Dieser Typ hat Pflichtfelder: Verwenden Sie das vollständige Formular (Arbeitselement hinzufügen), um es zu erstellen."
+    }
+  },
+  "agile_import": {
+    "open": "CSV importieren",
+    "title_upload": "Import: CSV hochladen",
+    "title_review": "Import: Zeilen prüfen",
+    "help": "Spalten: {columns}. Jede Spalte, die wie ein Attribut des Typs der Zeile benannt ist, füllt dieses Attribut (mehrere Werte mit „;“ trennen). Andere Spalten (zum Beispiel {example}) werden unverändert in das Arbeitselement übernommen.",
+    "columns": {
+      "ref": "Ref",
+      "type": "Typ",
+      "name": "Name",
+      "parent_ref": "Übergeordnete Ref (in Datei)",
+      "existing_parent": "Vorhandenes übergeordnetes Element",
+      "errors": "Fehler"
+    },
+    "request_failed": "Anfrage fehlgeschlagen",
+    "empty_csv": "Die CSV enthält keine Datenzeilen",
+    "dry_run": "Testlauf",
+    "commit": "Übernehmen",
+    "dry_run_passed": "Testlauf bestanden: bereit zum Übernehmen.",
+    "complete_title": "Import abgeschlossen",
+    "complete_message": "{count, plural, one {# Arbeitselement erstellt} other {# Arbeitselemente erstellt}}"
   }
 }

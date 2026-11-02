@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useTranslation as useI18nextTranslation } from "react-i18next";
 import { SUPPORTED_LANGUAGES, LANGUAGE_STORAGE_KEY } from "../constants/language";
 import type { TLanguage, ILanguageOption } from "../types";
@@ -58,9 +58,19 @@ export function useTranslation(): TTranslationStore {
     [i18n]
   );
 
+  // react-i18next hands out a new `t` on every render here; effects listing `t` as a dependency then re-ran
+  // forever (request storm on the attribute settings page). Keep identity stable per language.
+  const tRef = useRef(t);
+  tRef.current = t;
+  const translate = useCallback(
+    (key: string, params?: Record<string, unknown>) =>
+      coerceToString(key, params === undefined ? tRef.current(key) : tRef.current(key, params)),
+    // oxlint-disable-next-line eslint-plugin-react-hooks/exhaustive-deps
+    [i18n.language]
+  );
+
   return {
-    t: (key: string, params?: Record<string, unknown>) =>
-      coerceToString(key, params === undefined ? t(key) : t(key, params)),
+    t: translate,
     currentLocale: i18n.language as TLanguage,
     changeLanguage,
     languages: SUPPORTED_LANGUAGES,

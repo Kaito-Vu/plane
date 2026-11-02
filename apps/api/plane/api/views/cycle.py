@@ -36,6 +36,7 @@ from plane.api.serializers import (
 )
 from plane.app.permissions import ProjectAdminPermission, ProjectEntityPermission
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.ee.work_item_types.scrum_rules import cycle_warnings
 from plane.db.models import (
     Cycle,
     CycleIssue,
@@ -985,6 +986,7 @@ class CycleIssueListCreateAPIEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        cycle_warnings(issues, cycle)  # EE: raises for Epic/Feature (flat error body)
         # Get all CycleWorkItems already created, scoped to the URL workspace + project
         cycle_issues = list(
             CycleIssue.objects.filter(

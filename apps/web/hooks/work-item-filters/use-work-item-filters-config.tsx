@@ -62,6 +62,9 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web imports
 import { useFiltersOperatorConfigs } from "@/hooks/rich-filters/use-filters-operator-configs";
+import { useAttributeFilterConfigs } from "@/ee/work-item-types/components/attribute-filter";
+
+const EMPTY_MEMBERS: IUserLite[] = [];
 
 export type TWorkItemFiltersEntityProps = {
   workspaceSlug: string;
@@ -131,11 +134,15 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [moduleIds, getModuleById]
   );
   const projects = useMemo(
-    () =>
-      projectIds
-        ? (projectIds.map((projectId) => getProjectById(projectId)).filter((project) => project) as IProject[])
-        : [],
+    () => (projectIds ? (projectIds.map((id) => getProjectById(id)).filter((p) => p) as IProject[]) : []),
     [projectIds, getProjectById]
+  );
+  // EE: type + attribute filters (project scope only)
+  const eeFilterConfigs = useAttributeFilterConfigs(
+    workspaceSlug,
+    projectId,
+    members ?? EMPTY_MEMBERS,
+    operatorConfigs
   );
   const areAllConfigsInitialized = useMemo(() => isLoaderReady(projectLoader), [projectLoader]);
 
@@ -356,7 +363,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         isEnabled: isFilterEnabled("project_id") && projects !== undefined,
         filterIcon: ProjectsOutline,
         projects: projects,
-        getOptionIcon: (project) => <Logo logo={project.logo_props} size={12} />,
+        getOptionIcon: (p) => <Logo logo={p.logo_props} size={12} />,
         ...operatorConfigs,
       }),
     [isFilterEnabled, projects, operatorConfigs]
@@ -380,6 +387,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       updatedAtFilterConfig,
       createdByFilterConfig,
       subscriberFilterConfig,
+      ...eeFilterConfigs,
     ],
     configMap: {
       project_id: projectFilterConfig,
