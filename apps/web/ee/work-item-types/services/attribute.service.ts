@@ -115,7 +115,7 @@ export class AttributeService extends APIService {
     return this.req<{ count: number }>(
       this.get(
         `${this.ws(slug)}/projects/${projectId}/issues/${issueId}/subtree-count/`,
-        forArchive ? { for: "archive" } : {}
+        forArchive ? { params: { for: "archive" } } : {}
       )
     );
   }
