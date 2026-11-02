@@ -587,7 +587,8 @@
       "max_depth_exceeded": "Phân cấp quá sâu.",
       "attribute_required": "Một số thuộc tính bắt buộc đang trống.",
       "open_children": "{count, plural, one {Còn # mục công việc con chưa hoàn thành. Hãy hoàn thành trước.} other {Còn # mục công việc con chưa hoàn thành. Hãy hoàn thành trước.}}",
-      "cycle_type_not_allowed": "Không thể thêm loại mục công việc này vào chu kỳ."
+      "cycle_type_not_allowed": "Không thể thêm loại mục công việc này vào chu kỳ.",
+      "quick_add_full_form": "Loại này có trường bắt buộc: hãy dùng biểu mẫu đầy đủ (Thêm work item)."
     }
   },
   "agile_import": {

@@ -587,7 +587,8 @@
       "max_depth_exceeded": "The hierarchy is too deep.",
       "attribute_required": "Some required attributes are empty.",
       "open_children": "{count, plural, one {# child work item is still open. Complete it first.} other {# child work items are still open. Complete them first.}}",
-      "cycle_type_not_allowed": "This work item type cannot be added to a cycle."
+      "cycle_type_not_allowed": "This work item type cannot be added to a cycle.",
+      "quick_add_full_form": "This type has required fields: use the full form (Add work item) to create it."
     }
   },
   "agile_import": {
