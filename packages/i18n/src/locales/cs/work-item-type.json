@@ -473,5 +473,143 @@
         "message": "Typ pracovní položky nelze aktualizovat, protože to porušuje pravidla hierarchie."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Atributy",
+    "library_title": "Knihovna atributů",
+    "project_description": "Nakonfigurujte atributy každého typu pracovní položky v tomto projektu. Řádky přetažením změníte pořadí.",
+    "library_description": "Opakovaně použitelné šablony atributů. Použitím šablony v projektu vznikne nezávislá kopie.",
+    "library_no_project": "Nejprve vytvořte projekt, abyste mohli spravovat knihovnu atributů.",
+    "type_select": "Typ pracovní položky",
+    "empty": "Tento typ pracovní položky zatím nemá žádné atributy.",
+    "delete_confirm": "Smazat atribut „{name}“? Stávající hodnoty se již nebudou zobrazovat.",
+    "types": {
+      "epic": "Epik",
+      "feature": "Funkce",
+      "user_story": "User Story",
+      "task": "Úkol",
+      "bug": "Chyba",
+      "sub_task": "Podúkol"
+    },
+    "field_types": {
+      "text": "Text",
+      "textarea": "Odstavec",
+      "number": "Číslo",
+      "boolean": "Ano/Ne",
+      "date": "Datum",
+      "datetime": "Datum a čas",
+      "url": "URL",
+      "select": "Jednoduchý výběr",
+      "multi_select": "Vícenásobný výběr",
+      "member": "Člen",
+      "multi_member": "Více členů"
+    },
+    "badges": {
+      "system": "Systémový",
+      "required": "Povinný",
+      "hidden": "Skrytý"
+    },
+    "actions": {
+      "add": "Přidat atribut",
+      "edit": "Upravit",
+      "hide": "Skrýt",
+      "show": "Zobrazit",
+      "delete": "Smazat",
+      "save": "Uložit",
+      "cancel": "Zrušit"
+    },
+    "form": {
+      "create_title": "Nový atribut",
+      "edit_title": "Upravit atribut",
+      "name": "Název",
+      "description": "Popis",
+      "field_type": "Typ pole",
+      "is_required": "Povinný",
+      "default_value": "Výchozí hodnota"
+    },
+    "options": {
+      "title": "Možnosti",
+      "name": "Název možnosti",
+      "default": "Výchozí",
+      "add": "Přidat možnost",
+      "add_placeholder": "Nová možnost",
+      "save_first": "Nejprve atribut uložte, poté přidejte možnosti."
+    },
+    "apply_template": {
+      "open": "Použít z knihovny pracovního prostoru",
+      "title": "Použít z knihovny pracovního prostoru",
+      "template": "Šablona",
+      "apply": "Použít",
+      "hint": "Atribut se zkopíruje do tohoto projektu. Pozdější změny šablony kopii neovlivní."
+    },
+    "errors": {
+      "title": "Uložení se nezdařilo",
+      "unknown": "Něco se pokazilo. Zkuste to prosím znovu.",
+      "duplicate_name": "Atribut s tímto názvem již pro tento typ pracovní položky existuje.",
+      "system_attribute_locked": "Systémové atributy nelze takto měnit. Přepnout lze pouze Povinný.",
+      "attribute_type_immutable": "Atribut nelze přesunout do jiného typu pracovní položky.",
+      "type_change_blocked": "Typ pole nelze změnit, protože pracovní položky již mají hodnoty tohoto atributu.",
+      "invalid_reorder_ids": "Seznam je zastaralý. Obnovte stránku a zkuste to znovu.",
+      "invalid_issue_type": "Tento typ pracovní položky nepatří do pracovního prostoru.",
+      "issue_type_not_in_project": "Tento typ pracovní položky není v tomto projektu povolen.",
+      "options_not_allowed": "Možnosti mají pouze atributy s jednoduchým a vícenásobným výběrem.",
+      "invalid_value": "Výchozí hodnota není pro tento typ pole platná.",
+      "template_type_mismatch": "Šablona patří k jinému typu pracovní položky."
+    },
+    "boolean": {
+      "yes": "Ano",
+      "no": "Ne"
+    }
+  },
+  "agile_work_item": {
+    "type": "Typ pracovní položky",
+    "parent": "Nadřazená položka",
+    "clear": "Vymazat",
+    "parent_search": "Hledat: {types}…",
+    "no_parent_found": "Nebyla nalezena žádná odpovídající nadřazená položka",
+    "attributes": "Atributy",
+    "ancestors": "Hierarchie",
+    "children": "Podřízené pracovní položky",
+    "no_children": "Žádné podřízené pracovní položky",
+    "quick_add_choose_type": "Vyberte typ",
+    "delete_subtree_warning": "{count, plural, one {# pracovní položka pod touto (na jakékoli úrovni) je také zahrnuta.} few {# pracovní položky pod touto (na všech úrovních) jsou také zahrnuty.} many {# pracovní položky pod touto (na všech úrovních) je také zahrnuto.} other {# pracovních položek pod touto (na všech úrovních) je také zahrnuto.}}",
+    "cycle_warning_title": "Upozornění k Cyklu",
+    "errors": {
+      "fix_fields": "Před uložením opravte zvýrazněná pole.",
+      "field_required": "Toto pole je povinné.",
+      "invalid_value": "Tato hodnota není platná.",
+      "type_required": "Vyberte typ pracovní položky.",
+      "type_immutable": "Typ pracovní položky nelze po vytvoření změnit.",
+      "parent_required": "Tento typ pracovní položky vyžaduje nadřazenou položku.",
+      "parent_invalid": "Vybraná nadřazená položka není platná.",
+      "parent_type_invalid": "Typ nadřazené položky není pro tento typ pracovní položky povolen.",
+      "parent_cycle": "Pracovní položka nemůže být svým vlastním předkem.",
+      "max_depth_exceeded": "Hierarchie je příliš hluboká.",
+      "attribute_required": "Některé povinné atributy jsou prázdné.",
+      "open_children": "{count, plural, one {# podřízená pracovní položka je stále otevřená. Nejprve ji dokončete.} few {# podřízené pracovní položky jsou stále otevřené. Nejprve je dokončete.} many {# podřízené pracovní položky je stále otevřeno. Nejprve ji dokončete.} other {# podřízených pracovních položek je stále otevřeno. Nejprve je dokončete.}}",
+      "cycle_type_not_allowed": "Tento typ pracovní položky nelze přidat do Cyklu.",
+      "quick_add_full_form": "Tento typ má povinná pole: k jeho vytvoření použijte úplný formulář (Přidat pracovní položku)."
+    }
+  },
+  "agile_import": {
+    "open": "Importovat CSV",
+    "title_upload": "Import: nahrání CSV",
+    "title_review": "Import: kontrola řádků",
+    "help": "Sloupce: {columns}. Každý sloupec pojmenovaný stejně jako atribut typu daného řádku vyplní tento atribut (více hodnot oddělte znakem „;“). Ostatní sloupce (například {example}) se do pracovní položky přenesou beze změny.",
+    "columns": {
+      "ref": "Ref.",
+      "type": "Typ",
+      "name": "Název",
+      "parent_ref": "Ref. nadřazené položky (v souboru)",
+      "existing_parent": "Existující nadřazená položka",
+      "errors": "Chyby"
+    },
+    "request_failed": "Požadavek se nezdařil",
+    "empty_csv": "CSV neobsahuje žádné datové řádky",
+    "dry_run": "Zkušební běh",
+    "commit": "Potvrdit",
+    "dry_run_passed": "Zkušební běh proběhl úspěšně: připraveno k potvrzení.",
+    "complete_title": "Import dokončen",
+    "complete_message": "{count, plural, one {Vytvořena # pracovní položka} few {Vytvořeny # pracovní položky} many {Vytvořeno # pracovní položky} other {Vytvořeno # pracovních položek}}"
   }
 }

@@ -473,5 +473,143 @@
         "message": "O tipo de item de trabalho não pode ser atualizado pois viola as regras de hierarquia."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Atributos",
+    "library_title": "Biblioteca de atributos",
+    "project_description": "Configure os atributos de cada tipo de item de trabalho neste projeto. Arraste as linhas para reordenar.",
+    "library_description": "Modelos de atributos reutilizáveis. Aplicar um modelo a um projeto cria uma cópia independente.",
+    "library_no_project": "Crie um projeto primeiro para gerenciar a biblioteca de atributos.",
+    "type_select": "Tipo de item de trabalho",
+    "empty": "Ainda não há atributos para este tipo de item de trabalho.",
+    "delete_confirm": "Excluir o atributo \"{name}\"? Os valores existentes deixarão de ser exibidos.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Funcionalidade",
+      "user_story": "User Story",
+      "task": "Tarefa",
+      "bug": "Bug",
+      "sub_task": "Subtarefa"
+    },
+    "field_types": {
+      "text": "Texto",
+      "textarea": "Parágrafo",
+      "number": "Número",
+      "boolean": "Sim/Não",
+      "date": "Data",
+      "datetime": "Data e hora",
+      "url": "URL",
+      "select": "Seleção única",
+      "multi_select": "Seleção múltipla",
+      "member": "Membro",
+      "multi_member": "Vários membros"
+    },
+    "badges": {
+      "system": "Sistema",
+      "required": "Obrigatório",
+      "hidden": "Oculto"
+    },
+    "actions": {
+      "add": "Adicionar atributo",
+      "edit": "Editar",
+      "hide": "Ocultar",
+      "show": "Mostrar",
+      "delete": "Excluir",
+      "save": "Salvar",
+      "cancel": "Cancelar"
+    },
+    "form": {
+      "create_title": "Novo atributo",
+      "edit_title": "Editar atributo",
+      "name": "Nome",
+      "description": "Descrição",
+      "field_type": "Tipo de campo",
+      "is_required": "Obrigatório",
+      "default_value": "Valor padrão"
+    },
+    "options": {
+      "title": "Opções",
+      "name": "Nome da opção",
+      "default": "Padrão",
+      "add": "Adicionar opção",
+      "add_placeholder": "Nova opção",
+      "save_first": "Salve o atributo primeiro e depois adicione opções."
+    },
+    "apply_template": {
+      "open": "Aplicar da biblioteca do workspace",
+      "title": "Aplicar da biblioteca do workspace",
+      "template": "Modelo",
+      "apply": "Aplicar",
+      "hint": "O atributo é copiado para este projeto. Alterações posteriores no modelo não afetam a cópia."
+    },
+    "errors": {
+      "title": "Não foi possível salvar",
+      "unknown": "Algo deu errado. Tente novamente.",
+      "duplicate_name": "Já existe um atributo com este nome para este tipo de item de trabalho.",
+      "system_attribute_locked": "Atributos do sistema não podem ser alterados dessa forma. Apenas Obrigatório pode ser alternado.",
+      "attribute_type_immutable": "Um atributo não pode ser movido para outro tipo de item de trabalho.",
+      "type_change_blocked": "O tipo de campo não pode mudar porque itens de trabalho já têm valores para este atributo.",
+      "invalid_reorder_ids": "A lista está desatualizada. Recarregue a página e tente novamente.",
+      "invalid_issue_type": "Este tipo de item de trabalho não pertence ao workspace.",
+      "issue_type_not_in_project": "Este tipo de item de trabalho não está habilitado neste projeto.",
+      "options_not_allowed": "Apenas atributos de Seleção única e Seleção múltipla têm opções.",
+      "invalid_value": "O valor padrão não é válido para este tipo de campo.",
+      "template_type_mismatch": "O modelo pertence a outro tipo de item de trabalho."
+    },
+    "boolean": {
+      "yes": "Sim",
+      "no": "Não"
+    }
+  },
+  "agile_work_item": {
+    "type": "Tipo de item de trabalho",
+    "parent": "Pai",
+    "clear": "Limpar",
+    "parent_search": "Pesquisar {types}…",
+    "no_parent_found": "Nenhum pai correspondente encontrado",
+    "attributes": "Atributos",
+    "ancestors": "Hierarquia",
+    "children": "Itens de trabalho filhos",
+    "no_children": "Nenhum item de trabalho filho",
+    "quick_add_choose_type": "Escolha um tipo",
+    "delete_subtree_warning": "{count, plural, one {# item de trabalho abaixo deste (em qualquer nível) também está incluído.} many {# de itens de trabalho abaixo deste (em todos os níveis) também estão incluídos.} other {# itens de trabalho abaixo deste (em todos os níveis) também estão incluídos.}}",
+    "cycle_warning_title": "Aviso de Ciclo",
+    "errors": {
+      "fix_fields": "Corrija os campos destacados antes de salvar.",
+      "field_required": "Este campo é obrigatório.",
+      "invalid_value": "Este valor não é válido.",
+      "type_required": "Escolha um tipo de item de trabalho.",
+      "type_immutable": "O tipo de um item de trabalho não pode ser alterado após a criação.",
+      "parent_required": "Este tipo de item de trabalho precisa de um pai.",
+      "parent_invalid": "O pai selecionado não é válido.",
+      "parent_type_invalid": "O tipo do pai não é permitido para este tipo de item de trabalho.",
+      "parent_cycle": "Um item de trabalho não pode ser seu próprio ancestral.",
+      "max_depth_exceeded": "A hierarquia é muito profunda.",
+      "attribute_required": "Alguns atributos obrigatórios estão vazios.",
+      "open_children": "{count, plural, one {# item de trabalho filho ainda está aberto. Conclua-o primeiro.} many {# de itens de trabalho filhos ainda estão abertos. Conclua-os primeiro.} other {# itens de trabalho filhos ainda estão abertos. Conclua-os primeiro.}}",
+      "cycle_type_not_allowed": "Este tipo de item de trabalho não pode ser adicionado a um Ciclo.",
+      "quick_add_full_form": "Este tipo tem campos obrigatórios: use o formulário completo (Adicionar item de trabalho) para criá-lo."
+    }
+  },
+  "agile_import": {
+    "open": "Importar CSV",
+    "title_upload": "Importação: enviar CSV",
+    "title_review": "Importação: revisar linhas",
+    "help": "Colunas: {columns}. Qualquer coluna com o nome de um atributo do tipo da linha preenche esse atributo (separe vários valores com \";\"). As demais colunas (por exemplo {example}) vão para o item de trabalho como estão.",
+    "columns": {
+      "ref": "Ref.",
+      "type": "Tipo",
+      "name": "Nome",
+      "parent_ref": "Ref. do pai (no arquivo)",
+      "existing_parent": "Pai existente",
+      "errors": "Erros"
+    },
+    "request_failed": "Falha na solicitação",
+    "empty_csv": "O CSV não tem linhas de dados",
+    "dry_run": "Simulação",
+    "commit": "Confirmar",
+    "dry_run_passed": "Simulação concluída: pronto para confirmar.",
+    "complete_title": "Importação concluída",
+    "complete_message": "{count, plural, one {# item de trabalho criado} many {# de itens de trabalho criados} other {# itens de trabalho criados}}"
   }
 }

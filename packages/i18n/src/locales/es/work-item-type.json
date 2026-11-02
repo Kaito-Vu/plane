@@ -473,5 +473,143 @@
         "message": "El tipo de elemento de trabajo no se puede actualizar ya que rompe las reglas de jerarquía."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Atributos",
+    "library_title": "Biblioteca de atributos",
+    "project_description": "Configure los atributos de cada tipo de elemento de trabajo de este proyecto. Arrastre las filas para reordenarlas.",
+    "library_description": "Plantillas de atributos reutilizables. Aplicar una plantilla a un proyecto crea una copia independiente.",
+    "library_no_project": "Cree primero un proyecto para administrar la biblioteca de atributos.",
+    "type_select": "Tipo de elemento de trabajo",
+    "empty": "Aún no hay atributos para este tipo de elemento de trabajo.",
+    "delete_confirm": "¿Eliminar el atributo «{name}»? Los valores existentes dejarán de mostrarse.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Funcionalidad",
+      "user_story": "User Story",
+      "task": "Tarea",
+      "bug": "Error",
+      "sub_task": "Subtarea"
+    },
+    "field_types": {
+      "text": "Texto",
+      "textarea": "Párrafo",
+      "number": "Número",
+      "boolean": "Sí/No",
+      "date": "Fecha",
+      "datetime": "Fecha y hora",
+      "url": "URL",
+      "select": "Selección única",
+      "multi_select": "Selección múltiple",
+      "member": "Miembro",
+      "multi_member": "Varios miembros"
+    },
+    "badges": {
+      "system": "Sistema",
+      "required": "Obligatorio",
+      "hidden": "Oculto"
+    },
+    "actions": {
+      "add": "Agregar atributo",
+      "edit": "Editar",
+      "hide": "Ocultar",
+      "show": "Mostrar",
+      "delete": "Eliminar",
+      "save": "Guardar",
+      "cancel": "Cancelar"
+    },
+    "form": {
+      "create_title": "Nuevo atributo",
+      "edit_title": "Editar atributo",
+      "name": "Nombre",
+      "description": "Descripción",
+      "field_type": "Tipo de campo",
+      "is_required": "Obligatorio",
+      "default_value": "Valor predeterminado"
+    },
+    "options": {
+      "title": "Opciones",
+      "name": "Nombre de la opción",
+      "default": "Predeterminada",
+      "add": "Agregar opción",
+      "add_placeholder": "Nueva opción",
+      "save_first": "Guarde primero el atributo y luego agregue opciones."
+    },
+    "apply_template": {
+      "open": "Aplicar desde la biblioteca del espacio de trabajo",
+      "title": "Aplicar desde la biblioteca del espacio de trabajo",
+      "template": "Plantilla",
+      "apply": "Aplicar",
+      "hint": "El atributo se copia en este proyecto. Los cambios posteriores en la plantilla no afectan a la copia."
+    },
+    "errors": {
+      "title": "No se pudo guardar",
+      "unknown": "Algo salió mal. Inténtelo de nuevo.",
+      "duplicate_name": "Ya existe un atributo con este nombre para este tipo de elemento de trabajo.",
+      "system_attribute_locked": "Los atributos del sistema no se pueden cambiar de esta forma. Solo se puede alternar Obligatorio.",
+      "attribute_type_immutable": "Un atributo no se puede mover a otro tipo de elemento de trabajo.",
+      "type_change_blocked": "El tipo de campo no puede cambiar porque los elementos de trabajo ya tienen valores para este atributo.",
+      "invalid_reorder_ids": "La lista está desactualizada. Recargue la página e inténtelo de nuevo.",
+      "invalid_issue_type": "Este tipo de elemento de trabajo no pertenece al espacio de trabajo.",
+      "issue_type_not_in_project": "Este tipo de elemento de trabajo no está habilitado en este proyecto.",
+      "options_not_allowed": "Solo los atributos de Selección única y Selección múltiple tienen opciones.",
+      "invalid_value": "El valor predeterminado no es válido para este tipo de campo.",
+      "template_type_mismatch": "La plantilla pertenece a otro tipo de elemento de trabajo."
+    },
+    "boolean": {
+      "yes": "Sí",
+      "no": "No"
+    }
+  },
+  "agile_work_item": {
+    "type": "Tipo de elemento de trabajo",
+    "parent": "Principal",
+    "clear": "Borrar",
+    "parent_search": "Buscar {types}…",
+    "no_parent_found": "No se encontró ningún elemento principal coincidente",
+    "attributes": "Atributos",
+    "ancestors": "Jerarquía",
+    "children": "Elementos de trabajo secundarios",
+    "no_children": "No hay elementos de trabajo secundarios",
+    "quick_add_choose_type": "Elija un tipo",
+    "delete_subtree_warning": "{count, plural, one {# elemento de trabajo debajo de este (en cualquier nivel) también se incluye.} other {# elementos de trabajo debajo de este (en todos los niveles) también se incluyen.}}",
+    "cycle_warning_title": "Advertencia de Ciclo",
+    "errors": {
+      "fix_fields": "Corrija los campos resaltados antes de guardar.",
+      "field_required": "Este campo es obligatorio.",
+      "invalid_value": "Este valor no es válido.",
+      "type_required": "Elija un tipo de elemento de trabajo.",
+      "type_immutable": "El tipo de un elemento de trabajo no se puede cambiar después de crearlo.",
+      "parent_required": "Este tipo de elemento de trabajo necesita un elemento principal.",
+      "parent_invalid": "El elemento principal seleccionado no es válido.",
+      "parent_type_invalid": "El tipo del elemento principal no está permitido para este tipo de elemento de trabajo.",
+      "parent_cycle": "Un elemento de trabajo no puede ser su propio ancestro.",
+      "max_depth_exceeded": "La jerarquía es demasiado profunda.",
+      "attribute_required": "Algunos atributos obligatorios están vacíos.",
+      "open_children": "{count, plural, one {# elemento de trabajo secundario sigue abierto. Complételo primero.} other {# elementos de trabajo secundarios siguen abiertos. Complételos primero.}}",
+      "cycle_type_not_allowed": "Este tipo de elemento de trabajo no se puede agregar a un Ciclo.",
+      "quick_add_full_form": "Este tipo tiene campos obligatorios: use el formulario completo (Agregar elemento de trabajo) para crearlo."
+    }
+  },
+  "agile_import": {
+    "open": "Importar CSV",
+    "title_upload": "Importar: cargar CSV",
+    "title_review": "Importar: revisar filas",
+    "help": "Columnas: {columns}. Cualquier columna con el nombre de un atributo del tipo de la fila rellena ese atributo (separe varios valores con «;»). Las demás columnas (por ejemplo {example}) pasan tal cual al elemento de trabajo.",
+    "columns": {
+      "ref": "Ref.",
+      "type": "Tipo",
+      "name": "Nombre",
+      "parent_ref": "Ref. del principal (en el archivo)",
+      "existing_parent": "Principal existente",
+      "errors": "Errores"
+    },
+    "request_failed": "Error en la solicitud",
+    "empty_csv": "El CSV no tiene filas de datos",
+    "dry_run": "Simulación",
+    "commit": "Confirmar",
+    "dry_run_passed": "Simulación superada: listo para confirmar.",
+    "complete_title": "Importación completada",
+    "complete_message": "{count, plural, one {# elemento de trabajo creado} other {# elementos de trabajo creados}}"
   }
 }

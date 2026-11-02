@@ -473,5 +473,143 @@
         "message": "계층 규칙을 위반하므로 작업 항목 유형을 업데이트할 수 없습니다."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "속성",
+    "library_title": "속성 라이브러리",
+    "project_description": "이 프로젝트의 각 작업 항목 유형 속성을 구성합니다. 행을 드래그하여 순서를 변경합니다.",
+    "library_description": "재사용 가능한 속성 템플릿입니다. 템플릿을 프로젝트에 적용하면 독립적인 복사본이 생성됩니다.",
+    "library_no_project": "속성 라이브러리를 관리하려면 먼저 프로젝트를 만드세요.",
+    "type_select": "작업 항목 유형",
+    "empty": "이 작업 항목 유형에는 아직 속성이 없습니다.",
+    "delete_confirm": "속성 \"{name}\"을(를) 삭제하시겠습니까? 기존 값은 더 이상 표시되지 않습니다.",
+    "types": {
+      "epic": "에픽",
+      "feature": "기능",
+      "user_story": "사용자 스토리",
+      "task": "작업",
+      "bug": "버그",
+      "sub_task": "하위 작업"
+    },
+    "field_types": {
+      "text": "텍스트",
+      "textarea": "단락",
+      "number": "숫자",
+      "boolean": "예/아니요",
+      "date": "날짜",
+      "datetime": "날짜 및 시간",
+      "url": "URL",
+      "select": "단일 선택",
+      "multi_select": "다중 선택",
+      "member": "멤버",
+      "multi_member": "여러 멤버"
+    },
+    "badges": {
+      "system": "시스템",
+      "required": "필수",
+      "hidden": "숨김"
+    },
+    "actions": {
+      "add": "속성 추가",
+      "edit": "편집",
+      "hide": "숨기기",
+      "show": "표시",
+      "delete": "삭제",
+      "save": "저장",
+      "cancel": "취소"
+    },
+    "form": {
+      "create_title": "새 속성",
+      "edit_title": "속성 편집",
+      "name": "이름",
+      "description": "설명",
+      "field_type": "필드 유형",
+      "is_required": "필수",
+      "default_value": "기본값"
+    },
+    "options": {
+      "title": "옵션",
+      "name": "옵션 이름",
+      "default": "기본",
+      "add": "옵션 추가",
+      "add_placeholder": "새 옵션",
+      "save_first": "먼저 속성을 저장한 다음 옵션을 추가하세요."
+    },
+    "apply_template": {
+      "open": "워크스페이스 라이브러리에서 적용",
+      "title": "워크스페이스 라이브러리에서 적용",
+      "template": "템플릿",
+      "apply": "적용",
+      "hint": "속성이 이 프로젝트에 복사됩니다. 이후 템플릿을 변경해도 복사본에는 영향을 주지 않습니다."
+    },
+    "errors": {
+      "title": "저장할 수 없습니다",
+      "unknown": "문제가 발생했습니다. 다시 시도해 주세요.",
+      "duplicate_name": "이 작업 항목 유형에 같은 이름의 속성이 이미 있습니다.",
+      "system_attribute_locked": "시스템 속성은 이 방식으로 변경할 수 없습니다. 필수만 전환할 수 있습니다.",
+      "attribute_type_immutable": "속성을 다른 작업 항목 유형으로 이동할 수 없습니다.",
+      "type_change_blocked": "작업 항목에 이 속성의 값이 이미 있으므로 필드 유형을 변경할 수 없습니다.",
+      "invalid_reorder_ids": "목록이 최신 상태가 아닙니다. 페이지를 새로고침한 후 다시 시도해 주세요.",
+      "invalid_issue_type": "이 작업 항목 유형은 워크스페이스에 속하지 않습니다.",
+      "issue_type_not_in_project": "이 작업 항목 유형은 이 프로젝트에서 활성화되어 있지 않습니다.",
+      "options_not_allowed": "옵션은 단일 선택 및 다중 선택 속성에만 있습니다.",
+      "invalid_value": "기본값이 이 필드 유형에 유효하지 않습니다.",
+      "template_type_mismatch": "이 템플릿은 다른 작업 항목 유형에 속해 있습니다."
+    },
+    "boolean": {
+      "yes": "예",
+      "no": "아니요"
+    }
+  },
+  "agile_work_item": {
+    "type": "작업 항목 유형",
+    "parent": "상위 항목",
+    "clear": "지우기",
+    "parent_search": "{types} 검색…",
+    "no_parent_found": "일치하는 상위 항목을 찾을 수 없습니다",
+    "attributes": "속성",
+    "ancestors": "계층 구조",
+    "children": "하위 작업 항목",
+    "no_children": "하위 작업 항목 없음",
+    "quick_add_choose_type": "유형 선택",
+    "delete_subtree_warning": "{count, plural, one {이 항목 아래(모든 수준)의 작업 항목 #개도 함께 포함됩니다.} other {이 항목 아래(모든 수준)의 작업 항목 #개도 함께 포함됩니다.}}",
+    "cycle_warning_title": "사이클 경고",
+    "errors": {
+      "fix_fields": "저장하기 전에 강조 표시된 필드를 수정하세요.",
+      "field_required": "이 필드는 필수입니다.",
+      "invalid_value": "이 값은 유효하지 않습니다.",
+      "type_required": "작업 항목 유형을 선택하세요.",
+      "type_immutable": "작업 항목의 유형은 생성한 후에는 변경할 수 없습니다.",
+      "parent_required": "이 작업 항목 유형에는 상위 항목이 필요합니다.",
+      "parent_invalid": "선택한 상위 항목이 유효하지 않습니다.",
+      "parent_type_invalid": "상위 항목의 유형은 이 작업 항목 유형에 허용되지 않습니다.",
+      "parent_cycle": "작업 항목은 자기 자신의 상위 항목이 될 수 없습니다.",
+      "max_depth_exceeded": "계층 구조가 너무 깊습니다.",
+      "attribute_required": "일부 필수 속성이 비어 있습니다.",
+      "open_children": "{count, plural, one {하위 작업 항목 #개가 아직 열려 있습니다. 먼저 완료하세요.} other {하위 작업 항목 #개가 아직 열려 있습니다. 먼저 완료하세요.}}",
+      "cycle_type_not_allowed": "이 작업 항목 유형은 사이클에 추가할 수 없습니다.",
+      "quick_add_full_form": "이 유형에는 필수 필드가 있습니다. 전체 양식(작업 항목 추가)을 사용하여 생성하세요."
+    }
+  },
+  "agile_import": {
+    "open": "CSV 가져오기",
+    "title_upload": "가져오기: CSV 업로드",
+    "title_review": "가져오기: 행 검토",
+    "help": "열: {columns}. 행 유형의 속성과 이름이 같은 열은 해당 속성을 채웁니다(여러 값은 \";\"로 구분). 그 밖의 열(예: {example})은 작업 항목에 그대로 전달됩니다.",
+    "columns": {
+      "ref": "참조",
+      "type": "유형",
+      "name": "이름",
+      "parent_ref": "상위 항목 참조(파일 내)",
+      "existing_parent": "기존 상위 항목",
+      "errors": "오류"
+    },
+    "request_failed": "요청에 실패했습니다",
+    "empty_csv": "CSV에 데이터 행이 없습니다",
+    "dry_run": "드라이 런",
+    "commit": "커밋",
+    "dry_run_passed": "드라이 런 통과: 커밋할 준비가 되었습니다.",
+    "complete_title": "가져오기 완료",
+    "complete_message": "{count, plural, one {작업 항목 #개 생성됨} other {작업 항목 #개 생성됨}}"
   }
 }

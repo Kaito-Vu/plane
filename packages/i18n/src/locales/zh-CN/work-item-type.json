@@ -473,5 +473,143 @@
         "message": "工作项类型无法更新，因为它违反了层级规则。"
       }
     }
+  },
+  "agile_attributes": {
+    "title": "属性",
+    "library_title": "属性库",
+    "project_description": "配置此项目中每种工作项类型的属性。拖动行以重新排序。",
+    "library_description": "可重复使用的属性模板。将模板应用到项目会创建一个独立的副本。",
+    "library_no_project": "请先创建项目以管理属性库。",
+    "type_select": "工作项类型",
+    "empty": "此工作项类型尚无属性。",
+    "delete_confirm": "删除属性“{name}”？现有值将不再显示。",
+    "types": {
+      "epic": "史诗",
+      "feature": "功能",
+      "user_story": "用户故事",
+      "task": "任务",
+      "bug": "缺陷",
+      "sub_task": "子任务"
+    },
+    "field_types": {
+      "text": "文本",
+      "textarea": "段落",
+      "number": "数字",
+      "boolean": "是/否",
+      "date": "日期",
+      "datetime": "日期和时间",
+      "url": "URL",
+      "select": "单选",
+      "multi_select": "多选",
+      "member": "成员",
+      "multi_member": "多个成员"
+    },
+    "badges": {
+      "system": "系统",
+      "required": "必填",
+      "hidden": "已隐藏"
+    },
+    "actions": {
+      "add": "添加属性",
+      "edit": "编辑",
+      "hide": "隐藏",
+      "show": "显示",
+      "delete": "删除",
+      "save": "保存",
+      "cancel": "取消"
+    },
+    "form": {
+      "create_title": "新建属性",
+      "edit_title": "编辑属性",
+      "name": "名称",
+      "description": "描述",
+      "field_type": "字段类型",
+      "is_required": "必填",
+      "default_value": "默认值"
+    },
+    "options": {
+      "title": "选项",
+      "name": "选项名称",
+      "default": "默认",
+      "add": "添加选项",
+      "add_placeholder": "新选项",
+      "save_first": "请先保存属性，然后再添加选项。"
+    },
+    "apply_template": {
+      "open": "从工作区库应用",
+      "title": "从工作区库应用",
+      "template": "模板",
+      "apply": "应用",
+      "hint": "属性将复制到此项目。之后对模板的更改不会影响该副本。"
+    },
+    "errors": {
+      "title": "无法保存",
+      "unknown": "出了点问题。请重试。",
+      "duplicate_name": "此工作项类型已存在同名属性。",
+      "system_attribute_locked": "系统属性无法通过此方式更改。只能切换“必填”。",
+      "attribute_type_immutable": "属性无法移动到其他工作项类型。",
+      "type_change_blocked": "无法更改字段类型，因为工作项已有此属性的值。",
+      "invalid_reorder_ids": "列表已过期。请刷新页面后重试。",
+      "invalid_issue_type": "此工作项类型不属于该工作区。",
+      "issue_type_not_in_project": "此工作项类型未在此项目中启用。",
+      "options_not_allowed": "只有单选和多选属性才有选项。",
+      "invalid_value": "默认值对此字段类型无效。",
+      "template_type_mismatch": "该模板属于其他工作项类型。"
+    },
+    "boolean": {
+      "yes": "是",
+      "no": "否"
+    }
+  },
+  "agile_work_item": {
+    "type": "工作项类型",
+    "parent": "父项",
+    "clear": "清除",
+    "parent_search": "搜索{types}…",
+    "no_parent_found": "未找到匹配的父项",
+    "attributes": "属性",
+    "ancestors": "层级",
+    "children": "子工作项",
+    "no_children": "没有子工作项",
+    "quick_add_choose_type": "选择类型",
+    "delete_subtree_warning": "{count, plural, one {此项以下（所有层级）的 # 个工作项也会包含在内。} other {此项以下（所有层级）的 # 个工作项也会包含在内。}}",
+    "cycle_warning_title": "周期警告",
+    "errors": {
+      "fix_fields": "请在保存前修正突出显示的字段。",
+      "field_required": "此字段为必填项。",
+      "invalid_value": "此值无效。",
+      "type_required": "请选择工作项类型。",
+      "type_immutable": "工作项的类型在创建后无法更改。",
+      "parent_required": "此工作项类型需要父项。",
+      "parent_invalid": "所选父项无效。",
+      "parent_type_invalid": "此工作项类型不允许使用该父项的类型。",
+      "parent_cycle": "工作项不能成为其自身的祖先。",
+      "max_depth_exceeded": "层级过深。",
+      "attribute_required": "部分必填属性为空。",
+      "open_children": "{count, plural, one {仍有 # 个子工作项未完成。请先完成它。} other {仍有 # 个子工作项未完成。请先完成它们。}}",
+      "cycle_type_not_allowed": "此工作项类型无法添加到周期。",
+      "quick_add_full_form": "此类型有必填字段：请使用完整表单（添加工作项）来创建。"
+    }
+  },
+  "agile_import": {
+    "open": "导入 CSV",
+    "title_upload": "导入：上传 CSV",
+    "title_review": "导入：检查行",
+    "help": "列：{columns}。名称与该行类型的某个属性相同的列会填充该属性（多个值用“;”分隔）。其他列（例如 {example}）会原样写入工作项。",
+    "columns": {
+      "ref": "引用",
+      "type": "类型",
+      "name": "名称",
+      "parent_ref": "父项引用（文件内）",
+      "existing_parent": "现有父项",
+      "errors": "错误"
+    },
+    "request_failed": "请求失败",
+    "empty_csv": "CSV 中没有数据行",
+    "dry_run": "试运行",
+    "commit": "提交",
+    "dry_run_passed": "试运行通过：可以提交。",
+    "complete_title": "导入完成",
+    "complete_message": "{count, plural, one {已创建 # 个工作项} other {已创建 # 个工作项}}"
   }
 }

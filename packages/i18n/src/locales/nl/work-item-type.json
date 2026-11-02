@@ -473,5 +473,143 @@
         "message": "Werkitemtype kan niet worden bijgewerkt omdat het de hiërarchieregels schendt."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Attributen",
+    "library_title": "Attributenbibliotheek",
+    "project_description": "Configureer de attributen van elk werkitemtype in dit project. Sleep rijen om de volgorde te wijzigen.",
+    "library_description": "Herbruikbare attribuutsjablonen. Een sjabloon toepassen op een project maakt een onafhankelijke kopie.",
+    "library_no_project": "Maak eerst een project aan om de attributenbibliotheek te beheren.",
+    "type_select": "Werkitemtype",
+    "empty": "Er zijn nog geen attributen voor dit werkitemtype.",
+    "delete_confirm": "Het attribuut \"{name}\" verwijderen? Bestaande waarden worden niet meer weergegeven.",
+    "types": {
+      "epic": "Epic",
+      "feature": "Functie",
+      "user_story": "User Story",
+      "task": "Taak",
+      "bug": "Bug",
+      "sub_task": "Subtaak"
+    },
+    "field_types": {
+      "text": "Tekst",
+      "textarea": "Alinea",
+      "number": "Getal",
+      "boolean": "Ja/Nee",
+      "date": "Datum",
+      "datetime": "Datum en tijd",
+      "url": "URL",
+      "select": "Enkele selectie",
+      "multi_select": "Meervoudige selectie",
+      "member": "Lid",
+      "multi_member": "Meerdere leden"
+    },
+    "badges": {
+      "system": "Systeem",
+      "required": "Verplicht",
+      "hidden": "Verborgen"
+    },
+    "actions": {
+      "add": "Attribuut toevoegen",
+      "edit": "Bewerken",
+      "hide": "Verbergen",
+      "show": "Tonen",
+      "delete": "Verwijderen",
+      "save": "Opslaan",
+      "cancel": "Annuleren"
+    },
+    "form": {
+      "create_title": "Nieuw attribuut",
+      "edit_title": "Attribuut bewerken",
+      "name": "Naam",
+      "description": "Beschrijving",
+      "field_type": "Veldtype",
+      "is_required": "Verplicht",
+      "default_value": "Standaardwaarde"
+    },
+    "options": {
+      "title": "Opties",
+      "name": "Optienaam",
+      "default": "Standaard",
+      "add": "Optie toevoegen",
+      "add_placeholder": "Nieuwe optie",
+      "save_first": "Sla eerst het attribuut op en voeg daarna opties toe."
+    },
+    "apply_template": {
+      "open": "Toepassen vanuit werkruimtebibliotheek",
+      "title": "Toepassen vanuit werkruimtebibliotheek",
+      "template": "Sjabloon",
+      "apply": "Toepassen",
+      "hint": "Het attribuut wordt naar dit project gekopieerd. Latere wijzigingen in het sjabloon hebben geen invloed op de kopie."
+    },
+    "errors": {
+      "title": "Kan niet opslaan",
+      "unknown": "Er is iets misgegaan. Probeer het opnieuw.",
+      "duplicate_name": "Er bestaat al een attribuut met deze naam voor dit werkitemtype.",
+      "system_attribute_locked": "Systeemattributen kunnen niet op deze manier worden gewijzigd. Alleen Verplicht kan worden omgeschakeld.",
+      "attribute_type_immutable": "Een attribuut kan niet naar een ander werkitemtype worden verplaatst.",
+      "type_change_blocked": "Het veldtype kan niet worden gewijzigd omdat werkitems al waarden voor dit attribuut hebben.",
+      "invalid_reorder_ids": "De lijst is verouderd. Laad de pagina opnieuw en probeer het opnieuw.",
+      "invalid_issue_type": "Dit werkitemtype hoort niet bij de werkruimte.",
+      "issue_type_not_in_project": "Dit werkitemtype is niet ingeschakeld in dit project.",
+      "options_not_allowed": "Alleen attributen met enkele selectie en meervoudige selectie hebben opties.",
+      "invalid_value": "De standaardwaarde is niet geldig voor dit veldtype.",
+      "template_type_mismatch": "Het sjabloon hoort bij een ander werkitemtype."
+    },
+    "boolean": {
+      "yes": "Ja",
+      "no": "Nee"
+    }
+  },
+  "agile_work_item": {
+    "type": "Werkitemtype",
+    "parent": "Bovenliggend item",
+    "clear": "Wissen",
+    "parent_search": "Zoek {types}…",
+    "no_parent_found": "Geen overeenkomend bovenliggend item gevonden",
+    "attributes": "Attributen",
+    "ancestors": "Hiërarchie",
+    "children": "Onderliggende werkitems",
+    "no_children": "Geen onderliggende werkitems",
+    "quick_add_choose_type": "Kies een type",
+    "delete_subtree_warning": "{count, plural, one {# werkitem onder dit item (op elk niveau) wordt ook meegenomen.} other {# werkitems onder dit item (op alle niveaus) worden ook meegenomen.}}",
+    "cycle_warning_title": "Cyclus-waarschuwing",
+    "errors": {
+      "fix_fields": "Corrigeer de gemarkeerde velden voordat u opslaat.",
+      "field_required": "Dit veld is verplicht.",
+      "invalid_value": "Deze waarde is niet geldig.",
+      "type_required": "Kies een werkitemtype.",
+      "type_immutable": "Het type van een werkitem kan na het aanmaken niet meer worden gewijzigd.",
+      "parent_required": "Dit werkitemtype heeft een bovenliggend item nodig.",
+      "parent_invalid": "Het geselecteerde bovenliggende item is niet geldig.",
+      "parent_type_invalid": "Het type van het bovenliggende item is niet toegestaan voor dit werkitemtype.",
+      "parent_cycle": "Een werkitem kan niet zijn eigen voorouder zijn.",
+      "max_depth_exceeded": "De hiërarchie is te diep.",
+      "attribute_required": "Sommige verplichte attributen zijn leeg.",
+      "open_children": "{count, plural, one {# onderliggend werkitem is nog open. Rond het eerst af.} other {# onderliggende werkitems zijn nog open. Rond ze eerst af.}}",
+      "cycle_type_not_allowed": "Dit werkitemtype kan niet aan een Cyclus worden toegevoegd.",
+      "quick_add_full_form": "Dit type heeft verplichte velden: gebruik het volledige formulier (Werkitem toevoegen) om het aan te maken."
+    }
+  },
+  "agile_import": {
+    "open": "CSV importeren",
+    "title_upload": "Importeren: CSV uploaden",
+    "title_review": "Importeren: rijen controleren",
+    "help": "Kolommen: {columns}. Elke kolom met de naam van een attribuut van het type van de rij vult dat attribuut (scheid meerdere waarden met \";\"). Andere kolommen (bijvoorbeeld {example}) worden ongewijzigd in het werkitem overgenomen.",
+    "columns": {
+      "ref": "Ref",
+      "type": "Type",
+      "name": "Naam",
+      "parent_ref": "Ref bovenliggend item (in bestand)",
+      "existing_parent": "Bestaand bovenliggend item",
+      "errors": "Fouten"
+    },
+    "request_failed": "Aanvraag mislukt",
+    "empty_csv": "De CSV bevat geen gegevensrijen",
+    "dry_run": "Proefrun",
+    "commit": "Doorvoeren",
+    "dry_run_passed": "Proefrun geslaagd: klaar om door te voeren.",
+    "complete_title": "Importeren voltooid",
+    "complete_message": "{count, plural, one {# werkitem aangemaakt} other {# werkitems aangemaakt}}"
   }
 }

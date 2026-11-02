@@ -473,5 +473,143 @@
         "message": "Jenis item kerja tidak dapat diperbarui karena melanggar aturan hierarki."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Atribut",
+    "library_title": "Pustaka atribut",
+    "project_description": "Konfigurasikan atribut untuk setiap tipe item kerja di proyek ini. Seret baris untuk mengurutkan ulang.",
+    "library_description": "Templat atribut yang dapat digunakan kembali. Menerapkan templat ke proyek akan membuat salinan independen.",
+    "library_no_project": "Buat proyek terlebih dahulu untuk mengelola pustaka atribut.",
+    "type_select": "Tipe item kerja",
+    "empty": "Belum ada atribut untuk tipe item kerja ini.",
+    "delete_confirm": "Hapus atribut \"{name}\"? Nilai yang ada tidak akan ditampilkan lagi.",
+    "types": {
+      "epic": "Epik",
+      "feature": "Fitur",
+      "user_story": "User Story",
+      "task": "Tugas",
+      "bug": "Bug",
+      "sub_task": "Sub-tugas"
+    },
+    "field_types": {
+      "text": "Teks",
+      "textarea": "Paragraf",
+      "number": "Angka",
+      "boolean": "Ya/Tidak",
+      "date": "Tanggal",
+      "datetime": "Tanggal dan waktu",
+      "url": "URL",
+      "select": "Pilihan tunggal",
+      "multi_select": "Pilihan ganda",
+      "member": "Anggota",
+      "multi_member": "Beberapa anggota"
+    },
+    "badges": {
+      "system": "Sistem",
+      "required": "Wajib",
+      "hidden": "Tersembunyi"
+    },
+    "actions": {
+      "add": "Tambah atribut",
+      "edit": "Edit",
+      "hide": "Sembunyikan",
+      "show": "Tampilkan",
+      "delete": "Hapus",
+      "save": "Simpan",
+      "cancel": "Batal"
+    },
+    "form": {
+      "create_title": "Atribut baru",
+      "edit_title": "Edit atribut",
+      "name": "Nama",
+      "description": "Deskripsi",
+      "field_type": "Tipe bidang",
+      "is_required": "Wajib",
+      "default_value": "Nilai default"
+    },
+    "options": {
+      "title": "Opsi",
+      "name": "Nama opsi",
+      "default": "Default",
+      "add": "Tambah opsi",
+      "add_placeholder": "Opsi baru",
+      "save_first": "Simpan atribut terlebih dahulu, lalu tambahkan opsi."
+    },
+    "apply_template": {
+      "open": "Terapkan dari pustaka workspace",
+      "title": "Terapkan dari pustaka workspace",
+      "template": "Templat",
+      "apply": "Terapkan",
+      "hint": "Atribut disalin ke proyek ini. Perubahan templat di kemudian hari tidak memengaruhi salinan."
+    },
+    "errors": {
+      "title": "Tidak dapat menyimpan",
+      "unknown": "Terjadi kesalahan. Silakan coba lagi.",
+      "duplicate_name": "Atribut dengan nama ini sudah ada untuk tipe item kerja ini.",
+      "system_attribute_locked": "Atribut sistem tidak dapat diubah dengan cara ini. Hanya Wajib yang dapat diaktifkan atau dinonaktifkan.",
+      "attribute_type_immutable": "Atribut tidak dapat dipindahkan ke tipe item kerja lain.",
+      "type_change_blocked": "Tipe bidang tidak dapat diubah karena item kerja sudah memiliki nilai untuk atribut ini.",
+      "invalid_reorder_ids": "Daftar sudah usang. Muat ulang halaman dan coba lagi.",
+      "invalid_issue_type": "Tipe item kerja ini bukan milik workspace.",
+      "issue_type_not_in_project": "Tipe item kerja ini tidak diaktifkan di proyek ini.",
+      "options_not_allowed": "Hanya atribut Pilihan tunggal dan Pilihan ganda yang memiliki opsi.",
+      "invalid_value": "Nilai default tidak valid untuk tipe bidang ini.",
+      "template_type_mismatch": "Templat ini milik tipe item kerja lain."
+    },
+    "boolean": {
+      "yes": "Ya",
+      "no": "Tidak"
+    }
+  },
+  "agile_work_item": {
+    "type": "Tipe item kerja",
+    "parent": "Induk",
+    "clear": "Hapus pilihan",
+    "parent_search": "Cari {types}…",
+    "no_parent_found": "Tidak ditemukan induk yang cocok",
+    "attributes": "Atribut",
+    "ancestors": "Hierarki",
+    "children": "Item kerja turunan",
+    "no_children": "Tidak ada item kerja turunan",
+    "quick_add_choose_type": "Pilih tipe",
+    "delete_subtree_warning": "{count, plural, one {# item kerja di bawah item ini (di semua level) juga disertakan.} other {# item kerja di bawah item ini (di semua level) juga disertakan.}}",
+    "cycle_warning_title": "Peringatan Siklus",
+    "errors": {
+      "fix_fields": "Perbaiki bidang yang ditandai sebelum menyimpan.",
+      "field_required": "Bidang ini wajib diisi.",
+      "invalid_value": "Nilai ini tidak valid.",
+      "type_required": "Pilih tipe item kerja.",
+      "type_immutable": "Tipe item kerja tidak dapat diubah setelah dibuat.",
+      "parent_required": "Tipe item kerja ini memerlukan induk.",
+      "parent_invalid": "Induk yang dipilih tidak valid.",
+      "parent_type_invalid": "Tipe induk tidak diizinkan untuk tipe item kerja ini.",
+      "parent_cycle": "Item kerja tidak dapat menjadi leluhurnya sendiri.",
+      "max_depth_exceeded": "Hierarki terlalu dalam.",
+      "attribute_required": "Beberapa atribut wajib masih kosong.",
+      "open_children": "{count, plural, one {# item kerja turunan masih terbuka. Selesaikan terlebih dahulu.} other {# item kerja turunan masih terbuka. Selesaikan terlebih dahulu.}}",
+      "cycle_type_not_allowed": "Tipe item kerja ini tidak dapat ditambahkan ke Siklus.",
+      "quick_add_full_form": "Tipe ini memiliki bidang wajib: gunakan formulir lengkap (Tambah item kerja) untuk membuatnya."
+    }
+  },
+  "agile_import": {
+    "open": "Impor CSV",
+    "title_upload": "Impor: unggah CSV",
+    "title_review": "Impor: tinjau baris",
+    "help": "Kolom: {columns}. Kolom mana pun yang diberi nama seperti atribut dari tipe baris tersebut akan mengisi atribut itu (pisahkan beberapa nilai dengan \";\"). Kolom lain (misalnya {example}) masuk ke item kerja apa adanya.",
+    "columns": {
+      "ref": "Ref",
+      "type": "Tipe",
+      "name": "Nama",
+      "parent_ref": "Ref induk (dalam file)",
+      "existing_parent": "Induk yang ada",
+      "errors": "Kesalahan"
+    },
+    "request_failed": "Permintaan gagal",
+    "empty_csv": "CSV tidak memiliki baris data",
+    "dry_run": "Uji coba",
+    "commit": "Komit",
+    "dry_run_passed": "Uji coba berhasil: siap dikomit.",
+    "complete_title": "Impor selesai",
+    "complete_message": "{count, plural, one {# item kerja dibuat} other {# item kerja dibuat}}"
   }
 }

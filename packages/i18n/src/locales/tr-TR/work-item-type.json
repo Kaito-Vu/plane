@@ -473,5 +473,143 @@
         "message": "Çalışma öğesi türü, hiyerarşi kurallarını ihlal ettiğinden güncellenemiyor."
       }
     }
+  },
+  "agile_attributes": {
+    "title": "Öznitelikler",
+    "library_title": "Öznitelik kitaplığı",
+    "project_description": "Bu projedeki her iş öğesi türünün özniteliklerini yapılandırın. Sıralamayı değiştirmek için satırları sürükleyin.",
+    "library_description": "Yeniden kullanılabilir öznitelik şablonları. Bir şablonu projeye uygulamak bağımsız bir kopya oluşturur.",
+    "library_no_project": "Öznitelik kitaplığını yönetmek için önce bir proje oluşturun.",
+    "type_select": "İş öğesi türü",
+    "empty": "Bu iş öğesi türü için henüz öznitelik yok.",
+    "delete_confirm": "\"{name}\" özniteliği silinsin mi? Mevcut değerler artık gösterilmeyecek.",
+    "types": {
+      "epic": "Epik",
+      "feature": "Özellik",
+      "user_story": "User Story",
+      "task": "Görev",
+      "bug": "Hata",
+      "sub_task": "Alt görev"
+    },
+    "field_types": {
+      "text": "Metin",
+      "textarea": "Paragraf",
+      "number": "Sayı",
+      "boolean": "Evet/Hayır",
+      "date": "Tarih",
+      "datetime": "Tarih ve saat",
+      "url": "URL",
+      "select": "Tekli seçim",
+      "multi_select": "Çoklu seçim",
+      "member": "Üye",
+      "multi_member": "Birden fazla üye"
+    },
+    "badges": {
+      "system": "Sistem",
+      "required": "Zorunlu",
+      "hidden": "Gizli"
+    },
+    "actions": {
+      "add": "Öznitelik ekle",
+      "edit": "Düzenle",
+      "hide": "Gizle",
+      "show": "Göster",
+      "delete": "Sil",
+      "save": "Kaydet",
+      "cancel": "İptal"
+    },
+    "form": {
+      "create_title": "Yeni öznitelik",
+      "edit_title": "Özniteliği düzenle",
+      "name": "Ad",
+      "description": "Açıklama",
+      "field_type": "Alan türü",
+      "is_required": "Zorunlu",
+      "default_value": "Varsayılan değer"
+    },
+    "options": {
+      "title": "Seçenekler",
+      "name": "Seçenek adı",
+      "default": "Varsayılan",
+      "add": "Seçenek ekle",
+      "add_placeholder": "Yeni seçenek",
+      "save_first": "Önce özniteliği kaydedin, sonra seçenek ekleyin."
+    },
+    "apply_template": {
+      "open": "Çalışma alanı kitaplığından uygula",
+      "title": "Çalışma alanı kitaplığından uygula",
+      "template": "Şablon",
+      "apply": "Uygula",
+      "hint": "Öznitelik bu projeye kopyalanır. Şablonda sonradan yapılan değişiklikler kopyayı etkilemez."
+    },
+    "errors": {
+      "title": "Kaydedilemedi",
+      "unknown": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+      "duplicate_name": "Bu iş öğesi türü için bu ada sahip bir öznitelik zaten var.",
+      "system_attribute_locked": "Sistem öznitelikleri bu şekilde değiştirilemez. Yalnızca Zorunlu seçeneği açılıp kapatılabilir.",
+      "attribute_type_immutable": "Bir öznitelik başka bir iş öğesi türüne taşınamaz.",
+      "type_change_blocked": "Alan türü değiştirilemez çünkü iş öğelerinin bu öznitelik için zaten değerleri var.",
+      "invalid_reorder_ids": "Liste güncel değil. Sayfayı yenileyin ve tekrar deneyin.",
+      "invalid_issue_type": "Bu iş öğesi türü çalışma alanına ait değil.",
+      "issue_type_not_in_project": "Bu iş öğesi türü bu projede etkin değil.",
+      "options_not_allowed": "Yalnızca Tekli seçim ve Çoklu seçim özniteliklerinin seçenekleri vardır.",
+      "invalid_value": "Varsayılan değer bu alan türü için geçerli değil.",
+      "template_type_mismatch": "Şablon başka bir iş öğesi türüne ait."
+    },
+    "boolean": {
+      "yes": "Evet",
+      "no": "Hayır"
+    }
+  },
+  "agile_work_item": {
+    "type": "İş öğesi türü",
+    "parent": "Üst öğe",
+    "clear": "Temizle",
+    "parent_search": "{types} ara…",
+    "no_parent_found": "Eşleşen üst öğe bulunamadı",
+    "attributes": "Öznitelikler",
+    "ancestors": "Hiyerarşi",
+    "children": "Alt iş öğeleri",
+    "no_children": "Alt iş öğesi yok",
+    "quick_add_choose_type": "Bir tür seçin",
+    "delete_subtree_warning": "{count, plural, one {Bunun altındaki # iş öğesi (her düzeyde) de dahil edilir.} other {Bunun altındaki # iş öğesi (tüm düzeylerde) de dahil edilir.}}",
+    "cycle_warning_title": "Döngü uyarısı",
+    "errors": {
+      "fix_fields": "Kaydetmeden önce vurgulanan alanları düzeltin.",
+      "field_required": "Bu alan zorunludur.",
+      "invalid_value": "Bu değer geçerli değil.",
+      "type_required": "Bir iş öğesi türü seçin.",
+      "type_immutable": "Bir iş öğesinin türü oluşturulduktan sonra değiştirilemez.",
+      "parent_required": "Bu iş öğesi türü bir üst öğe gerektirir.",
+      "parent_invalid": "Seçilen üst öğe geçerli değil.",
+      "parent_type_invalid": "Üst öğenin türüne bu iş öğesi türü için izin verilmiyor.",
+      "parent_cycle": "Bir iş öğesi kendi atası olamaz.",
+      "max_depth_exceeded": "Hiyerarşi çok derin.",
+      "attribute_required": "Bazı zorunlu öznitelikler boş.",
+      "open_children": "{count, plural, one {# alt iş öğesi hâlâ açık. Önce onu tamamlayın.} other {# alt iş öğesi hâlâ açık. Önce onları tamamlayın.}}",
+      "cycle_type_not_allowed": "Bu iş öğesi türü bir Döngüye eklenemez.",
+      "quick_add_full_form": "Bu türün zorunlu alanları var: oluşturmak için tam formu (İş öğesi ekle) kullanın."
+    }
+  },
+  "agile_import": {
+    "open": "CSV içe aktar",
+    "title_upload": "İçe aktarma: CSV yükle",
+    "title_review": "İçe aktarma: satırları gözden geçir",
+    "help": "Sütunlar: {columns}. Satırın türünün bir özniteliği gibi adlandırılmış her sütun o özniteliği doldurur (birden fazla değeri \";\" ile ayırın). Diğer sütunlar (örneğin {example}) iş öğesine olduğu gibi aktarılır.",
+    "columns": {
+      "ref": "Ref",
+      "type": "Tür",
+      "name": "Ad",
+      "parent_ref": "Üst öğe ref (dosyada)",
+      "existing_parent": "Mevcut üst öğe",
+      "errors": "Hatalar"
+    },
+    "request_failed": "İstek başarısız oldu",
+    "empty_csv": "CSV'de veri satırı yok",
+    "dry_run": "Deneme çalıştırması",
+    "commit": "Uygula",
+    "dry_run_passed": "Deneme çalıştırması başarılı: uygulamaya hazır.",
+    "complete_title": "İçe aktarma tamamlandı",
+    "complete_message": "{count, plural, one {# iş öğesi oluşturuldu} other {# iş öğesi oluşturuldu}}"
   }
 }

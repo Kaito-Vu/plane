@@ -473,5 +473,143 @@
         "message": "階層ルールに違反するため、作業項目タイプを更新できません。"
       }
     }
+  },
+  "agile_attributes": {
+    "title": "属性",
+    "library_title": "属性ライブラリ",
+    "project_description": "このプロジェクト内の各作業項目タイプの属性を設定します。行をドラッグして並べ替えます。",
+    "library_description": "再利用可能な属性テンプレートです。テンプレートをプロジェクトに適用すると、独立したコピーが作成されます。",
+    "library_no_project": "属性ライブラリを管理するには、まずプロジェクトを作成してください。",
+    "type_select": "作業項目タイプ",
+    "empty": "この作業項目タイプにはまだ属性がありません。",
+    "delete_confirm": "属性「{name}」を削除しますか？既存の値は表示されなくなります。",
+    "types": {
+      "epic": "エピック",
+      "feature": "フィーチャー",
+      "user_story": "ユーザーストーリー",
+      "task": "タスク",
+      "bug": "バグ",
+      "sub_task": "サブタスク"
+    },
+    "field_types": {
+      "text": "テキスト",
+      "textarea": "段落",
+      "number": "数値",
+      "boolean": "はい/いいえ",
+      "date": "日付",
+      "datetime": "日付と時刻",
+      "url": "URL",
+      "select": "単一選択",
+      "multi_select": "複数選択",
+      "member": "メンバー",
+      "multi_member": "複数のメンバー"
+    },
+    "badges": {
+      "system": "システム",
+      "required": "必須",
+      "hidden": "非表示"
+    },
+    "actions": {
+      "add": "属性を追加",
+      "edit": "編集",
+      "hide": "非表示にする",
+      "show": "表示する",
+      "delete": "削除",
+      "save": "保存",
+      "cancel": "キャンセル"
+    },
+    "form": {
+      "create_title": "新しい属性",
+      "edit_title": "属性を編集",
+      "name": "名前",
+      "description": "説明",
+      "field_type": "フィールドタイプ",
+      "is_required": "必須",
+      "default_value": "デフォルト値"
+    },
+    "options": {
+      "title": "オプション",
+      "name": "オプション名",
+      "default": "デフォルト",
+      "add": "オプションを追加",
+      "add_placeholder": "新しいオプション",
+      "save_first": "先に属性を保存してから、オプションを追加してください。"
+    },
+    "apply_template": {
+      "open": "ワークスペースライブラリから適用",
+      "title": "ワークスペースライブラリから適用",
+      "template": "テンプレート",
+      "apply": "適用",
+      "hint": "属性はこのプロジェクトにコピーされます。テンプレートへの以降の変更はコピーに影響しません。"
+    },
+    "errors": {
+      "title": "保存できませんでした",
+      "unknown": "問題が発生しました。もう一度お試しください。",
+      "duplicate_name": "この作業項目タイプには、同じ名前の属性がすでに存在します。",
+      "system_attribute_locked": "システム属性はこの方法では変更できません。切り替えられるのは「必須」のみです。",
+      "attribute_type_immutable": "属性を別の作業項目タイプに移動することはできません。",
+      "type_change_blocked": "作業項目にこの属性の値がすでにあるため、フィールドタイプを変更できません。",
+      "invalid_reorder_ids": "リストが古くなっています。ページを再読み込みして、もう一度お試しください。",
+      "invalid_issue_type": "この作業項目タイプはワークスペースに属していません。",
+      "issue_type_not_in_project": "この作業項目タイプはこのプロジェクトで有効になっていません。",
+      "options_not_allowed": "オプションを持つのは、単一選択と複数選択の属性のみです。",
+      "invalid_value": "デフォルト値はこのフィールドタイプでは無効です。",
+      "template_type_mismatch": "このテンプレートは別の作業項目タイプに属しています。"
+    },
+    "boolean": {
+      "yes": "はい",
+      "no": "いいえ"
+    }
+  },
+  "agile_work_item": {
+    "type": "作業項目タイプ",
+    "parent": "親",
+    "clear": "クリア",
+    "parent_search": "{types}を検索…",
+    "no_parent_found": "一致する親が見つかりません",
+    "attributes": "属性",
+    "ancestors": "階層",
+    "children": "子作業項目",
+    "no_children": "子作業項目はありません",
+    "quick_add_choose_type": "タイプを選択",
+    "delete_subtree_warning": "{count, plural, one {この下（すべての階層）の作業項目 # 件も含まれます。} other {この下（すべての階層）の作業項目 # 件も含まれます。}}",
+    "cycle_warning_title": "サイクルに関する警告",
+    "errors": {
+      "fix_fields": "保存する前に、強調表示されたフィールドを修正してください。",
+      "field_required": "このフィールドは必須です。",
+      "invalid_value": "この値は無効です。",
+      "type_required": "作業項目タイプを選択してください。",
+      "type_immutable": "作業項目のタイプは、作成後に変更できません。",
+      "parent_required": "この作業項目タイプには親が必要です。",
+      "parent_invalid": "選択した親は無効です。",
+      "parent_type_invalid": "親のタイプは、この作業項目タイプでは許可されていません。",
+      "parent_cycle": "作業項目を自分自身の祖先にすることはできません。",
+      "max_depth_exceeded": "階層が深すぎます。",
+      "attribute_required": "未入力の必須属性があります。",
+      "open_children": "{count, plural, one {子作業項目 # 件がまだ未完了です。先に完了してください。} other {子作業項目 # 件がまだ未完了です。先に完了してください。}}",
+      "cycle_type_not_allowed": "この作業項目タイプはサイクルに追加できません。",
+      "quick_add_full_form": "このタイプには必須フィールドがあります。作成するには完全なフォーム（作業項目を追加）を使用してください。"
+    }
+  },
+  "agile_import": {
+    "open": "CSVをインポート",
+    "title_upload": "インポート：CSVをアップロード",
+    "title_review": "インポート：行を確認",
+    "help": "列：{columns}。行のタイプの属性と同じ名前の列は、その属性に入力されます（複数の値は「;」で区切ります）。その他の列（例：{example}）はそのまま作業項目に渡されます。",
+    "columns": {
+      "ref": "参照",
+      "type": "タイプ",
+      "name": "名前",
+      "parent_ref": "親の参照（ファイル内）",
+      "existing_parent": "既存の親",
+      "errors": "エラー"
+    },
+    "request_failed": "リクエストに失敗しました",
+    "empty_csv": "CSVにデータ行がありません",
+    "dry_run": "ドライラン",
+    "commit": "コミット",
+    "dry_run_passed": "ドライランに成功しました。コミットの準備ができています。",
+    "complete_title": "インポートが完了しました",
+    "complete_message": "{count, plural, one {作業項目 # 件を作成しました} other {作業項目 # 件を作成しました}}"
   }
 }
