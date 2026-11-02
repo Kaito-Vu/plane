@@ -136,7 +136,12 @@ const column = (id: string, name: string): IGroupByColumn => ({
 const humanize = (key: string) => key.charAt(0).toUpperCase() + key.slice(1).replace("_", " ");
 
 /** Columns for EE group keys; group ids match the backend (uuid strings, "True"/"False", "None"). */
-export const getEeGroupByColumns = (groupBy: string, projectId: string | undefined): IGroupByColumn[] | undefined => {
+export const getEeGroupByColumns = (
+  groupBy: string,
+  projectIdArg: string | undefined
+): IGroupByColumn[] | undefined => {
+  // list/kanban layouts call getGroupByColumns without projectId (core getters read the router store too)
+  const projectId = projectIdArg ?? store.router.projectId;
   if (!projectId) return undefined;
   const attributeStore = store.attribute;
   if (groupBy === "type") {

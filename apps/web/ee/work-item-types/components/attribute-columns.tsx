@@ -14,12 +14,20 @@ export const attributeColumnKey = (attributeId: string) => `attribute:${attribut
 const isOn = (displayProperties: IIssueDisplayProperties | undefined, attributeId: string) =>
   !!(displayProperties as Record<string, unknown> | undefined)?.[attributeColumnKey(attributeId)];
 
-/** Project attributes whose column is switched on. */
-const useEnabledAttributes = (projectId: string | null | undefined, displayProperties?: IIssueDisplayProperties) => {
+/** Attributes grouped by name: types often share a name (Story Points on Story/Task/...), shown as one toggle
+ * and one column. Keys stay per attribute id; a toggle flips every id of its name. */
+const byName = (attributes: TAttribute[]) => {
+  const groups = new Map<string, TAttribute[]>();
+  for (const a of attributes) groups.set(a.name, [...(groups.get(a.name) ?? []), a]);
+  return [...groups.entries()].map(([name, attrs]) => ({ name, attrs }));
+};
+
+/** Enabled attribute columns (one per name). */
+const useEnabledColumns = (projectId: string | null | undefined, displayProperties?: IIssueDisplayProperties) => {
   const { workspaceSlug } = useParams();
   const { getProjectAttributes } = useAttributes();
   useEnsureProjectTypes(workspaceSlug?.toString(), projectId);
-  return getProjectAttributes(projectId).filter((a) => isOn(displayProperties, a.id));
+  return byName(getProjectAttributes(projectId).filter((a) => isOn(displayProperties, a.id)));
 };
 
 /** Display-properties dropdown: one toggle per attribute (fixed and custom) of the current project. */
@@ -32,24 +40,33 @@ export const AttributeDisplayPropertyToggles = observer(function AttributeDispla
   const { getProjectAttributes, getTypeKey } = useAttributes();
   const { t } = useTranslation();
   useEnsureProjectTypes(workspaceSlug?.toString(), projectId?.toString());
-  const attributes = getProjectAttributes(projectId?.toString());
-  if (attributes.length === 0) return null;
+  const groups = byName(getProjectAttributes(projectId?.toString()));
+  if (groups.length === 0) return null;
   return (
     <>
-      {attributes.map((a) => {
-        const typeKey = getTypeKey(projectId?.toString(), a.issue_type);
-        const on = isOn(displayProperties, a.id);
+      {groups.map(({ name, attrs }) => {
+        const types = attrs
+          .map((a) => getTypeKey(projectId?.toString(), a.issue_type))
+          .filter(Boolean)
+          .map((k) => t(`agile_attributes.types.${k}`));
+        const on = attrs.some((a) => isOn(displayProperties, a.id));
         return (
           <button
-            key={a.id}
+            key={name}
             type="button"
-            title={typeKey ? t(`agile_attributes.types.${typeKey}`) : undefined}
+            title={types.join(", ")}
             className={`rounded-sm border px-2 py-0.5 text-11 transition-all ${
               on ? "border-accent-strong bg-accent-primary text-on-color" : "border-subtle hover:bg-layer-1"
             }`}
-            onClick={() => handleUpdate({ [attributeColumnKey(a.id)]: !on } as Partial<IIssueDisplayProperties>)}
+            onClick={() =>
+              handleUpdate(
+                Object.fromEntries(
+                  attrs.map((a) => [attributeColumnKey(a.id), !on])
+                ) as Partial<IIssueDisplayProperties>
+              )
+            }
           >
-            {a.name}
+            {name}
           </button>
         );
       })}
@@ -79,15 +96,15 @@ export const AttributeHeaderCells = observer(function AttributeHeaderCells(props
   displayProperties: IIssueDisplayProperties;
 }) {
   const { projectId } = useParams();
-  const attributes = useEnabledAttributes(projectId?.toString(), props.displayProperties);
+  const columns = useEnabledColumns(projectId?.toString(), props.displayProperties);
   return (
     <>
-      {attributes.map((a) => (
+      {columns.map(({ name }) => (
         <th
-          key={a.id}
+          key={name}
           className="h-11 min-w-36 items-center border border-t-0 border-b-0 border-subtle bg-layer-1 px-4 py-1 text-left text-13 font-medium"
         >
-          {a.name}
+          {name}
         </th>
       ))}
     </>
@@ -100,20 +117,23 @@ export const AttributeRowCells = observer(function AttributeRowCells(props: {
   issue: TIssue;
 }) {
   const { displayProperties, issue } = props;
-  const attributes = useEnabledAttributes(issue.project_id, displayProperties);
+  const columns = useEnabledColumns(issue.project_id, displayProperties).map(({ name, attrs }) => ({
+    name,
+    attr: attrs.find((a) => a.issue_type === issue.type_id),
+  }));
   const values = useIssueValues(
     issue,
-    attributes.some((a) => a.issue_type === issue.type_id)
+    columns.some((c) => c.attr)
   );
   const format = useFormatter();
   return (
     <>
-      {attributes.map((a) => (
+      {columns.map(({ name, attr }) => (
         <td
-          key={a.id}
+          key={name}
           className="h-11 min-w-36 truncate border-r-[1px] border-subtle px-4 text-13 after:absolute after:bottom-[-1px] after:w-full after:border after:border-subtle"
         >
-          {a.issue_type === issue.type_id ? format(a, values?.[a.id]) : ""}
+          {attr ? format(attr, values?.[attr.id]) : ""}
         </td>
       ))}
     </>
@@ -126,9 +146,9 @@ export const AttributeListProperties = observer(function AttributeListProperties
   issue: TIssue;
 }) {
   const { displayProperties, issue } = props;
-  const attributes = useEnabledAttributes(issue.project_id, displayProperties).filter(
-    (a) => a.issue_type === issue.type_id
-  );
+  const attributes = useEnabledColumns(issue.project_id, displayProperties)
+    .flatMap(({ attrs }) => attrs)
+    .filter((a) => a.issue_type === issue.type_id);
   const values = useIssueValues(issue, attributes.length > 0);
   const format = useFormatter();
   return (
