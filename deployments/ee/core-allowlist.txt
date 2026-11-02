@@ -101,3 +101,5 @@ packages/constants/src/rich-filters/operator-labels/extended.ts
 apps/web/package.json
 apps/web/vitest.config.ts
 pnpm-lock.yaml
+apps/web/components/issues/issue-detail/root.tsx
+apps/web/components/issues/peek-overview/root.tsx
