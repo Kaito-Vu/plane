@@ -1,0 +1,94 @@
+# Run on prod: docker compose -f docker-compose.run.yml --env-file .env.prod up -d
+# Images come from build.sh (docker load). Postgres is external (see POSTGRES_HOST in .env.prod).
+x-api: &api
+  image: plane-api:${TAG:-prod}
+  restart: always
+  env_file: .env.prod
+
+services:
+  web:
+    image: plane-web:${TAG:-prod}
+    restart: always
+    depends_on: [api]
+
+  admin:
+    image: plane-admin:${TAG:-prod}
+    restart: always
+    depends_on: [api, web]
+
+  space:
+    image: plane-space:${TAG:-prod}
+    restart: always
+    depends_on: [api, web]
+
+  live:
+    image: plane-live:${TAG:-prod}
+    restart: always
+
+  api:
+    <<: *api
+    container_name: api
+    command: ./bin/docker-entrypoint-api.sh
+    depends_on: [plane-redis, plane-mq]
+
+  worker:
+    <<: *api
+    container_name: bgworker
+    command: ./bin/docker-entrypoint-worker.sh
+    depends_on: [api]
+
+  beat-worker:
+    <<: *api
+    container_name: beatworker
+    command: ./bin/docker-entrypoint-beat.sh
+    depends_on: [api]
+
+  migrator:
+    <<: *api
+    container_name: plane-migrator
+    restart: "no"
+    command: ./bin/docker-entrypoint-migrator.sh
+    depends_on: [plane-redis]
+
+  plane-redis:
+    image: valkey/valkey:9.2-alpine
+    restart: always
+    volumes:
+      - redisdata:/data
+
+  plane-mq:
+    image: rabbitmq:4.4.0-management-alpine
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  plane-minio:
+    image: docker.io/pgsty/silo:RELEASE.2026-10-26T00-00-00Z
+    restart: always
+    command: server /export --console-address ":9090"
+    volumes:
+      - uploads:/export
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+
+  proxy:
+    image: plane-proxy:${TAG:-prod}
+    restart: always
+    ports:
+      - ${LISTEN_HTTP_PORT:-80}:80
+      - ${LISTEN_HTTPS_PORT:-443}:443
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
+      BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
+    depends_on: [web, api, space, admin]
+
+volumes:
+  redisdata:
+  uploads:
+  rabbitmq_data:
