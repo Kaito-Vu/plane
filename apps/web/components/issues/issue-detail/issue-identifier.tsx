@@ -14,7 +14,14 @@ import { IdentifierText } from "@/components/issues/issue-detail/identifier-text
 import { TypeBadge } from "@/ee/work-item-types/components/type-badge";
 
 export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueIdentifierProps) {
-  const { projectId, variant, size, displayProperties, enableClickToCopyIdentifier = false } = props;
+  const {
+    projectId,
+    variant,
+    size,
+    displayProperties,
+    enableClickToCopyIdentifier = false,
+    fullTypeBadge = false,
+  } = props;
   // store hooks
   const { getProjectIdentifierById } = useProject();
   const {
@@ -27,18 +34,27 @@ export const IssueIdentifier = observer(function IssueIdentifier(props: TIssueId
   const projectIdentifier = isUsingStoreData ? getProjectIdentifierById(projectId) : props.projectIdentifier;
   const issueSequenceId = isUsingStoreData ? issue?.sequence_id : props.issueSequenceId;
   const shouldRenderIssueID = displayProperties ? displayProperties.key : true;
+  const shouldRenderType = displayProperties?.issue_type !== false; // saved prefs that predate the property keep showing it
 
-  if (!shouldRenderIssueID) return null;
+  if (!shouldRenderIssueID && !shouldRenderType) return null;
 
   return (
     <div className="flex shrink-0 items-center space-x-2">
-      <TypeBadge projectId={projectId} typeId={isUsingStoreData ? issue?.type_id : props.issueTypeId} compact />
-      <IdentifierText
-        identifier={`${projectIdentifier}-${issueSequenceId}`}
-        enableClickToCopyIdentifier={enableClickToCopyIdentifier}
-        variant={variant}
-        size={size}
-      />
+      {shouldRenderType && (
+        <TypeBadge
+          projectId={projectId}
+          typeId={isUsingStoreData ? issue?.type_id : props.issueTypeId}
+          compact={!fullTypeBadge}
+        />
+      )}
+      {shouldRenderIssueID && (
+        <IdentifierText
+          identifier={`${projectIdentifier}-${issueSequenceId}`}
+          enableClickToCopyIdentifier={enableClickToCopyIdentifier}
+          variant={variant}
+          size={size}
+        />
+      )}
     </div>
   );
 });

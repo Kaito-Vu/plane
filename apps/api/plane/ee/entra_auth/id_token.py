@@ -11,8 +11,8 @@ class IdTokenError(Exception):
 
 @lru_cache(maxsize=None)
 def _client(jwks_uri: str) -> "jwt.PyJWKClient":
-    # one client per jwks_uri so cache_keys actually caches the JWKS across logins
-    return jwt.PyJWKClient(jwks_uri, cache_keys=True, timeout=10)
+    # one client per jwks_uri so the key set is cached across logins; keys Microsoft removes expire with the set
+    return jwt.PyJWKClient(jwks_uri, cache_keys=False, cache_jwk_set=True, lifespan=3600, timeout=3)
 
 
 def get_signing_key(id_token: str, jwks_uri: str) -> Any:

@@ -1,6 +1,6 @@
 import os
 import uuid
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode
 
 from django.http import HttpResponseRedirect
 from django.views import View
@@ -23,7 +23,7 @@ def _redirect_error(host, exc, next_path=None):
     params = exc.get_error_dict()
     if next_path:
         params["next_path"] = str(validate_next_path(next_path))
-    return HttpResponseRedirect(urljoin(host, "?" + urlencode(params)))
+    return HttpResponseRedirect(f"{host}?{urlencode(params)}")
 
 
 def _error(code):
@@ -49,6 +49,7 @@ class _EntraInitiate(View):
         request.session["host"] = host
         request.session[SESSION_SURFACE] = self.surface
         next_path = request.GET.get("next_path")
+        request.session.pop("next_path", None)  # never inherit a path from an abandoned login
         if next_path:
             request.session["next_path"] = str(validate_next_path(next_path))
 
@@ -82,7 +83,7 @@ class EntraCallbackEndpoint(View):
         is_space = request.session.get(SESSION_SURFACE) == "space"
         is_app = not is_space
         host = request.session.get("host") or base_host(request=request, is_app=is_app, is_space=is_space)
-        next_path = request.session.get("next_path")
+        next_path = request.session.pop("next_path", None)
 
         if not _entra_enabled():
             return _redirect_error(host, _error("ENTRA_NOT_CONFIGURED"), next_path)
@@ -102,6 +103,6 @@ class EntraCallbackEndpoint(View):
                 path = str(validate_next_path(next_path))
             else:
                 path = get_redirection_path(user=user) if is_app else ""
-            return HttpResponseRedirect(urljoin(host, path))
+            return HttpResponseRedirect(f"{host.rstrip('/')}/{path.lstrip('/')}" if path else host)
         except AuthenticationException as e:
             return _redirect_error(host, e, next_path)

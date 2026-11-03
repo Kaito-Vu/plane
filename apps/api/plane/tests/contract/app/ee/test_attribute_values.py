@@ -1,3 +1,4 @@
+import uuid
 import json
 from unittest import mock
 
@@ -292,3 +293,37 @@ def test_restricted_guest_cannot_read_values_of_others_issues(workspace, project
     c.force_authenticate(user=guest)
     r = c.get(_issues(workspace, project) + f"{story.id}/attribute-values/")
     assert r.status_code == status.HTTP_404_NOT_FOUND
+
+
+def _batch_url(workspace, project):
+    return f"/api/workspaces/{workspace.slug}/projects/{project.id}/attribute-values/"
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_batch_values_returns_one_entry_per_visible_issue(session_client, workspace, project, story):
+    r = session_client.get(_batch_url(workspace, project), {"issue_ids": f"{story.id},{uuid.uuid4()}"})
+    assert r.status_code == status.HTTP_200_OK
+    assert r.data == {str(story.id): {}}  # unknown ids are dropped, known ones always present
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_batch_values_rejects_bad_ids_and_oversize(session_client, workspace, project):
+    assert session_client.get(_batch_url(workspace, project), {"issue_ids": "nope"}).status_code == 400
+    too_many = ",".join(str(uuid.uuid4()) for _ in range(201))
+    assert session_client.get(_batch_url(workspace, project), {"issue_ids": too_many}).status_code == 400
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_batch_values_hide_others_issues_from_restricted_guest(workspace, project, story):
+    project.guest_view_all_features = False
+    project.save()
+    guest = UserFactory()
+    WorkspaceMemberFactory(workspace=workspace, member=guest, role=GUEST)
+    ProjectMemberFactory(project=project, member=guest, workspace=workspace, role=GUEST)
+    c = APIClient()
+    c.force_authenticate(user=guest)
+    r = c.get(_batch_url(workspace, project), {"issue_ids": str(story.id)})
+    assert r.status_code == status.HTTP_200_OK and r.data == {}

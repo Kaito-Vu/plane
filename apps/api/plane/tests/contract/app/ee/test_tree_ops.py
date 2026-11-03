@@ -1,3 +1,4 @@
+import contextlib
 from datetime import timedelta
 
 import pytest
@@ -8,6 +9,21 @@ from plane.bgtasks.issue_automation_task import archive_old_issues
 from plane.db.models import Issue
 from plane.ee.work_item_types.constants import TypeKey
 from plane.ee.work_item_types.tree_ops import restore_subtree, soft_delete_subtree, subtree_count
+
+
+@contextlib.contextmanager
+def _inline_cascade():
+    """Run the fan-out task inline and expose the per-issue issue_activity calls it makes."""
+    from unittest import mock
+
+    from plane.ee.tasks import log_issues_activity
+
+    with (
+        mock.patch("plane.bgtasks.issue_activities_task.issue_activity") as delay,
+        mock.patch("plane.ee.tasks.log_issues_activity.delay", side_effect=lambda *a: log_issues_activity(*a)),
+    ):
+        yield delay
+
 
 T = TypeKey
 
@@ -152,7 +168,7 @@ def test_cascade_writes_descendant_activities(story, mk, create_user, django_cap
 
     task = mk(T.TASK, parent=story)
     sub = mk(T.SUB_TASK, parent=task)
-    with mock.patch("plane.bgtasks.issue_activities_task.issue_activity.delay") as delay:
+    with _inline_cascade() as delay:
         with django_capture_on_commit_callbacks(execute=True):
             soft_delete_subtree(task, actor_id=create_user.id)
     calls = [c.kwargs for c in delay.call_args_list]
@@ -168,7 +184,7 @@ def test_archive_writes_descendant_activities(story, mk, create_user, django_cap
 
     task = mk(T.TASK, parent=story, state="done")
     story.archived_at = timezone.now().date()
-    with mock.patch("plane.bgtasks.issue_activities_task.issue_activity.delay") as delay:
+    with _inline_cascade() as delay:
         with django_capture_on_commit_callbacks(execute=True):
             archive_subtree(story, actor_id=create_user.id)
     (call,) = delay.call_args_list

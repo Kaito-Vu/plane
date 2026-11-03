@@ -16,13 +16,18 @@ export function TypeKeyBadge({ typeKey, compact = false, className }: TTypeKeyBa
   return (
     <span
       title={label}
+      aria-label={label}
       className={cn(
         "inline-flex shrink-0 items-center rounded-sm px-1 text-11 leading-4 font-medium whitespace-nowrap",
+        // full labels share one width so badges line up in a column
+        !compact && "w-20 justify-center truncate",
         className
       )}
       style={{ color, backgroundColor: `${color}1a`, border: `1px solid ${color}40` }}
     >
-      {compact ? label.charAt(0) : label}
+      <span aria-hidden="true" className="truncate">
+        {compact ? label.charAt(0) : label}
+      </span>
     </span>
   );
 }

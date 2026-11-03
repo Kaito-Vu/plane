@@ -30,14 +30,23 @@ export const IssueAttributesPanel = observer(function IssueAttributesPanel(props
   useEnsureProjectTypes(workspaceSlug, projectId);
 
   useEffect(() => {
+    // reset + stale guard: a late response for the previous issue must never be saved onto this one
+    let alive = true;
+    setSaved({});
+    setValues({});
+    setErrors({});
     service
       .getAttributeValues(workspaceSlug, projectId, issueId)
       .then((v) => {
+        if (!alive) return v;
         setSaved(v);
         setValues(v);
         return v;
       })
       .catch(console.error);
+    return () => {
+      alive = false;
+    };
   }, [workspaceSlug, projectId, issueId]);
 
   const typeKey = getTypeKey(projectId, getIssueById(issueId)?.type_id);

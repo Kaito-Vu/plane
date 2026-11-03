@@ -90,3 +90,20 @@ def test_depth_exactly_10_allowed():
 @pytest.mark.unit
 def test_unknown_agile_external_id_is_none():
     assert type_key_of(IssueType(external_source="agile", external_id="nope")) is None
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_moving_a_subtree_counts_its_height(workspace, create_user):
+    from plane.db.models import Project
+
+    project = Project.objects.create(name="H", identifier="H", workspace=workspace, created_by=create_user)
+    deep = Issue.objects.create(name="top", project=project)
+    for i in range(MAX_DEPTH - 2):
+        deep = Issue.objects.create(name=f"d{i}", project=project, parent=deep)
+    root = Issue.objects.create(name="moving", project=project)
+    Issue.objects.create(name="child", project=project, parent=root)
+    assert_no_cycle(None, deep)  # a leaf fits under the chain...
+    with pytest.raises(WorkItemValidationError) as e:
+        assert_no_cycle(root.id, deep)  # ...but a node with a child no longer does
+    assert e.value.error_code == "max_depth_exceeded"

@@ -1,12 +1,11 @@
-import json
 import logging
 
 from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
-from plane.bgtasks.deletion_task import soft_delete_related_objects
 from plane.db.models import Issue
+from plane.ee.tasks import soft_delete_issues_related
 
 from .constants import MAX_DEPTH
 from .exceptions import WorkItemValidationError
@@ -17,11 +16,16 @@ logger = logging.getLogger("plane.worker")
 
 def _descendant_ids(root_ids, **filters) -> list:
     """All descendants (not the roots) matching filters, walking parent links level by level."""
-    found, level = [], list(root_ids)
-    for _ in range(MAX_DEPTH + 1):
-        level = list(Issue.all_objects.filter(parent_id__in=level, **filters).values_list("id", flat=True))
-        if not level:
-            break
+    # no depth cap: a capped walk would leave deeper nodes live under a deleted/archived ancestor.
+    # `seen` guarantees termination even if bad data contains a cycle.
+    found, seen, level = [], set(root_ids), list(root_ids)
+    while level:
+        level = [
+            pk
+            for pk in Issue.all_objects.filter(parent_id__in=level, **filters).values_list("id", flat=True)
+            if pk not in seen
+        ]
+        seen.update(level)
         found += level
     return found
 
@@ -30,23 +34,18 @@ def _log_descendants(ids, issue: Issue, actor_id, type_: str, requested: dict, c
     """One issue_activity per cascaded descendant (after commit), so they show up in history."""
     if actor_id is None or not ids:
         return
-    from plane.bgtasks.issue_activities_task import issue_activity  # bgtasks import views; keep lazy
+    from plane.ee.tasks import log_issues_activity
 
-    epoch = int(timezone.now().timestamp())
-    for pk in ids:
-        transaction.on_commit(
-            lambda pk=pk: issue_activity.delay(
-                type=type_,
-                requested_data=json.dumps(
-                    {**requested, "issue_id": str(pk)} if type_.endswith("deleted") else requested
-                ),
-                actor_id=str(actor_id),
-                issue_id=str(pk),
-                project_id=str(issue.project_id),
-                current_instance=json.dumps(current) if current is not None else None,
-                epoch=epoch,
-            )
-        )
+    activity = {
+        "type": type_,
+        "requested": requested,
+        "actor_id": str(actor_id),
+        "project_id": str(issue.project_id),
+        "current": current,
+        "epoch": int(timezone.now().timestamp()),
+    }
+    id_strs = [str(pk) for pk in ids]
+    transaction.on_commit(lambda: log_issues_activity.delay(id_strs, activity))  # one message for the subtree
 
 
 def subtree_count(issue: Issue, for_archive: bool = False) -> int:
@@ -66,8 +65,9 @@ def soft_delete_subtree(issue: Issue, actor_id=None) -> int:
     now = timezone.now()
     with transaction.atomic():
         count = Issue.all_objects.filter(id__in=ids, deleted_at__isnull=True).update(deleted_at=now)
-        for pk in ids:  # cycle/module links etc. follow core's per-issue cascade
-            transaction.on_commit(lambda pk=pk: soft_delete_related_objects.delay("db", "issue", pk))
+        # cycle/module links etc. follow core's per-issue cascade, fanned out in one task
+        id_strs = [str(pk) for pk in ids]
+        transaction.on_commit(lambda: soft_delete_issues_related.delay(id_strs))
         _log_descendants(descendants, issue, actor_id, "issue.activity.deleted", {}, None)
     issue.deleted_at = now
     return count

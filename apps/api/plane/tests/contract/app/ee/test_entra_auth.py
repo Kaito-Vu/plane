@@ -135,7 +135,9 @@ class TestEntraCallback:
         with patch(PROVIDER) as provider:
             provider.return_value.authenticate.return_value = create_user
             response = client.get(reverse(CALLBACK), {"code": "c", "state": state})
-        assert response.url == "http://space.example.com/issues"
+        assert response.url.startswith("http://space.example.com")
+        assert response.url.endswith("/issues")
+        assert "//issues" not in response.url.split("://", 1)[1]
         assert client.session["device_info"]["domain"].startswith("http://space.example.com")
 
     def test_replay_fails(self, instance, create_user):

@@ -16,6 +16,8 @@ export type TIssueIdentifierBaseProps = {
   variant?: TIdentifierTextVariant;
   displayProperties?: IIssueDisplayProperties | undefined;
   enableClickToCopyIdentifier?: boolean;
+  /** render the work item type badge with its full name instead of the first letter */
+  fullTypeBadge?: boolean;
 };
 
 export type TIssueIdentifierFromStore = TIssueIdentifierBaseProps & {

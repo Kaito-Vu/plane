@@ -9,7 +9,7 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def parse_domains(raw: str | None) -> list[str]:
-    return [d for d in (p.strip().lower() for p in (raw or "").split(",")) if d]
+    return [d for d in (p.strip().lstrip("@").lower() for p in (raw or "").split(",")) if d]
 
 
 def _error(name: str) -> AuthenticationException:

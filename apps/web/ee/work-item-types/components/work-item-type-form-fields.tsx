@@ -53,7 +53,14 @@ export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({
   // edit: load current values
   useEffect(() => {
     if (part !== "details" || !issueId || !projectId || !slug) return;
-    service.getAttributeValues(slug, projectId, issueId).then(setIssuePropertyValues).catch(console.error);
+    let alive = true;
+    service
+      .getAttributeValues(slug, projectId, issueId)
+      .then((v) => alive && setIssuePropertyValues(v))
+      .catch(console.error);
+    return () => {
+      alive = false;
+    };
   }, [part, issueId, projectId, slug, setIssuePropertyValues]);
 
   if (!projectId) return null;
@@ -74,6 +81,7 @@ export const WorkItemTypeFormFields = observer(function WorkItemTypeFormFields({
         error={fieldError(TYPE_FIELD)}
         onChange={(k) => {
           setValue("type_id", getTypeId(projectId, k) ?? null, { shouldDirty: true });
+          setIssuePropertyValues({}); // values belong to the previous type's attributes; the API rejects them
           clearError(TYPE_FIELD);
           clearError(PARENT_FIELD); // parent requirement depends on the type
         }}

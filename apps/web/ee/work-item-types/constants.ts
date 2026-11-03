@@ -18,12 +18,12 @@ export const TYPE_KEYS: TWorkItemTypeKey[] = ["epic", "feature", "user_story", "
 export const childTypesOf = (parentKey: TWorkItemTypeKey): TWorkItemTypeKey[] =>
   TYPE_KEYS.filter((k) => PARENT_RULES_UI[k].includes(parentKey));
 
-/** Badge colour per type (hex, used inline). */
+/** Badge colour per type (hex, used inline). Shades chosen for >= 4.5:1 text contrast on the light tint. */
 export const TYPE_COLORS: Record<TWorkItemTypeKey, string> = {
-  epic: "#7c3aed",
-  feature: "#2563eb",
-  user_story: "#16a34a",
-  task: "#0891b2",
-  bug: "#dc2626",
-  sub_task: "#64748b",
+  epic: "#6d28d9",
+  feature: "#1d4ed8",
+  user_story: "#15803d",
+  task: "#0e7490",
+  bug: "#b91c1c",
+  sub_task: "#475569",
 };

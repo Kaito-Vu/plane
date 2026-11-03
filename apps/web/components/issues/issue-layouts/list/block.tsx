@@ -229,21 +229,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
                   </div>
                 </Tooltip>
               )}
-              {displayProperties && (displayProperties.key || displayProperties.issue_type) && (
-                <div className="flex-shrink-0" style={{ minWidth: `${keyMinWidth}px` }}>
-                  {issue.project_id && (
-                    <IssueIdentifier
-                      issueId={issueId}
-                      projectId={issue.project_id}
-                      size="xs"
-                      variant="tertiary"
-                      displayProperties={displayProperties}
-                    />
-                  )}
-                </div>
-              )}
-
-              {/* sub-issues chevron */}
+              {/* tree toggle: always reserves its slot so rows at one level line up */}
               <div className="grid size-4 flex-shrink-0 place-items-center">
                 {subIssuesCount > 0 && !isEpic && (
                   <button
@@ -259,6 +245,21 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
                   </button>
                 )}
               </div>
+
+              {displayProperties && (displayProperties.key || displayProperties.issue_type) && (
+                <div className="flex-shrink-0" style={{ minWidth: `${keyMinWidth}px` }}>
+                  {issue.project_id && (
+                    <IssueIdentifier
+                      issueId={issueId}
+                      projectId={issue.project_id}
+                      size="xs"
+                      variant="tertiary"
+                      fullTypeBadge
+                      displayProperties={displayProperties}
+                    />
+                  )}
+                </div>
+              )}
 
               {issue?.tempId !== undefined && (
                 <div className="absolute top-0 left-0 z-[99999] h-full w-full animate-pulse bg-surface-1/20" />

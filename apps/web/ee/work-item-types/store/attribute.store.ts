@@ -6,6 +6,9 @@ import { PARENT_RULES_UI } from "../constants";
 import { AttributeService } from "../services/attribute.service";
 import type { TAttribute, TAttributeValues, TProjectWorkItemType, TWorkItemTypeKey } from "../types";
 
+// keep in sync with MAX_BATCH in apps/api/plane/ee/work_item_types/views/values.py
+const BATCH_SIZE = 200;
+
 type TTypeIds = Partial<Record<TWorkItemTypeKey, string>>;
 
 export interface IAttributeStore {
@@ -36,6 +39,8 @@ export class AttributeStore implements IAttributeStore {
   private ensured: Record<string, Promise<void>> = {};
   valuesByIssue: Record<string, TAttributeValues> = {};
   private valuesRequested = new Set<string>();
+  private valuesQueue = new Map<string, string[]>();
+  private valuesFlush: ReturnType<typeof setTimeout> | undefined;
 
   // rootStore kept for the standard store constructor signature
   constructor(_rootStore: RootStore) {
@@ -107,16 +112,30 @@ export class AttributeStore implements IAttributeStore {
       : []
   );
 
-  // ponytail: one request per visible issue with an enabled column, cached for the session (stale after
+  // ponytail: ids requested in the same tick are batched per project, cached for the session (stale after
   // other users/import edit values until reload); embed values in the list API if this hurts
   ensureIssueValues = (workspaceSlug: string, projectId: string, issueId: string) => {
     if (this.valuesRequested.has(issueId)) return;
     this.valuesRequested.add(issueId);
-    this.service
-      .getAttributeValues(workspaceSlug, projectId, issueId)
-      .then((values) => runInAction(() => (this.valuesByIssue[issueId] = values)))
-      // no retry on failure (virtualised rows remount often); a reload retries
-      .catch((err) => console.error(err));
+    const key = `${workspaceSlug}/${projectId}`;
+    this.valuesQueue.set(key, [...(this.valuesQueue.get(key) ?? []), issueId]);
+    clearTimeout(this.valuesFlush);
+    this.valuesFlush = setTimeout(this.flushValues, 0);
+  };
+
+  private flushValues = () => {
+    const queue = this.valuesQueue;
+    this.valuesQueue = new Map();
+    queue.forEach((ids, key) => {
+      const [workspaceSlug, projectId] = key.split("/");
+      for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+        this.service
+          .getAttributeValuesBatch(workspaceSlug, projectId, ids.slice(i, i + BATCH_SIZE))
+          .then((res) => runInAction(() => Object.assign(this.valuesByIssue, res)))
+          // no retry on failure (virtualised rows remount often); a reload retries
+          .catch((err) => console.error(err));
+      }
+    });
   };
 
   setIssueValues = (issueId: string, values: TAttributeValues) => {

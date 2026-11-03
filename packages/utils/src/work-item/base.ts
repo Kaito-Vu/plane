@@ -186,6 +186,20 @@ export const shouldHighlightIssueDueDate = (
   return targetDateDistance <= 0;
 };
 
+const DUE_DATE_WARNING_DAYS = 3;
+
+/** "overdue" when due today or earlier, "warning" when due within the next few days, else undefined. */
+export const getIssueDueDateStatus = (
+  date: string | Date | null,
+  stateGroup: TStateGroups | undefined
+): "overdue" | "warning" | undefined => {
+  if (shouldHighlightIssueDueDate(date, stateGroup)) return "overdue";
+  const parsedDate = getDate(date);
+  if (!date || !stateGroup || !parsedDate) return undefined;
+  if ([STATE_GROUPS.completed.key, STATE_GROUPS.cancelled.key].includes(stateGroup)) return undefined;
+  return differenceInCalendarDays(parsedDate, new Date()) <= DUE_DATE_WARNING_DAYS ? "warning" : undefined;
+};
+
 export const getIssueBlocksStructure = (block: TIssue): IGanttBlock => ({
   data: block,
   id: block?.id,

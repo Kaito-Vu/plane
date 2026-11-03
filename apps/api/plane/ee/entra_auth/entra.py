@@ -88,7 +88,7 @@ class EntraProvider(OIDCProvider):
         if avatar_url != GRAPH_PHOTO_URL or not access_token:
             raise ValueError("entra avatar fetch refused")
         response = pinned_fetch(
-            "GET", GRAPH_PHOTO_URL, headers={"Authorization": f"Bearer {access_token}"}, timeout=10, stream=True
+            "GET", GRAPH_PHOTO_URL, headers={"Authorization": f"Bearer {access_token}"}, timeout=(2, 3), stream=True
         )
         if 300 <= response.status_code < 400:
             response.close()

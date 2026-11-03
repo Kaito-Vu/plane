@@ -18,13 +18,7 @@ import type { DateRangeValue } from "@plane/blocks/property-select";
 import { DateRangeSelect, DateSelect } from "@plane/blocks/property-select";
 import type { TIssue, IIssueDisplayProperties, TIssuePriorities } from "@plane/types";
 // ui
-import {
-  cn,
-  getDate,
-  renderFormattedPayloadDate,
-  generateWorkItemLink,
-  shouldHighlightIssueDueDate,
-} from "@plane/utils";
+import { cn, getDate, renderFormattedPayloadDate, generateWorkItemLink, getIssueDueDateStatus } from "@plane/utils";
 // components
 import { CycleSelect } from "@/components/dropdowns/cycle/cycle-select";
 import { EstimateSelect } from "@/components/dropdowns/estimate/estimate-select";
@@ -83,6 +77,11 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
 
   // derived values
   const stateDetails = getStateById(issue.state_id);
+  const dueDateStatus = getIssueDueDateStatus(issue.target_date, stateDetails?.group);
+  const dueDateClassName = cn({
+    "text-danger-primary": dueDateStatus === "overdue",
+    "text-yellow-500": dueDateStatus === "warning",
+  });
   const subIssueCount = issue?.sub_issues_count ?? 0;
 
   const issueOperations = useMemo(
@@ -253,9 +252,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
             icon={<StartDateOutline />}
             clearable
             mergeDates
-            className={cn({
-              "text-danger-primary": shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group),
-            })}
+            className={dueDateClassName}
             disabled={isReadOnly}
             showTooltip
             tooltipHeading={t("project_cycles.date_range")}
@@ -303,9 +300,7 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
             minDate={minDate}
             placeholder={t("common.order_by.due_date")}
             icon={<DueDateOutline />}
-            className={cn({
-              "text-danger-primary": shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group),
-            })}
+            className={dueDateClassName}
             clearable
             disabled={isReadOnly}
             showTooltip

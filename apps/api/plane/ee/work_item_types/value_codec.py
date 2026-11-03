@@ -36,7 +36,8 @@ def _to_uuid(attribute: Attribute, raw: Any) -> UUID:
 
 def _to_option(attribute: Attribute, raw: Any):
     option_id = _to_uuid(attribute, raw)
-    option = attribute.options.filter(id=option_id, is_active=True).first()
+    # in memory: write_values prefetches options, so N option values cost no extra queries
+    option = next((o for o in attribute.options.all() if o.id == option_id and o.is_active), None)
     if option is None:
         raise _invalid(attribute, "Option does not belong to this attribute")
     return option
@@ -133,7 +134,7 @@ def write_values(issue, values: dict[UUID, Any], *, project) -> None:
         a.id: a
         for a in Attribute.objects.filter(
             id__in=list(keys.values()), project=project, issue_type_id=issue.type_id, is_active=True
-        )
+        ).prefetch_related("options")
     }
     coerced = []
     for k, raw in values.items():
@@ -147,25 +148,25 @@ def write_values(issue, values: dict[UUID, Any], *, project) -> None:
             if members != len(ids):
                 raise _invalid(attribute, "Member is not part of this project")
         coerced.append((attribute, cols))
-    with transaction.atomic():
-        for attribute, cols in coerced:
-            # delete + rewrite handles both single and multi_* uniformly
-            AttributeValue.objects.filter(issue=issue, attribute=attribute).delete()
-            if not cols:
-                continue
-            ((col, val),) = cols.items()
-            AttributeValue.objects.bulk_create(
-                [
-                    AttributeValue(
-                        issue=issue,
-                        attribute=attribute,
-                        project=project,
-                        workspace_id=project.workspace_id,
-                        **{col: item},
-                    )
-                    for item in (val if isinstance(val, list) else [val])
-                ]
+    if not coerced:
+        return
+    rows = []
+    for attribute, cols in coerced:
+        if not cols:
+            continue
+        ((col, val),) = cols.items()
+        rows += [
+            AttributeValue(
+                issue=issue, attribute=attribute, project=project, workspace_id=project.workspace_id, **{col: item}
             )
+            for item in (val if isinstance(val, list) else [val])
+        ]
+    with transaction.atomic():
+        # serialise concurrent writers on this issue so a single-valued attribute never ends up with two rows
+        type(issue).all_objects.select_for_update().filter(pk=issue.pk).values_list("pk", flat=True).first()
+        # delete + rewrite handles single and multi_* uniformly; hard delete so rewrites leave no dead rows
+        AttributeValue.objects.filter(issue=issue, attribute__in=[a for a, _ in coerced]).delete(soft=False)
+        AttributeValue.objects.bulk_create(rows)
 
 
 def missing_required(project_id: UUID, issue_type_id: UUID, values: dict[UUID, Any]) -> list[UUID]:

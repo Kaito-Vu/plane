@@ -14,8 +14,8 @@ from plane.ee.entra_auth.id_token import get_signing_key, verify_id_token
 
 SESSION_NONCE = "entra_nonce"
 SESSION_VERIFIER = "entra_code_verifier"
-_TIMEOUT = 10
-_DISCOVERY_TTL = 3600
+_TIMEOUT = (2, 3)  # (connect, read): the token exchange sits on the login critical path
+_DISCOVERY_TTL = 24 * 3600
 _HOST = "login.microsoftonline.com"
 # every endpoint we send secrets to or trust keys from must live on Microsoft's host
 _ENDPOINTS = ("authorization_endpoint", "token_endpoint", "jwks_uri")

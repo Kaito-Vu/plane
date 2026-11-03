@@ -13,6 +13,13 @@ def enforce_hierarchy(sender, instance: Issue, raw=False, **kwargs):
     # QuerySet.update/bulk_create bypass pre_save entirely (spec §13.16).
     if raw or instance.type_id is None or instance.is_draft or instance.deleted_at is not None:
         return
+    if not instance._state.adding:
+        # the hierarchy only depends on type, parent and triage-ness: skip the ancestor walk on plain edits
+        before = (
+            Issue.all_objects.filter(pk=instance.pk).values_list("type_id", "parent_id", "state_id").first()
+        )
+        if before == (instance.type_id, instance.parent_id, instance.state_id):
+            return
     if instance.state_id is not None and instance.state.group == StateGroup.TRIAGE.value:
         return
     check_hierarchy(

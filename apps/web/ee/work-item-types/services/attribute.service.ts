@@ -104,6 +104,15 @@ export class AttributeService extends APIService {
     );
   }
 
+  /** Values for many issues of one project in a single request (list/spreadsheet columns). */
+  getAttributeValuesBatch(slug: string, projectId: string, issueIds: string[]) {
+    return this.req<Record<string, TAttributeValues>>(
+      this.get(`${this.ws(slug)}/projects/${projectId}/attribute-values/`, {
+        params: { issue_ids: issueIds.join(",") },
+      })
+    );
+  }
+
   updateAttributeValues(slug: string, projectId: string, issueId: string, values: TAttributeValues) {
     return this.req<unknown>(
       this.patch(`${this.ws(slug)}/projects/${projectId}/issues/${issueId}/`, { attribute_values: values })
