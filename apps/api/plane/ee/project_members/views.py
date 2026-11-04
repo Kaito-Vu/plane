@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from plane.app.permissions.base import ROLE, allow_permission
 from plane.app.views.project.member import ProjectMemberViewSet
 from plane.app.views.base import BaseAPIView
+from plane.api.views.member import ProjectMemberListCreateAPIEndpoint
 from plane.db.models import ProjectMember, User, Workspace
 
 from .services import (
@@ -29,6 +30,37 @@ def _error(message, code, http_status=status.HTTP_400_BAD_REQUEST):
     return Response({"error": message, "code": code}, status=http_status)
 
 
+def _canonical_id(raw):
+    try:
+        return str(UUID(str(raw)))
+    except ValueError:
+        raise UserNotEligible(NOT_ELIGIBLE_MESSAGE)
+
+
+class EeProjectMemberListCreateAPIEndpoint(ProjectMemberListCreateAPIEndpoint):
+    """v1 member create: provision the workspace row first, else core rejects non-workspace users."""
+
+    def post(self, request, slug, project_id):
+        data = request.data
+        if not isinstance(data, dict):
+            return _error(NOT_ELIGIBLE_MESSAGE, "USER_NOT_ELIGIBLE")
+        role = data.get("role", 5)
+        try:
+            (user,) = eligible_users([_canonical_id(data.get("member"))])
+        except UserNotEligible as exc:
+            return _error(str(exc), "USER_NOT_ELIGIBLE")
+        if not _valid_role(role):
+            return Response({"error": "Invalid role"}, status=status.HTTP_400_BAD_REQUEST)
+
+        workspace = Workspace.objects.get(slug=slug)
+        with transaction.atomic():
+            provision_workspace_member(workspace, user, role)
+            response = super().post(request, slug=slug, project_id=project_id)
+            if response.status_code >= 400:
+                transaction.set_rollback(True)
+        return response
+
+
 class EeProjectMemberViewSet(ProjectMemberViewSet):
     """Project-first membership: adding/promoting a project member provisions the workspace row."""
 
@@ -44,10 +76,7 @@ class EeProjectMemberViewSet(ProjectMemberViewSet):
             for m in members:
                 if not isinstance(m, dict):
                     raise UserNotEligible(NOT_ELIGIBLE_MESSAGE)
-                try:
-                    cid = str(UUID(str(m.get("member_id"))))
-                except ValueError:
-                    raise UserNotEligible(NOT_ELIGIBLE_MESSAGE)
+                cid = _canonical_id(m.get("member_id"))
                 by_id.pop(cid, None)
                 by_id[cid] = {**m, "member_id": cid}
             entries = list(by_id.values())
