@@ -36,8 +36,16 @@
         "select_co_worker": "Select co-worker",
         "search_placeholder": "Search by name or email",
         "no_user_found": "No user found",
-        "type_min_chars": "Type at least 3 characters to search",
-        "not_eligible": "This user can't be added to the project"
+        "type_min_chars": "Type at least {count} characters to search",
+        "errors": {
+          "not_eligible": "One or more of the selected users can't be added to this project.",
+          "already_member": "One or more of the selected users are already members of this project.",
+          "role_not_allowed": "You can't assign that role. Only workspace admins can add project admins.",
+          "role_conflict": "The chosen role doesn't match the user's workspace role. Workspace admins can only be project admins and workspace guests can only be project guests.",
+          "generic": "Couldn't add the members. Please try again.",
+          "refresh_failed": "Members were added, but the list may not show them until you reload the page.",
+          "no_role_available": "You can't add this user: their workspace role requires a workspace admin."
+        }
       }
     },
     "states": {
