@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    GodModeExternalInvitesEndpoint,
     GodModeAdminEndpoint,
     GodModeSessionEndpoint,
     GodModeSignInEndpoint,
@@ -19,4 +20,5 @@ urlpatterns = [
         GodModeWorkspaceArchiveEndpoint.as_view(),
         name="god-mode-workspace-archive",
     ),
+    path("instances/external-invites/", GodModeExternalInvitesEndpoint.as_view(), name="god-mode-external-invites"),
 ]

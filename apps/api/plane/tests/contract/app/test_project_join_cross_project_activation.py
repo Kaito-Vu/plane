@@ -21,11 +21,19 @@ import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from plane.license.models import InstanceConfiguration
 from plane.db.models import (
     Project,
     ProjectMember,
     ProjectMemberInvite,
 )
+
+
+@pytest.fixture(autouse=True)
+def external_invites_on(db):
+    # These tests exercise core join behavior; the closed-by-default switch (ee) is covered elsewhere.
+    InstanceConfiguration.objects.create(key="ALLOW_EXTERNAL_INVITES", value="1", category="INVITES")
+
 
 ADMIN = 20
 GUEST = 5

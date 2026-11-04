@@ -18,7 +18,8 @@ from plane.license.api.views import (
     InstanceAdminUserSessionEndpoint,
 )
 from plane.app.views.base import BaseAPIView
-from plane.license.models import Instance, InstanceAdmin
+from plane.ee.project_members.invites import KEY as EXTERNAL_INVITES_KEY, external_invites_enabled
+from plane.license.models import Instance, InstanceAdmin, InstanceConfiguration
 from plane.utils.cache import invalidate_cache
 
 from .access import is_god_mode_user
@@ -114,3 +115,21 @@ class GodModeSessionEndpoint(InstanceAdminUserSessionEndpoint):
         if not is_god_mode_user(request.user):
             return Response({"is_authenticated": False}, status=status.HTTP_200_OK)
         return super().get(request)
+
+
+# --- external invites switch --------------------------------------------------------------------
+class GodModeExternalInvitesEndpoint(BaseAPIView):
+    permission_classes = [InstanceAdminPermission]
+
+    def get(self, request):
+        return Response({"enabled": external_invites_enabled()})
+
+    def patch(self, request):
+        enabled = request.data.get("enabled") if isinstance(request.data, dict) else None
+        if not isinstance(enabled, bool):
+            return Response({"error": "enabled must be a boolean"}, status=status.HTTP_400_BAD_REQUEST)
+        InstanceConfiguration.objects.update_or_create(
+            key=EXTERNAL_INVITES_KEY,
+            defaults={"value": "1" if enabled else "0", "category": "INVITES", "is_encrypted": False},
+        )
+        return Response({"enabled": enabled})
