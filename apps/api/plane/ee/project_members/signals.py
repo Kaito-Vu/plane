@@ -10,5 +10,6 @@ from .services import deprovision_if_orphan, provision_workspace_member
 def sync_workspace_member(sender, instance, created, **kwargs):
     if not instance.is_active:
         deprovision_if_orphan(instance.workspace_id, instance.member_id)
-    elif created:  # safety net only; routine saves must not resurrect suspended ws members
+    elif created and instance.member.is_active and not instance.member.is_bot:
+        # safety net only; routine saves must not resurrect suspended ws members; ineligible users skipped
         provision_workspace_member(instance.workspace, instance.member, instance.role)

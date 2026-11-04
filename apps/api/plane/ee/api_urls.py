@@ -13,6 +13,11 @@ urlpatterns = [
         name="project-members",
     ),
     path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/project-members/",
+        EeProjectMemberListCreateAPIEndpoint.as_view(http_method_names=["get", "post"]),
+        name="project-members",
+    ),
+    path(
         "workspaces/<str:slug>/invitations/",
         GatedApiWorkspaceInvitations.as_view({"get": "list", "post": "create"}),
         name="workspace-invitations-list",

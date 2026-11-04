@@ -31,6 +31,9 @@ class TestProjectMemberSearch:
         assert search(session_client, workspace, project, " ab ").status_code == 400
         assert search(session_client, workspace, project, "").status_code == 400
 
+    def test_nul_byte_query_400(self, session_client, workspace, project):
+        assert search(session_client, workspace, project, "ab\x00c").status_code == 400
+
     def test_non_admin_403(self, workspace, project):
         member = mk_user("mem@x.com")
         WorkspaceMember.objects.create(workspace=workspace, member=member, role=15)

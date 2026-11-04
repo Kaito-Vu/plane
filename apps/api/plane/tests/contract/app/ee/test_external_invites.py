@@ -66,11 +66,14 @@ def test_each_shadowed_endpoint_410_when_off_and_creates_no_workspace_member(
     kind, url, body = _endpoints(workspace, project)[idx]
     client = session_client if kind == "session" else api_key_client
     before = WorkspaceMember.objects.count()
+    before_pm = ProjectMember.objects.count()
     r = client.post(url, body, format="json")
     assert r.status_code == status.HTTP_410_GONE, r.content
     assert r.json()["code"] == "INVITES_DISABLED" and r.json()["error"]
     assert WorkspaceMember.objects.count() == before
     assert not WorkspaceMemberInvite.objects.exists()
+    assert not ProjectMemberInvite.objects.exists()
+    assert ProjectMember.objects.count() == before_pm
 
 
 @pytest.mark.contract

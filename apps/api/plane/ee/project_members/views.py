@@ -39,6 +39,15 @@ def _canonical_id(raw):
         raise UserNotEligible(NOT_ELIGIBLE_MESSAGE)
 
 
+def _reject_unsafe_add(actor, slug, project_id, member_ids, roles):
+    """POST only adds: core would otherwise rewrite roles of existing members and let non-ws-admins mint admins."""
+    if ProjectMember.objects.filter(project_id=project_id, member_id__in=member_ids, is_active=True).exists():
+        return _error("Member is already in the project; change roles with PATCH", "ALREADY_MEMBER")
+    if ROLE.ADMIN.value in roles and not is_workspace_admin(actor, slug):
+        return _error("Only workspace admins can add project admins", "ROLE_NOT_ALLOWED")
+    return None
+
+
 class EeProjectMemberListCreateAPIEndpoint(ProjectMemberListCreateAPIEndpoint):
     """v1 member create: provision the workspace row first, else core rejects non-workspace users."""
 
@@ -53,6 +62,9 @@ class EeProjectMemberListCreateAPIEndpoint(ProjectMemberListCreateAPIEndpoint):
             return _error(str(exc), "USER_NOT_ELIGIBLE")
         if not _valid_role(role):
             return Response({"error": "Invalid role"}, status=status.HTTP_400_BAD_REQUEST)
+        rejected = _reject_unsafe_add(request.user, slug, project_id, [str(user.id)], [role])
+        if rejected:
+            return rejected
 
         workspace = Workspace.objects.get(slug=slug)
         with transaction.atomic():
@@ -68,6 +80,8 @@ class EeProjectMemberViewSet(ProjectMemberViewSet):
 
     @allow_permission([ROLE.ADMIN])
     def create(self, request, slug, project_id):
+        if not isinstance(request.data, dict):
+            return _error(NOT_ELIGIBLE_MESSAGE, "USER_NOT_ELIGIBLE")
         members = request.data.get("members", [])
         if not isinstance(members, list) or not members:
             return Response({"error": "At least one member is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -87,11 +101,15 @@ class EeProjectMemberViewSet(ProjectMemberViewSet):
             return _error(str(exc), "USER_NOT_ELIGIBLE")
         if not all(_valid_role(e.get("role", 5)) for e in entries):
             return Response({"error": "Invalid role"}, status=status.HTTP_400_BAD_REQUEST)
+        rejected = _reject_unsafe_add(request.user, slug, project_id, list(by_id), [e.get("role", 5) for e in entries])
+        if rejected:
+            return rejected
         request.data["members"] = entries
 
         workspace = Workspace.objects.get(slug=slug)
         with transaction.atomic():
-            for e in entries:
+            # sorted order: concurrent admins lock WorkspaceMember rows in the same order (no deadlock)
+            for e in sorted(entries, key=lambda e: e["member_id"]):
                 provision_workspace_member(workspace, users[e["member_id"]], e.get("role", 5))
             response = super().create(request, slug=slug, project_id=project_id)
             if response.status_code >= 400:
@@ -124,6 +142,8 @@ class ProjectMemberSearchEndpoint(BaseAPIView):
         q = request.query_params.get("q", "").strip()
         if len(q) < 3:
             return Response({"error": "Query must be at least 3 characters"}, status=status.HTTP_400_BAD_REQUEST)
+        if chr(0) in q:  # NUL bytes crash the DB driver
+            return Response({"error": "Invalid query"}, status=status.HTTP_400_BAD_REQUEST)
         logger.info("member search slug=%s project_id=%s actor=%s qlen=%d", slug, project_id, request.user.id, len(q))
 
         users = (

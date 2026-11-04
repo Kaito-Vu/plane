@@ -55,7 +55,7 @@ def deprovision_if_orphan(workspace_id, user_id) -> bool:
     """Disable the workspace row when the user has no live active project membership."""
     with transaction.atomic():
         wm = (
-            WorkspaceMember.objects.select_for_update()
+            WorkspaceMember.objects.select_for_update(of=("self",))  # do not lock the Workspace row
             .select_related("workspace")
             .filter(workspace_id=workspace_id, member_id=user_id, is_active=True)
             .first()

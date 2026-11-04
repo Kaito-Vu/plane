@@ -105,13 +105,15 @@ class TestEeProjectMembers:
         assert add(session_client, workspace, project, [{"member_id": str(user.id), "role": 5}]).status_code == 201
         assert WorkspaceMember.objects.get(workspace=workspace, member=user).role == 5
 
-    def test_already_active_member_no_duplicate(self, session_client, workspace, project):
+    def test_already_active_member_rejected_400_nothing_written(self, session_client, workspace, project):
         user = mk_user()
-        for _ in range(2):
-            r = add(session_client, workspace, project, [{"member_id": str(user.id), "role": 15}])
-            assert r.status_code == 201
+        assert add(session_client, workspace, project, [{"member_id": str(user.id), "role": 15}]).status_code == 201
+        r = add(session_client, workspace, project, [{"member_id": str(user.id), "role": 5}])
+        assert r.status_code == 400
+        assert r.json()["code"] == "ALREADY_MEMBER"
         assert WorkspaceMember.objects.filter(workspace=workspace, member=user).count() == 1
-        assert ProjectMember.objects.filter(project=project, member=user).count() == 1
+        pm = ProjectMember.objects.get(project=project, member=user)
+        assert pm.role == 15 and pm.is_active
 
     def test_patch_ws_guest_to_project_member_returns_core_400_no_ws_change(self, session_client, workspace, project):
         user = mk_user()
@@ -177,3 +179,81 @@ class TestEeProjectMembers:
         r = add(session_client, workspace, project, [{"member_id": str(user.id), "role": role}])
         assert r.status_code == 400
         assert not WorkspaceMember.objects.filter(member=user).exists()
+
+
+def _project_admin_not_ws_admin(workspace, project):
+    admin = mk_user("padm")
+    WorkspaceMember.objects.create(workspace=workspace, member=admin, role=15)
+    ProjectMember.objects.create(project=project, member=admin, workspace=workspace, role=20)
+    c = APIClient()
+    c.force_authenticate(user=admin)
+    return admin, c
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+class TestMemberCreateHardening:
+    def test_peer_demotion_via_post_rejected(self, workspace, project):
+        _, c = _project_admin_not_ws_admin(workspace, project)
+        peer = mk_user("peer")
+        WorkspaceMember.objects.create(workspace=workspace, member=peer, role=15)
+        pm = ProjectMember.objects.create(project=project, member=peer, workspace=workspace, role=20)
+        r = add(c, workspace, project, [{"member_id": str(peer.id), "role": 5}])
+        assert r.status_code == 400 and r.json()["code"] == "ALREADY_MEMBER"
+        pm.refresh_from_db()
+        assert pm.role == 20
+
+    def test_role_20_by_non_ws_admin_rejected(self, workspace, project):
+        _, c = _project_admin_not_ws_admin(workspace, project)
+        target = mk_user()
+        r = add(c, workspace, project, [{"member_id": str(target.id), "role": 20}])
+        assert r.status_code == 400 and r.json()["code"] == "ROLE_NOT_ALLOWED"
+        assert not WorkspaceMember.objects.filter(member=target).exists()
+        assert not ProjectMember.objects.filter(project=project, member=target).exists()
+
+    def test_role_20_by_ws_admin_allowed(self, session_client, workspace, project):
+        target = mk_user()
+        r = add(session_client, workspace, project, [{"member_id": str(target.id), "role": 20}])
+        assert r.status_code == 201, r.content
+        assert ProjectMember.objects.get(project=project, member=target).role == 20
+
+    def test_removed_member_can_be_readded(self, session_client, workspace, project):
+        user = mk_user()
+        assert add(session_client, workspace, project, [{"member_id": str(user.id), "role": 15}]).status_code == 201
+        pm = ProjectMember.objects.get(project=project, member=user)
+        assert session_client.delete(url(workspace, project, pm.id)).status_code == 204
+        assert add(session_client, workspace, project, [{"member_id": str(user.id), "role": 15}]).status_code == 201
+        assert ProjectMember.objects.get(project=project, member=user).is_active
+
+    @pytest.mark.parametrize("body", ["[]", "null", '"x"', "5"])
+    def test_non_dict_body_400_not_500(self, session_client, workspace, project, body):
+        r = session_client.generic("POST", url(workspace, project), body, content_type="application/json")
+        assert r.status_code == 400 and r.json()["code"] == "USER_NOT_ELIGIBLE"
+
+    def test_provisions_in_sorted_id_order(self, session_client, workspace, project):
+        users = [mk_user() for _ in range(3)]
+        seen = []
+        import plane.ee.project_members.views as v
+
+        real = v.provision_workspace_member
+
+        def spy(ws, user, role):
+            seen.append(str(user.id))
+            return real(ws, user, role)
+
+        ids = sorted(str(u.id) for u in users)
+        with mock.patch.object(v, "provision_workspace_member", spy):
+            r = add(session_client, workspace, project, [{"member_id": i, "role": 15} for i in reversed(ids)])
+        assert r.status_code == 201
+        assert seen == ids
+
+    def test_bot_project_lead_gets_no_workspace_row(self, workspace):
+        bot = mk_user("bot", is_bot=True)
+        p = Project.objects.create(name="B", identifier="BOT", workspace=workspace, project_lead=bot)
+        ProjectMember.objects.create(project=p, member=bot, workspace=workspace, role=20)
+        assert not WorkspaceMember.objects.filter(workspace=workspace, member=bot).exists()
+
+    def test_inactive_user_project_member_gets_no_workspace_row(self, workspace, project):
+        u = mk_user("ina", is_active=False)
+        ProjectMember.objects.create(project=project, member=u, workspace=workspace, role=15)
+        assert not WorkspaceMember.objects.filter(workspace=workspace, member=u).exists()

@@ -70,3 +70,35 @@ class TestProjectMembersV1:
         r = api_key_client.get(members_url(workspace.slug, project.id))
         assert r.status_code == status.HTTP_200_OK
         assert str(create_user.id) in {str(row["id"]) for row in r.data}
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+class TestProjectMembersV1Hardening:
+    def test_v1_existing_active_member_rejected_400(self, api_key_client, workspace, project):
+        target = make_user()
+        url = members_url(workspace.slug, project.id)
+        assert api_key_client.post(url, {"member": str(target.id), "role": 15}, format="json").status_code == 201
+        r = api_key_client.post(url, {"member": str(target.id), "role": 5}, format="json")
+        assert r.status_code == 400 and r.data["code"] == "ALREADY_MEMBER"
+        assert ProjectMember.objects.get(project=project, member=target).role == 15
+
+    def test_v1_role_20_by_non_ws_admin_rejected(self, api_key_client, workspace, project, create_user):
+        WorkspaceMember.objects.filter(workspace=workspace, member=create_user).update(role=15)
+        target = make_user()
+        r = api_key_client.post(
+            members_url(workspace.slug, project.id), {"member": str(target.id), "role": 20}, format="json"
+        )
+        assert r.status_code == 400 and r.data["code"] == "ROLE_NOT_ALLOWED"
+        assert not ProjectMember.objects.filter(project=project, member=target).exists()
+
+    def test_v1_role_20_by_ws_admin_allowed(self, api_key_client, workspace, project):
+        target = make_user()
+        r = api_key_client.post(
+            members_url(workspace.slug, project.id), {"member": str(target.id), "role": 20}, format="json"
+        )
+        assert r.status_code == 201, r.data
+
+    def test_v1_project_members_alias_resolves_to_ee_view(self, workspace, project):
+        match = resolve(f"/api/v1/workspaces/{workspace.slug}/projects/{project.id}/project-members/")
+        assert match.func.view_class is EeProjectMemberListCreateAPIEndpoint
