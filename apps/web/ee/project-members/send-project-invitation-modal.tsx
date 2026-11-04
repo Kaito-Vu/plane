@@ -34,6 +34,7 @@ import {
 import { useMember } from "@/hooks/store/use-member";
 import { useUserPermissions } from "@/hooks/store/user";
 // local
+import { addMembersAndRefresh } from "./add-members-and-refresh";
 import { fetchCandidates } from "./fetch-candidates";
 import type { TProjectMemberSearchResult } from "./services/project-member-search.service";
 import { projectMemberSearchService } from "./services/project-member-search.service";
@@ -79,7 +80,8 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
   // store hooks
   const { getProjectRoleByWorkspaceSlugAndProjectId } = useUserPermissions();
   const {
-    project: { bulkAddMembersToProject },
+    project: { bulkAddMembersToProject, fetchProjectMembers },
+    workspace: { fetchWorkspaceMembers },
   } = useMember();
   // every search result seen so far, so a selected id can still be drawn after the query changes
   const knownUsers = useRef(new Map<string, TProjectMemberSearchResult>());
@@ -103,8 +105,16 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
 
     const payload = { members: formData.members.map(({ member_id, role }) => ({ member_id, role })) };
 
-    await bulkAddMembersToProject(workspaceSlug.toString(), projectId.toString(), payload)
+    await addMembersAndRefresh(
+      {
+        add: bulkAddMembersToProject,
+        refreshWorkspace: fetchWorkspaceMembers,
+        refreshProject: (ws, pid) => fetchProjectMembers(ws, pid),
+      },
+      { workspaceSlug: workspaceSlug.toString(), projectId: projectId.toString(), payload }
+    )
       .then(() => {
+        reset(defaultValues);
         if (onSuccess) onSuccess();
         onClose();
         setToast({
@@ -123,9 +133,6 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
               ? t("project_settings.members.invite_members.not_eligible")
               : (error?.error ?? t("common.errors.default.message")),
         });
-      })
-      .finally(() => {
-        reset(defaultValues);
       });
   };
 
