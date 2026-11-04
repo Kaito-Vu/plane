@@ -95,6 +95,8 @@ class MemberSearchThrottle(UserRateThrottle):
 
 
 def _mask_email(email):
+    if not email:
+        return ""
     local, _, domain = email.partition("@")
     return f"{local[:1]}***@{domain}"
 

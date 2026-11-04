@@ -89,3 +89,11 @@ class TestProjectMemberSearch:
         for _ in range(30):
             assert search(session_client, workspace, project, "alice").status_code == 200
         assert search(session_client, workspace, project, "alice").status_code == 429
+
+    def test_null_email_user_does_not_crash(self, session_client, workspace, project):
+        u = mk_user("tmp-null@x.com", display_name="nullmail-guy")
+        User.objects.filter(pk=u.pk).update(email=None)
+        r = search(session_client, workspace, project, "nullmail")
+        assert r.status_code == 200
+        assert r.json()[0]["id"] == str(u.id)
+        assert r.json()[0]["email"] == ""
