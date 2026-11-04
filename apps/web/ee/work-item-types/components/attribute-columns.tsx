@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
+import { Menu as BaseMenu } from "@base-ui/react/menu";
+import { Toggle, ToggleLabel } from "@makeplane/propel/elements/toggle";
 import { useTranslation } from "@plane/i18n";
 import type { IIssueDisplayProperties, TIssue } from "@plane/types";
 import { useMember } from "@/hooks/store/use-member";
@@ -51,23 +53,22 @@ export const AttributeDisplayPropertyToggles = observer(function AttributeDispla
           .map((k) => t(`agile_attributes.types.${k}`));
         const on = attrs.some((a) => isOn(displayProperties, a.id));
         return (
-          <button
+          <BaseMenu.CheckboxItem
             key={name}
-            type="button"
             title={types.join(", ")}
-            className={`rounded-sm border px-2 py-0.5 text-11 transition-all ${
-              on ? "border-accent-strong bg-accent-primary text-on-color" : "border-subtle hover:bg-layer-1"
-            }`}
-            onClick={() =>
+            checked={on}
+            closeOnClick={false}
+            onCheckedChange={(checked) =>
               handleUpdate(
                 Object.fromEntries(
-                  attrs.map((a) => [attributeColumnKey(a.id), !on])
+                  attrs.map((a) => [attributeColumnKey(a.id), checked])
                 ) as Partial<IIssueDisplayProperties>
               )
             }
+            render={<Toggle size="sm" render={<div />} data-pressed={on ? "" : undefined} />}
           >
-            {name}
-          </button>
+            <ToggleLabel>{name}</ToggleLabel>
+          </BaseMenu.CheckboxItem>
         );
       })}
     </>
@@ -140,32 +141,15 @@ export const AttributeRowCells = observer(function AttributeRowCells(props: {
   );
 });
 
-/** List/kanban: enabled attribute values as small chips. */
-export const AttributeListProperties = observer(function AttributeListProperties(props: {
-  displayProperties: IIssueDisplayProperties;
-  issue: TIssue;
-}) {
-  const { displayProperties, issue } = props;
+/** List/kanban: enabled attribute values with a value, as {id, name, text} chips for the issue's type. */
+export const useAttributeChips = (displayProperties: IIssueDisplayProperties | undefined, issue: TIssue) => {
   const attributes = useEnabledColumns(issue.project_id, displayProperties)
     .flatMap(({ attrs }) => attrs)
     .filter((a) => a.issue_type === issue.type_id);
   const values = useIssueValues(issue, attributes.length > 0);
   const format = useFormatter();
-  return (
-    <>
-      {attributes.map((a) => {
-        const text = format(a, values?.[a.id]);
-        if (!text) return null;
-        return (
-          <span
-            key={a.id}
-            title={a.name}
-            className="flex h-5 flex-shrink-0 items-center rounded-sm border-[0.5px] border-strong px-2 text-11"
-          >
-            <span className="text-tertiary">{a.name}:</span>&nbsp;{text}
-          </span>
-        );
-      })}
-    </>
-  );
-});
+  return attributes.flatMap((a) => {
+    const text = format(a, values?.[a.id]);
+    return text ? [{ id: a.id, name: a.name, text }] : [];
+  });
+};
