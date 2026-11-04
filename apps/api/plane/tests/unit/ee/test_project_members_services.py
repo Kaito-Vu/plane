@@ -165,3 +165,103 @@ def test_sweep_disables_orphans_after_project_soft_delete(workspace, project, ot
 def test_provision_unknown_role_clamps_to_guest(workspace, other_user, bad_role):
     wm = provision_workspace_member(workspace, other_user, bad_role)
     assert wm.role == 5 and wm.is_active
+
+
+def _profile(user, **kw):
+    from plane.db.models import Profile
+
+    return Profile.objects.create(user=user, **kw)
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_onboards_user_whose_profile_step_is_complete(workspace, other_user):
+    p = _profile(
+        other_user, onboarding_step={"profile_complete": True, "workspace_create": False, "workspace_join": False}
+    )
+    provision_workspace_member(workspace, other_user, 15)
+    p.refresh_from_db()
+    assert p.is_onboarded is True
+    assert p.onboarding_step["workspace_join"] is True and p.onboarding_step["profile_complete"] is True
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_onboards_on_reactivation_too(workspace, other_user):
+    WorkspaceMember.objects.create(workspace=workspace, member=other_user, role=15, is_active=False)
+    p = _profile(other_user, onboarding_step={"profile_complete": True})
+    provision_workspace_member(workspace, other_user, 15)
+    p.refresh_from_db()
+    assert p.is_onboarded is True
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_leaves_incomplete_profile_untouched(workspace, other_user):
+    p = _profile(other_user)
+    provision_workspace_member(workspace, other_user, 15)
+    p.refresh_from_db()
+    assert p.is_onboarded is False
+    assert p.onboarding_step["workspace_join"] is False
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_already_active_row_leaves_profile_untouched(workspace, other_user):
+    WorkspaceMember.objects.create(workspace=workspace, member=other_user, role=15)
+    p = _profile(other_user, onboarding_step={"profile_complete": True})
+    provision_workspace_member(workspace, other_user, 15)
+    p.refresh_from_db()
+    assert p.is_onboarded is False
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_without_profile_row_does_not_raise(workspace, other_user):
+    assert provision_workspace_member(workspace, other_user, 15).is_active
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_signal_ignores_project_member_without_user(workspace, project):
+    from unittest import mock
+
+    with (
+        mock.patch("plane.ee.project_members.signals.provision_workspace_member") as prov,
+        mock.patch("plane.ee.project_members.signals.deprovision_if_orphan") as deprov,
+    ):
+        pm = ProjectMember.objects.create(project=project, member=None, workspace=workspace, role=15)
+        assert pm.pk
+        pm.is_active = False
+        pm.save()  # deactivation path also skipped
+    prov.assert_not_called()
+    deprov.assert_not_called()
+    assert not WorkspaceMember.objects.filter(member__isnull=True).exists()
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+@pytest.mark.parametrize("bad", [0, [], ["profile_complete"], "profile_complete"])
+def test_provision_survives_non_dict_onboarding_step(workspace, other_user, bad):
+    p = _profile(other_user)
+    type(p).objects.filter(pk=p.pk).update(onboarding_step=bad)
+    wm = provision_workspace_member(workspace, other_user, 15)
+    assert wm.is_active
+    p.refresh_from_db()
+    assert p.onboarding_step == bad and p.is_onboarded is False
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_survives_profile_write_database_error(workspace, other_user):
+    from unittest import mock
+
+    from django.db import DatabaseError
+
+    p = _profile(other_user, onboarding_step={"profile_complete": True})
+    with mock.patch("plane.db.models.Profile.save", side_effect=DatabaseError("boom")):
+        wm = provision_workspace_member(workspace, other_user, 15)
+    assert wm.is_active
+    assert WorkspaceMember.objects.filter(workspace=workspace, member=other_user, is_active=True).exists()
+    p.refresh_from_db()
+    assert p.is_onboarded is False

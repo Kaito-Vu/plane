@@ -36,8 +36,16 @@
         "select_co_worker": "Chọn đồng nghiệp",
         "search_placeholder": "Tìm theo tên hoặc email",
         "no_user_found": "Không tìm thấy người dùng",
-        "type_min_chars": "Nhập ít nhất 3 ký tự để tìm kiếm",
-        "not_eligible": "Không thể thêm người dùng này vào dự án"
+        "type_min_chars": "Nhập ít nhất {count} ký tự để tìm kiếm",
+        "errors": {
+          "not_eligible": "Không thể thêm một hoặc nhiều người dùng đã chọn vào dự án này.",
+          "already_member": "Một hoặc nhiều người dùng đã chọn đã là thành viên của dự án này.",
+          "role_not_allowed": "Bạn không thể gán vai trò đó. Chỉ quản trị viên workspace mới thêm được quản trị viên dự án.",
+          "role_conflict": "Vai trò đã chọn không khớp với vai trò workspace của người dùng. Quản trị viên workspace chỉ có thể là quản trị viên dự án, khách workspace chỉ có thể là khách dự án.",
+          "generic": "Không thể thêm thành viên. Vui lòng thử lại.",
+          "refresh_failed": "Đã thêm thành viên, nhưng danh sách có thể chưa hiển thị cho đến khi bạn tải lại trang.",
+          "no_role_available": "Bạn không thể thêm người dùng này: vai trò workspace của họ cần quản trị viên workspace."
+        }
       }
     },
     "states": {

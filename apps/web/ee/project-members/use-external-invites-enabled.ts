@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
+import { makeCachedLoader } from "./invites-cache";
 import { projectMemberSearchService } from "./services/project-member-search.service";
 
-// Module-level cache: fetched once per page load. False while loading and on error.
-let cached: Promise<boolean> | undefined;
+// Fetched once per page load on success; a failure is not cached (retried on next mount). False until known.
+const load = makeCachedLoader(() => projectMemberSearchService.externalInvitesEnabled());
 
 export const useExternalInvitesEnabled = (): boolean => {
   const [enabled, setEnabled] = useState(false);
   useEffect(() => {
     let active = true;
-    cached ??= projectMemberSearchService.externalInvitesEnabled();
-    void cached.then((v) => active && setEnabled(v));
+    load()
+      .then((v) => active && setEnabled(v))
+      .catch(() => undefined);
     return () => {
       active = false;
     };

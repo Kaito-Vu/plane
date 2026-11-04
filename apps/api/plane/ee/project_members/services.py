@@ -1,12 +1,15 @@
 """Keep WorkspaceMember rows in step with project membership (project-first membership)."""
 
+import logging
 import uuid
 from typing import Iterable
 
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import Exists, F, OuterRef
 
-from plane.db.models import ProjectMember, User, Workspace, WorkspaceMember
+from plane.db.models import Profile, ProjectMember, User, Workspace, WorkspaceMember
+
+logger = logging.getLogger(__name__)
 
 PROJECT_TO_WORKSPACE_ROLE: dict[int, int] = {20: 15, 15: 15, 5: 5}
 
@@ -42,13 +45,36 @@ def provision_workspace_member(workspace: Workspace, user: User, project_role: i
         # get_or_create is race-safe on first creation (savepoint + re-get on IntegrityError)
         wm, created = WorkspaceMember.objects.get_or_create(workspace=workspace, member=user, defaults={"role": role})
         if created:
+            _finish_onboarding(user)
             return wm
         wm = WorkspaceMember.objects.select_for_update().get(pk=wm.pk)
         if not wm.is_active:
             wm.is_active = True
             wm.role = role
             wm.save(update_fields=["is_active", "role", "updated_at"])
+            _finish_onboarding(user)
         return wm
+
+
+def _finish_onboarding(user: User) -> None:
+    """A user who finished the profile step and now has a workspace must not be sent back to /onboarding.
+
+    The web (lib/wrappers/authentication-wrapper.tsx) treats is_onboarded as onboarded; components/onboarding/root.tsx
+    reads workspace_join beside workspace_create. Never touches a profile whose profile step is incomplete; a missing
+    Profile row is ignored.
+    """
+    profile = Profile.objects.filter(user=user).first()
+    if profile is None or not isinstance(profile.onboarding_step, dict):
+        return
+    if not profile.onboarding_step.get("profile_complete"):
+        return
+    profile.is_onboarded = True
+    profile.onboarding_step = {**profile.onboarding_step, "workspace_join": True}
+    try:
+        with transaction.atomic():  # savepoint: a failed profile write must not roll back the membership add
+            profile.save(update_fields=["is_onboarded", "onboarding_step", "updated_at"])
+    except DatabaseError:
+        logger.exception("could not mark profile onboarded for user %s", user.pk)
 
 
 def deprovision_if_orphan(workspace_id, user_id) -> bool:

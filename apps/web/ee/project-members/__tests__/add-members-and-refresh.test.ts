@@ -13,18 +13,22 @@ const mk = () => {
 describe("addMembersAndRefresh", () => {
   it("adds once, then refreshes workspace then project", async () => {
     const { calls, deps } = mk();
-    await addMembersAndRefresh(deps, { workspaceSlug: "w", projectId: "p", payload });
+    const res = await addMembersAndRefresh(deps, { workspaceSlug: "w", projectId: "p", payload });
     expect(deps.add).toHaveBeenCalledTimes(1);
     expect(deps.add).toHaveBeenCalledWith("w", "p", payload);
     expect(calls).toEqual(["add", "ws", "proj"]);
+    expect(res).toEqual({ failedRefreshes: [] });
   });
-  it("tolerates refresh failures", async () => {
+  it("tolerates refresh failures and reports which failed", async () => {
     const { deps } = mk();
     deps.refreshWorkspace.mockRejectedValue(new Error("x"));
-    deps.refreshProject.mockRejectedValue(new Error("y"));
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
-    await expect(addMembersAndRefresh(deps, { workspaceSlug: "w", projectId: "p", payload })).resolves.toBeUndefined();
+    const res = await addMembersAndRefresh(deps, { workspaceSlug: "w", projectId: "p", payload });
+    expect(res).toEqual({ failedRefreshes: ["workspace"] });
     expect(deps.refreshProject).toHaveBeenCalled();
+    deps.refreshProject.mockRejectedValue(new Error("y"));
+    const both = await addMembersAndRefresh(deps, { workspaceSlug: "w", projectId: "p", payload });
+    expect(both.failedRefreshes).toEqual(["workspace", "project"]);
     err.mockRestore();
   });
   it("propagates add failure and skips refreshes", async () => {

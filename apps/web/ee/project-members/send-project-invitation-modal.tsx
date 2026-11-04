@@ -6,12 +6,12 @@
 
 // Forked from apps/web/components/project/send-project-invitation-modal.tsx (last change: bdebb4446).
 // Differences: candidates come from the instance-wide user search (>= 3 chars, debounced by Select), not the
-// workspace member list; default role is Member (15); the workspace-role clamp is dropped.
+// workspace member list; default role is Member (15); roles follow the backend rules (allowed-roles.ts).
 import { useEffect, useRef } from "react";
 import { observer } from "mobx-react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 // plane imports
-import { ROLE, EUserPermissions } from "@plane/constants";
+import { ROLE, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@makeplane/propel/components/button";
 import { AddOutline, ChevronDownOutline, CloseOutline } from "@makeplane/propel/icons";
@@ -35,10 +35,12 @@ import { useMember } from "@/hooks/store/use-member";
 import { useUserPermissions } from "@/hooks/store/user";
 // local
 import { addMembersAndRefresh } from "./add-members-and-refresh";
+import { allowedRoles, roleAfterUserChange } from "./allowed-roles";
 import { fetchCandidates } from "./fetch-candidates";
+import { memberAddErrorKey } from "./member-add-error";
 import type { TProjectMemberSearchResult } from "./services/project-member-search.service";
 import { projectMemberSearchService } from "./services/project-member-search.service";
-import { shouldSearch } from "./search-query";
+import { MIN_SEARCH_CHARS, shouldSearch } from "./search-query";
 
 const DEFAULT_ROLE = EUserPermissions.MEMBER;
 
@@ -78,7 +80,7 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
   // plane hooks
   const { t } = useTranslation();
   // store hooks
-  const { getProjectRoleByWorkspaceSlugAndProjectId } = useUserPermissions();
+  const { getProjectRoleByWorkspaceSlugAndProjectId, allowPermissions } = useUserPermissions();
   const {
     project: { bulkAddMembersToProject, fetchProjectMembers },
     workspace: { fetchWorkspaceMembers },
@@ -89,16 +91,26 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
   const {
     formState: { errors, isSubmitting },
     watch,
+    setValue,
+    getValues,
     reset,
     handleSubmit,
     control,
-  } = useForm<FormValues>();
+  } = useForm<FormValues>({ defaultValues });
   const { fields, append, remove } = useFieldArray({
     control,
     name: "members",
   });
   // derived values
   const currentProjectRole = getProjectRoleByWorkspaceSlugAndProjectId(workspaceSlug, projectId);
+  const isWorkspaceAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
+  // roles the backend will accept for the user picked in a row (none picked yet: the requester's own limits)
+  const rolesFor = (memberId: string): number[] =>
+    allowedRoles({
+      requesterProjectRole: currentProjectRole,
+      requesterIsWorkspaceAdmin: isWorkspaceAdmin,
+      targetWorkspaceRole: memberId ? (knownUsers.current.get(memberId)?.workspace_role ?? null) : null,
+    });
 
   const onSubmit = async (formData: FormValues) => {
     if (!workspaceSlug || !projectId || isSubmitting) return;
@@ -113,7 +125,7 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
       },
       { workspaceSlug: workspaceSlug.toString(), projectId: projectId.toString(), payload }
     )
-      .then(() => {
+      .then(({ failedRefreshes }) => {
         reset(defaultValues);
         if (onSuccess) onSuccess();
         onClose();
@@ -122,16 +134,19 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
           type: "success",
           message: "Members added successfully.",
         });
+        if (failedRefreshes.length > 0)
+          setToast({
+            title: t("warning"),
+            type: "warning",
+            message: t("project_settings.members.invite_members.errors.refresh_failed"),
+          });
       })
       .catch((error) => {
         console.error(error);
         setToast({
           title: t("error"),
           type: "error",
-          message:
-            error?.code === "USER_NOT_ELIGIBLE"
-              ? t("project_settings.members.invite_members.not_eligible")
-              : (error?.error ?? t("common.errors.default.message")),
+          message: t(memberAddErrorKey(error)),
         });
       });
   };
@@ -163,10 +178,12 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
     }
   }, [fields, append]);
 
-  const getRoleOptions = (): TRoleOption[] =>
-    Object.entries(ROLE)
-      .filter(([key]) => parseInt(key) <= (currentProjectRole ?? EUserPermissions.GUEST))
+  const getRoleOptions = (memberId: string): TRoleOption[] => {
+    const allowed = rolesFor(memberId);
+    return Object.entries(ROLE)
+      .filter(([key]) => allowed.includes(parseInt(key)))
       .map(([key, label]) => ({ key: parseInt(key) as EUserPermissions, label }));
+  };
 
   const chosenIds = watch("members").map((m) => m.member_id);
 
@@ -194,7 +211,12 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                       <Controller
                         control={control}
                         name={`members.${index}.member_id`}
-                        rules={{ required: "Please select a member" }}
+                        rules={{
+                          required: "Please select a member",
+                          validate: (id) =>
+                            rolesFor(id).length > 0 ||
+                            t("project_settings.members.invite_members.errors.no_role_available"),
+                        }}
                         render={({ field: { value, onChange } }) => (
                           <Select<TProjectMemberSearchResult>
                             infinite
@@ -209,7 +231,14 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                               return res;
                             }}
                             value={(value && knownUsers.current.get(value)) || null}
-                            onChange={onChange}
+                            onChange={(id: string) => {
+                              onChange(id);
+                              // never carry the previous user's role over: reset to the new user's default
+                              setValue(
+                                `members.${index}.role`,
+                                roleAfterUserChange(rolesFor(id), DEFAULT_ROLE) as EUserPermissions
+                              );
+                            }}
                             getOptionValue={(u) => u.id}
                             getOptionLabel={(u) => u.display_name || u.email}
                             getOptionDescription={(u) => u.email}
@@ -227,7 +256,9 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                             emptyMessage={(query) =>
                               shouldSearch(query)
                                 ? t("project_settings.members.invite_members.no_user_found")
-                                : t("project_settings.members.invite_members.type_min_chars")
+                                : t("project_settings.members.invite_members.type_min_chars", {
+                                    count: MIN_SEARCH_CHARS,
+                                  })
                             }
                           >
                             <Select.Trigger<TProjectMemberSearchResult>
@@ -235,17 +266,26 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                               appendIcon={<ChevronDownOutline />}
                             >
                               <span className="min-w-0 grow truncate text-left">
-                                {(value && knownUsers.current.get(value)?.display_name) ||
+                                {(value &&
+                                  (knownUsers.current.get(value)?.display_name ||
+                                    knownUsers.current.get(value)?.email)) ||
                                   t("project_settings.members.invite_members.select_co_worker")}
                               </span>
                             </Select.Trigger>
                           </Select>
                         )}
                       />
-                      {errors.members && errors.members[index]?.member_id && (
+                      {chosenIds[index] && rolesFor(chosenIds[index]).length === 0 ? (
                         <span className="px-1 text-13 text-danger-primary">
-                          {errors.members[index]?.member_id?.message}
+                          {t("project_settings.members.invite_members.errors.no_role_available")}
                         </span>
+                      ) : (
+                        errors.members &&
+                        errors.members[index]?.member_id && (
+                          <span className="px-1 text-13 text-danger-primary">
+                            {errors.members[index]?.member_id?.message}
+                          </span>
+                        )
                       )}
                     </div>
 
@@ -254,9 +294,13 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                         <Controller
                           name={`members.${index}.role`}
                           control={control}
-                          rules={{ required: "Select Role" }}
+                          rules={{
+                            required: "Select Role",
+                            validate: (role) =>
+                              rolesFor(getValues(`members.${index}.member_id`)).includes(role) || "Select Role",
+                          }}
                           render={({ field: { value, onChange } }) => {
-                            const roleOptions = getRoleOptions();
+                            const roleOptions = getRoleOptions(chosenIds[index]);
                             return (
                               <div className="w-32">
                                 <Select<TRoleOption>

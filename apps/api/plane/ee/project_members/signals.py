@@ -8,6 +8,8 @@ from .services import deprovision_if_orphan, provision_workspace_member
 
 @receiver(post_save, sender=ProjectMember, dispatch_uid="ee_project_member_sync_workspace_member")
 def sync_workspace_member(sender, instance, created, **kwargs):
+    if not instance.member_id:  # nullable FK: nothing to sync
+        return
     if not instance.is_active:
         deprovision_if_orphan(instance.workspace_id, instance.member_id)
     elif created and instance.member.is_active and not instance.member.is_bot:
