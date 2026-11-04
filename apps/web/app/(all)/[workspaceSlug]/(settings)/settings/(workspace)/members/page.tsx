@@ -26,6 +26,8 @@ import { SendWorkspaceInvitationModal } from "@/components/workspace/members";
 import { useMember } from "@/hooks/store/use-member";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUserPermissions } from "@/hooks/store/user";
+// ee
+import { useExternalInvitesEnabled } from "@/ee/project-members/use-external-invites-enabled";
 // local imports
 import type { Route } from "./+types/page";
 import { MembersWorkspaceSettingsHeader } from "./header";
@@ -43,6 +45,7 @@ const WorkspaceMembersSettingsPage = observer(function WorkspaceMembersSettingsP
   } = useMember();
   const { currentWorkspace } = useWorkspace();
   const { t } = useTranslation();
+  const externalInvitesEnabled = useExternalInvitesEnabled();
 
   // derived values
   const canPerformWorkspaceAdminActions = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
@@ -101,11 +104,13 @@ const WorkspaceMembersSettingsPage = observer(function WorkspaceMembersSettingsP
   return (
     <SettingsContentWrapper header={<MembersWorkspaceSettingsHeader />} hugging>
       <PageHead title={pageTitle} />
-      <SendWorkspaceInvitationModal
-        isOpen={inviteModal}
-        onClose={() => setInviteModal(false)}
-        onSubmit={handleWorkspaceInvite}
-      />
+      {externalInvitesEnabled && (
+        <SendWorkspaceInvitationModal
+          isOpen={inviteModal}
+          onClose={() => setInviteModal(false)}
+          onSubmit={handleWorkspaceInvite}
+        />
+      )}
       <section
         className={cn("size-full", {
           "opacity-60": !canPerformWorkspaceMemberActions,
@@ -135,7 +140,7 @@ const WorkspaceMembersSettingsPage = observer(function WorkspaceMembersSettingsP
               handleUpdate={handleRoleFilterUpdate}
               memberType="workspace"
             />
-            {canPerformWorkspaceAdminActions && (
+            {canPerformWorkspaceAdminActions && externalInvitesEnabled && (
               <Button
                 variant="primary"
                 size="md"

@@ -12,4 +12,5 @@ urlpatterns = [
     ),
     path("", include("plane.ee.work_item_types.urls")),
     path("", include("plane.ee.god_mode.urls")),
+    path("", include("plane.ee.project_members.urls")),
 ]

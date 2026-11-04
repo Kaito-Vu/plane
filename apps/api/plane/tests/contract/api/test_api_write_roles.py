@@ -368,14 +368,16 @@ class TestProjectMemberRoleCap:
         assert pm.role == role
         assert pm.member_id == holder.id
 
-    def test_cannot_add_inactive_workspace_member(self, api_key_client, workspace, project):
+    def test_add_inactive_workspace_member_reactivates(self, api_key_client, workspace, project):
+        # project-first membership (spec D5): an inactive ws row is reactivated, not rejected
         target = _make_user(workspace, project, MEMBER, None)
         WorkspaceMember.objects.filter(workspace=workspace, member=target).update(is_active=False)
         resp = api_key_client.post(
             _members_url(workspace, project), {"member": str(target.id), "role": MEMBER}, format="json"
         )
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        assert not ProjectMember.objects.filter(project=project, member=target).exists()
+        assert resp.status_code == status.HTTP_201_CREATED
+        assert WorkspaceMember.objects.get(workspace=workspace, member=target).is_active
+        assert ProjectMember.objects.filter(project=project, member=target).exists()
 
     def test_cannot_change_role_of_inactive_workspace_member(self, api_key_client, workspace, project, member_user):
         WorkspaceMember.objects.filter(workspace=workspace, member=member_user).update(is_active=False)

@@ -6,7 +6,7 @@
 
 // local imports
 import { coreSidebarMenuLinks } from "./core";
-import { adminAccessMenuItem } from "@/ee/god-mode/sidebar";
+import { adminAccessMenuItem, externalInvitesMenuItem } from "@/ee/god-mode/sidebar";
 import type { TSidebarMenuItem } from "./types";
 
 export function useSidebarMenu(): TSidebarMenuItem[] {
@@ -18,5 +18,6 @@ export function useSidebarMenu(): TSidebarMenuItem[] {
     coreSidebarMenuLinks.ai,
     coreSidebarMenuLinks.image,
     adminAccessMenuItem,
+    externalInvitesMenuItem,
   ];
 }

@@ -49,6 +49,9 @@ class TestProjectSelfJoinRole:
             workspace=workspace, project=project, member=joiner, role=ADMIN, is_active=False
         )
 
+        # saving the inactive row deprovisions the joiner (their only project); restore the ws row
+        WorkspaceMember.objects.filter(workspace=workspace, member=joiner).update(is_active=True)
+
         response = _join(joiner, workspace, project)
 
         assert response.status_code == status.HTTP_201_CREATED

@@ -264,7 +264,7 @@ class TestProjectAPIGet(TestProjectBase):
         Project.objects.create(name="Project 2", identifier="P2", workspace=workspace)
 
         # Add guest to only one project
-        ProjectMember.objects.create(project=project1, member=guest_user, role=10, is_active=True)
+        ProjectMember.objects.create(project=project1, member=guest_user, role=5, is_active=True)
 
         session_client.force_authenticate(user=guest_user)
 

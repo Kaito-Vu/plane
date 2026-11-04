@@ -44,9 +44,9 @@ D3. Chỉ super admin (god mode) tạo workspace [CSP]: đặt `DISABLE_WORKSPAC
 D4. Backend, 0 file core. Trong `plane/ee/project_members/`:
 
 - Hàm dịch vụ `provision_workspace_member(workspace, user, project_role)`: một `transaction.atomic`, khóa hàng `WorkspaceMember` TRƯỚC (cùng thứ tự với deprovision), idempotent, không hạ role đang có (trừ khi kích hoạt lại, theo D1).
-- `ProjectMemberViewSet` con, shadow route `workspaces/<slug>/projects/<id>/members/` (create, partial_update).
+- `ProjectMemberViewSet` con, shadow route `workspaces/<slug>/projects/<id>/members/` (chỉ `create`; `partial_update` giữ nguyên của core).
 - `create`: mọi `member_id` phải là User tồn tại, `is_active`, không bot. Sai một người thì trả 400, mã `USER_NOT_ELIGIBLE`, cùng một dạng lỗi cho "không tồn tại" và "không đủ điều kiện", không ghi gì. Sau đó cấp ws member rồi gọi `super().create()`.
-- Giới hạn còn nguyên từ core, ghi rõ trong tài liệu: ws Admin chỉ thêm được làm project Admin (`member.py:83`); project Admin không phải ws Admin không cấp được role 20 (`:271`). `partial_update` chỉ nâng ws role lên 15 khi cần.
+- Giới hạn còn nguyên từ core, ghi rõ trong tài liệu: ws Admin chỉ thêm được làm project Admin (`member.py:83`); project Admin không phải ws Admin không cấp được role 20 (`:271`). Hàm dịch vụ KHÔNG BAO GIỜ nâng role của dòng workspace đang active (ranh giới của core: ws Guest không thể là project Member/Admin; muốn nâng phải do ws Admin). Chỉ tạo dòng còn thiếu hoặc bật lại dòng không active với role theo bảng D1. Ruling 2026-11-04.
 - Shadow cả route thêm member của API v1 (`ee/api_urls.py`) dùng cùng hàm dịch vụ, nếu không khóa API vẫn qua mặt.
 
 D5. Gỡ khi hết project [CSP]: khi user không còn `ProjectMember` active nào trong workspace, không phải ws Admin và không phải `Workspace.owner` thì tắt `WorkspaceMember` (`is_active=False`). Cơ chế:

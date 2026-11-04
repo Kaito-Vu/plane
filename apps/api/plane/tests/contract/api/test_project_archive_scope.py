@@ -113,8 +113,10 @@ class TestProjectArchiveScope:
         """An active project row does not grant archive or unarchive without an
         active workspace membership."""
         user = _make_user("inactive")
-        WorkspaceMember.objects.create(workspace=workspace, member=user, role=20, is_active=False)
+        WorkspaceMember.objects.create(workspace=workspace, member=user, role=20)
         ProjectMember.objects.create(project=private_project, workspace=workspace, member=user, role=20, is_active=True)
+        # suspend after the project row exists (creating it would otherwise reactivate the ws row)
+        WorkspaceMember.objects.filter(workspace=workspace, member=user).update(is_active=False)
         client = _client_for(user)
         url = _archive_url(workspace.slug, private_project.id)
 
