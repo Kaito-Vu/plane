@@ -3,7 +3,6 @@ import type { SingleOrArray, TFilterValue } from "@plane/types";
 import { FILTER_FIELD_TYPE } from "@plane/types";
 import { useTranslation } from "@plane/i18n";
 import { cn } from "@plane/utils";
-import { COMMON_FILTER_ITEM_BORDER_CLASSNAME } from "@/components/rich-filters/shared";
 import type { TFilterValueInputProps } from "@/components/rich-filters/shared";
 
 const INPUT = "h-full w-28 bg-transparent px-2 text-body-xs-regular outline-none placeholder:text-placeholder";
@@ -93,9 +92,7 @@ export function AttributeFilterValueInput<V extends TFilterValue>(props: TFilter
       : [String(condition.value)];
   const set = (v: string | string[] | undefined) => onChange(v as unknown as SingleOrArray<V>);
   const wrap = (children: React.ReactNode) => (
-    <div className={cn("flex h-full items-center", { [COMMON_FILTER_ITEM_BORDER_CLASSNAME]: !isDisabled })}>
-      {children}
-    </div>
+    <div className={cn("flex h-full items-center", { "border-r border-subtle-1": !isDisabled })}>{children}</div>
   );
   if (type === FILTER_FIELD_TYPE.TEXT || type === FILTER_FIELD_TYPE.NUMBER)
     return wrap(
