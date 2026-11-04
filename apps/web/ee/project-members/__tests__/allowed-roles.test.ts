@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowedRoles, defaultRole } from "../allowed-roles";
+import { allowedRoles, defaultRole, roleAfterUserChange } from "../allowed-roles";
 
 const a = (requesterProjectRole: number | undefined, requesterIsWorkspaceAdmin: boolean, t: number | null) =>
   allowedRoles({ requesterProjectRole, requesterIsWorkspaceAdmin, targetWorkspaceRole: t });
@@ -35,5 +35,14 @@ describe("defaultRole", () => {
     expect(defaultRole([5])).toBe(5);
     expect(defaultRole([20])).toBe(20);
     expect(defaultRole([])).toBeUndefined();
+  });
+});
+
+describe("roleAfterUserChange", () => {
+  it("resets to the new user's default, never keeping a previous Admin", () => {
+    expect(roleAfterUserChange([20, 15, 5], 15)).toBe(15);
+    expect(roleAfterUserChange([20], 15)).toBe(20);
+    expect(roleAfterUserChange([5], 15)).toBe(5);
+    expect(roleAfterUserChange([], 15)).toBe(15);
   });
 });

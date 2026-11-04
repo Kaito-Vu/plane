@@ -21,3 +21,7 @@ export const allowedRoles = (args: {
 // Member when allowed, else the highest allowed role; undefined when nothing is allowed.
 export const defaultRole = (allowed: number[]): number | undefined =>
   allowed.includes(MEMBER) ? MEMBER : allowed.length ? Math.max(...allowed) : undefined;
+
+// Role for a row whose user just changed: always the default for the NEW user, never the previous pick.
+export const roleAfterUserChange = (allowedForNewUser: number[], fallback: number): number =>
+  defaultRole(allowedForNewUser) ?? fallback;

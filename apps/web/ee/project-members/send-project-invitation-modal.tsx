@@ -35,7 +35,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { useUserPermissions } from "@/hooks/store/user";
 // local
 import { addMembersAndRefresh } from "./add-members-and-refresh";
-import { allowedRoles, defaultRole } from "./allowed-roles";
+import { allowedRoles, roleAfterUserChange } from "./allowed-roles";
 import { fetchCandidates } from "./fetch-candidates";
 import { memberAddErrorKey } from "./member-add-error";
 import type { TProjectMemberSearchResult } from "./services/project-member-search.service";
@@ -92,6 +92,7 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
     formState: { errors, isSubmitting },
     watch,
     setValue,
+    getValues,
     reset,
     handleSubmit,
     control,
@@ -232,11 +233,11 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                             value={(value && knownUsers.current.get(value)) || null}
                             onChange={(id: string) => {
                               onChange(id);
-                              // re-clamp the row's role to what this user's workspace role allows
-                              const allowed = rolesFor(id);
-                              const current = watch(`members.${index}.role`);
-                              if (!allowed.includes(current))
-                                setValue(`members.${index}.role`, (defaultRole(allowed) ?? DEFAULT_ROLE) as EUserPermissions);
+                              // never carry the previous user's role over: reset to the new user's default
+                              setValue(
+                                `members.${index}.role`,
+                                roleAfterUserChange(rolesFor(id), DEFAULT_ROLE) as EUserPermissions
+                              );
                             }}
                             getOptionValue={(u) => u.id}
                             getOptionLabel={(u) => u.display_name || u.email}
@@ -293,7 +294,11 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                         <Controller
                           name={`members.${index}.role`}
                           control={control}
-                          rules={{ required: "Select Role" }}
+                          rules={{
+                            required: "Select Role",
+                            validate: (role) =>
+                              rolesFor(getValues(`members.${index}.member_id`)).includes(role) || "Select Role",
+                          }}
                           render={({ field: { value, onChange } }) => {
                             const roleOptions = getRoleOptions(chosenIds[index]);
                             return (
