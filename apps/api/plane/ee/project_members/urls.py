@@ -15,7 +15,9 @@ from .views import EeProjectMemberViewSet, EeProjectViewSet, ProjectMemberSearch
 _base = "workspaces/<str:slug>/projects/<uuid:project_id>/members/"
 
 urlpatterns = [
-    path("workspaces/<str:slug>/projects/", EeProjectViewSet.as_view({"get": "list", "post": "create"}), name="project"),
+    path(
+        "workspaces/<str:slug>/projects/", EeProjectViewSet.as_view({"get": "list", "post": "create"}), name="project"
+    ),
     path(_base, EeProjectMemberViewSet.as_view({"get": "list", "post": "create"}), name="project-member"),
     path(_base + "search/", ProjectMemberSearchEndpoint.as_view(), name="project-member-search"),
     path(

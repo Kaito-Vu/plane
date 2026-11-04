@@ -77,7 +77,9 @@ class TestDeprovision:
         pm = add_member(workspace, project, user)
         session_client.delete(base(workspace, project) + f"{pm.id}/")
         assert not ws_row(workspace, user).is_active
-        r = session_client.post(base(workspace, project), {"members": [{"member_id": str(user.id), "role": 15}]}, format="json")
+        r = session_client.post(
+            base(workspace, project), {"members": [{"member_id": str(user.id), "role": 15}]}, format="json"
+        )
         assert r.status_code == 201
         assert ws_row(workspace, user).is_active
 
@@ -94,7 +96,9 @@ class TestDeprovision:
         pm_owner.save()
         assert ws_row(workspace, create_user).is_active
 
-    def test_user_in_two_workspaces_only_affected_workspace_disabled(self, session_client, workspace, project, create_user):
+    def test_user_in_two_workspaces_only_affected_workspace_disabled(
+        self, session_client, workspace, project, create_user
+    ):
         ws2 = Workspace.objects.create(name="W2", owner=create_user, slug="w2-slug")
         WorkspaceMember.objects.create(workspace=ws2, member=create_user, role=20)
         p2 = mk_project(ws2, create_user, "TWO")

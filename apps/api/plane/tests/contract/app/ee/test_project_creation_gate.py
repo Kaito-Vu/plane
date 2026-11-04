@@ -5,7 +5,6 @@ import pytest
 from django.urls import resolve
 from rest_framework.test import APIClient
 
-from plane.app.permissions.project import ProjectBasePermission
 from plane.db.models import User, WorkspaceMember
 from plane.ee.project_members import permissions
 from plane.ee.project_members.views import EeProjectViewSet

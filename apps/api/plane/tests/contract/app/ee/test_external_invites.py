@@ -114,7 +114,9 @@ def test_toggle_god_mode_only(session_client, create_user, workspace):
     assert session_client.patch(url, {"enabled": True}, format="json").status_code == 403  # ws Admin
     assert not InstanceConfiguration.objects.filter(key=KEY).exists()
 
-    instance = Instance.objects.create(instance_name="t", instance_id="t", current_version="1", last_checked_at=timezone.now())
+    instance = Instance.objects.create(
+        instance_name="t", instance_id="t", current_version="1", last_checked_at=timezone.now()
+    )
     InstanceAdmin.objects.create(instance=instance, user=create_user, role=20)
     create_user.refresh_from_db()  # signal flips is_superuser in the DB
     assert session_client.patch(url, {"enabled": "yes"}, format="json").status_code == 400
@@ -127,7 +129,9 @@ def test_toggle_god_mode_only(session_client, create_user, workspace):
 
 
 def _seed_invites(workspace, project, create_user):
-    wi = WorkspaceMemberInvite.objects.create(workspace=workspace, email=create_user.email, token="a", role=15, accepted=True)
+    wi = WorkspaceMemberInvite.objects.create(
+        workspace=workspace, email=create_user.email, token="a", role=15, accepted=True
+    )
     pi = ProjectMemberInvite.objects.create(
         workspace=workspace, project=project, email=create_user.email, token="b", role=15, accepted=True
     )

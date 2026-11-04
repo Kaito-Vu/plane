@@ -18,7 +18,7 @@ class EeConfig(AppConfig):
 
         from plane.celery import app
 
-        from .project_members import signals, tasks  # noqa: F401  (tasks: not covered by autodiscover)
+        from .project_members import signals as project_member_signals, tasks  # noqa: F401  (tasks: not covered by autodiscover)
 
         app.conf.beat_schedule["ee-sweep-orphan-workspace-members"] = {
             "task": "plane.ee.project_members.tasks.ee_sweep_orphan_workspace_members",

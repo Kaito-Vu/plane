@@ -40,9 +40,7 @@ def provision_workspace_member(workspace: Workspace, user: User, project_role: i
     role = PROJECT_TO_WORKSPACE_ROLE.get(project_role, 5) if isinstance(project_role, int) else 5
     with transaction.atomic():
         # get_or_create is race-safe on first creation (savepoint + re-get on IntegrityError)
-        wm, created = WorkspaceMember.objects.get_or_create(
-            workspace=workspace, member=user, defaults={"role": role}
-        )
+        wm, created = WorkspaceMember.objects.get_or_create(workspace=workspace, member=user, defaults={"role": role})
         if created:
             return wm
         wm = WorkspaceMember.objects.select_for_update().get(pk=wm.pk)

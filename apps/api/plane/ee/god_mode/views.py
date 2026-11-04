@@ -42,9 +42,7 @@ class GodModeWorkspaceArchiveEndpoint(BaseAPIView):
     def post(self, request, slug):
         workspace = get_object_or_404(Workspace, slug=slug)
         # Workspaces have no archive state, so archive every active project in it.
-        count = Project.objects.filter(workspace=workspace, archived_at__isnull=True).update(
-            archived_at=timezone.now()
-        )
+        count = Project.objects.filter(workspace=workspace, archived_at__isnull=True).update(archived_at=timezone.now())
         return Response({"archived_projects": count}, status=status.HTTP_200_OK)
 
 
