@@ -8,11 +8,13 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.response import Response
 
 from plane.app.permissions.base import ROLE, allow_permission
+from plane.app.views.project.base import ProjectViewSet
 from plane.app.views.project.member import ProjectMemberViewSet
 from plane.app.views.base import BaseAPIView
 from plane.api.views.member import ProjectMemberListCreateAPIEndpoint
 from plane.db.models import ProjectMember, User, Workspace
 
+from .permissions import is_workspace_admin
 from .services import (
     NOT_ELIGIBLE_MESSAGE,
     PROJECT_TO_WORKSPACE_ROLE,
@@ -154,3 +156,12 @@ class ProjectMemberSearchEndpoint(BaseAPIView):
                 for u in users
             ]
         )
+
+
+class EeProjectViewSet(ProjectViewSet):
+    """Only workspace admins create projects."""
+
+    def create(self, request, slug):
+        if not is_workspace_admin(request.user, slug):
+            return Response({"error": "Only workspace admins can create projects"}, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, slug=slug)

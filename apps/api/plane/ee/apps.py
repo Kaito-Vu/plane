@@ -10,3 +10,6 @@ class EeConfig(AppConfig):
         from .god_mode import access
 
         access.install()
+        from .project_members import permissions
+
+        permissions.install()
