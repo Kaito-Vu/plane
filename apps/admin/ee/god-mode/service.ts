@@ -37,6 +37,22 @@ class GodModeService extends InstanceService {
         throw e?.response?.data;
       });
   }
+
+  async getExternalInvites(): Promise<{ enabled: boolean }> {
+    return this.get("/api/instances/external-invites/")
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async setExternalInvites(enabled: boolean): Promise<{ enabled: boolean }> {
+    return this.patch("/api/instances/external-invites/", { enabled })
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
 }
 
 export const godModeService = new GodModeService();

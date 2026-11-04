@@ -159,6 +159,7 @@ packages/i18n/src/locales/vi-VN/auth.json
 packages/i18n/src/locales/zh-CN/auth.json
 packages/i18n/src/locales/zh-TW/auth.json
 apps/admin/app/routes.ts
+apps/admin/hooks/use-sidebar-menu/index.ts
 apps/admin/hooks/oauth/index.ts
 apps/admin/hooks/oauth/core.tsx
 apps/admin/components/common/header/core.ts
