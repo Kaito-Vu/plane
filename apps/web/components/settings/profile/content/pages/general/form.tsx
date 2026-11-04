@@ -19,6 +19,7 @@ import type { IUser, TUserProfile } from "@plane/types";
 
 import { getFileURL } from "@plane/utils";
 // components
+import { isSsoUser } from "@/ee/sso-policy/use-is-sso-user";
 import { DeactivateAccountModal } from "@/components/account/deactivate-account-modal";
 import { ImagePickerPopover } from "@/components/core/image-picker-popover";
 import { ChangeEmailModal } from "@/components/core/modals/change-email-modal";
@@ -232,9 +233,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                         <img
                           src={getFileURL(userAvatar)}
                           className="absolute top-0 left-0 h-full w-full rounded-lg object-cover"
-                          onClick={() => setIsImageUploadModalOpen(true)}
                           alt={currentUser?.display_name}
-                          role="button"
                         />
                       </div>
                     )}
@@ -291,6 +290,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                           value={value}
                           onChange={onChange}
                           ref={ref}
+                          disabled={isSsoUser(currentUser)}
                           placeholder="Enter your first name"
                           maxLength={50}
                           autoComplete="on"
@@ -320,6 +320,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                           value={value}
                           onChange={onChange}
                           ref={ref}
+                          disabled={isSsoUser(currentUser)}
                           placeholder="Enter your last name"
                           maxLength={50}
                           autoComplete="on"
@@ -353,6 +354,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                           value={value}
                           onChange={onChange}
                           ref={ref}
+                          disabled={isSsoUser(currentUser)}
                           placeholder="Enter your display name"
                           maxLength={50}
                         />

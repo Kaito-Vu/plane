@@ -54,7 +54,7 @@ services:
     image: valkey/valkey:9.2-alpine
     restart: always
     volumes:
-      - redisdata:/data
+      - ${DATA_DIR:-./data}/redis:/data
 
   plane-mq:
     image: rabbitmq:4.4.0-management-alpine
@@ -64,14 +64,14 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - ${DATA_DIR:-./data}/rabbitmq:/var/lib/rabbitmq
 
   plane-minio:
     image: docker.io/pgsty/silo:RELEASE.2026-10-26T00-00-00Z
     restart: always
     command: server /export --console-address ":9090"
     volumes:
-      - uploads:/export
+      - ${DATA_DIR:-./data}/uploads:/export
     environment:
       MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
@@ -87,8 +87,3 @@ services:
       FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
       BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
     depends_on: [web, api, space, admin]
-
-volumes:
-  redisdata:
-  uploads:
-  rabbitmq_data:

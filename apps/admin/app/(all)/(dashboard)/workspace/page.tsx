@@ -17,7 +17,7 @@ import { cn } from "@plane/utils";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { Skeleton } from "@/components/common/skeleton";
-import { WorkspaceListItem } from "@/components/workspace/list-item";
+import { WorkspaceListItem } from "@/ee/god-mode/workspace-list-item";
 import { setPromiseToast } from "@plane/blocks/toast";
 // hooks
 import { useInstance, useWorkspace } from "@/hooks/store";
@@ -65,14 +65,7 @@ const WorkspaceManagementPage = observer(function WorkspaceManagementPage(_props
       },
     });
 
-    await updateConfigPromise
-      .then(() => {
-        setIsSubmitting(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setIsSubmitting(false);
-      });
+    await updateConfigPromise.catch((err) => console.error(err)).finally(() => setIsSubmitting(false));
   };
 
   return (
@@ -127,8 +120,7 @@ const WorkspaceManagementPage = observer(function WorkspaceManagementPage(_props
                   )}
                 </div>
                 <div className={cn("text-11 leading-5 font-regular text-tertiary")}>
-                  You can&apos;t yet delete workspaces and you can only go to the workspace if you are an Admin or a
-                  Member.
+                  You can only go to the workspace if you are an Admin or a Member.
                 </div>
               </div>
               <div className="flex items-center gap-2">

@@ -18,6 +18,7 @@ import { setToast } from "@plane/blocks/toast";
 import { PasswordStrengthIndicator } from "@plane/blocks/auth";
 import { getPasswordStrength } from "@plane/utils";
 // components
+import { isSsoUser } from "@/ee/sso-policy/use-is-sso-user";
 import { ProfileSettingsHeading } from "@/components/settings/profile/heading";
 // helpers
 import { authErrorHandler, EAuthenticationErrorCodes, passwordErrors } from "@/helpers/authentication.helper";
@@ -131,6 +132,14 @@ export const SecurityProfileSettings = observer(function SecurityProfileSettings
     );
 
   const renderPasswordMatchError = !isRetryPasswordInputFocused || confirmPassword.length >= password.length;
+
+  if (isSsoUser(currentUser))
+    return (
+      <div className="size-full">
+        <ProfileSettingsHeading title={t("auth.common.password.change_password.label.default")} />
+        <p className="mt-7 text-13 text-secondary">Your password is managed by your identity provider.</p>
+      </div>
+    );
 
   return (
     <div className="size-full">

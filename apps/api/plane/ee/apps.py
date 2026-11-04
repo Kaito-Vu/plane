@@ -7,3 +7,6 @@ class EeConfig(AppConfig):
 
     def ready(self):
         from .work_item_types import signals  # noqa: F401
+        from .god_mode import access
+
+        access.install()

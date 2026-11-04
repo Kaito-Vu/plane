@@ -1,0 +1,42 @@
+import type { IInstanceAdmin } from "@plane/types";
+import { InstanceService } from "@plane/services";
+
+/**
+ * God-mode API calls. Reuses the authenticated HTTP client of InstanceService (get/post/delete are public),
+ * so no core service file needs to change.
+ */
+class GodModeService extends InstanceService {
+  async addAdmin(email: string): Promise<IInstanceAdmin> {
+    return this.post("/api/instances/admins/", { email })
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async removeAdmin(id: string): Promise<void> {
+    return this.delete(`/api/instances/admins/${id}/`)
+      .then(() => undefined)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async deleteWorkspace(slug: string): Promise<void> {
+    return this.delete(`/api/instances/workspaces/${encodeURIComponent(slug)}/`)
+      .then(() => undefined)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async archiveWorkspaceProjects(slug: string): Promise<{ archived_projects: number }> {
+    return this.post(`/api/instances/workspaces/${encodeURIComponent(slug)}/archive/`)
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+}
+
+export const godModeService = new GodModeService();

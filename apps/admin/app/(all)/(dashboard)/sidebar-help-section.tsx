@@ -10,14 +10,7 @@ import Link from "next/link";
 import { WEB_BASE_URL } from "@plane/constants";
 // plane internal packages
 import { Tooltip } from "@makeplane/propel/components/tooltip";
-import {
-  ArrowNarrowLeftOutline,
-  ChatOutline,
-  Github,
-  HelpOutline,
-  NewTabOutline,
-  PagesOutline,
-} from "@makeplane/propel/icons";
+import { ArrowNarrowLeftOutline, HelpOutline, NewTabOutline, PagesOutline } from "@makeplane/propel/icons";
 import { cn } from "@plane/utils";
 // hooks
 import { useInstance, useTheme } from "@/hooks/store";
@@ -28,16 +21,6 @@ const helpOptions = [
     name: "Documentation",
     href: "https://docs.plane.so/",
     Icon: PagesOutline,
-  },
-  {
-    name: "Join our Forum",
-    href: "https://forum.plane.so",
-    Icon: ChatOutline,
-  },
-  {
-    name: "Report a bug",
-    href: "https://github.com/makeplane/plane/issues/new/choose",
-    Icon: Github,
   },
 ];
 
