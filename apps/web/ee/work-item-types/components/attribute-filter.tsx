@@ -26,7 +26,7 @@ import {
   getMultiSelectConfig,
   getSingleSelectConfig,
 } from "@plane/utils";
-import { FilterOption } from "@/components/issues/issue-layouts/filters";
+import { MenuRadioItem } from "@makeplane/propel/components/menu";
 import type { TFiltersOperatorConfigs } from "@/hooks/rich-filters/use-filters-operator-configs";
 import { store } from "@/lib/store-context";
 import { ALL_ISSUES } from "@plane/constants";
@@ -170,13 +170,11 @@ const useEeGroupByAvailable = () => {
   return /\/projects\/[^/]+\/issues\/?$/.test(pathname ?? "");
 };
 
-/** Extra group-by options (type, select/member/boolean attributes) under the core ones. */
+/** Extra group-by options (type, select/member/boolean attributes); render inside the core `MenuRadioGroup`. */
 export const AttributeGroupByOptions = observer(function AttributeGroupByOptions(props: {
-  selected: TIssueGroupByOptions | undefined;
-  exclude?: TIssueGroupByOptions | undefined;
-  onSelect: (key: TIssueGroupByOptions) => void;
+  exclude?: TIssueGroupByOptions | null | undefined;
 }) {
-  const { selected, exclude, onSelect } = props;
+  const { exclude } = props;
   const { workspaceSlug, projectId } = useParams();
   const { t } = useTranslation();
   const { getProjectAttributes, typeIdsByProject } = useAttributes();
@@ -195,13 +193,7 @@ export const AttributeGroupByOptions = observer(function AttributeGroupByOptions
       {options
         .filter((o) => o.key !== exclude)
         .map((o) => (
-          <FilterOption
-            key={o.key}
-            isChecked={selected === o.key}
-            onClick={() => onSelect(o.key)}
-            title={o.title}
-            multiple={false}
-          />
+          <MenuRadioItem key={o.key} value={o.key} label={o.title} />
         ))}
     </>
   );

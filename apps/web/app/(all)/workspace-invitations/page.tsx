@@ -5,12 +5,15 @@
  */
 
 import { observer } from "mobx-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import { BoxesOutline, CloseOutline, TickOutline, UserOutline } from "@makeplane/propel/icons";
+// plane imports
+import { AnchorButton } from "@makeplane/propel/components/anchor-button";
+import { Button } from "@makeplane/propel/components/button";
+import { EmptyStateDetailed } from "@plane/blocks/empty-state";
 // components
 import { LogoSpinner } from "@/components/common/logo-spinner";
-import { EmptySpace, EmptySpaceItem } from "@/components/ui/empty-space";
 // constants
 import { WORKSPACE_INVITATION } from "@plane/constants";
 // helpers
@@ -51,9 +54,13 @@ function WorkspaceInvitationPage() {
         accepted: true,
         token: token,
       })
-      .then(() =>
-        router.push(invitationDetail.email === currentUser?.email ? `/${invitationDetail.workspace.slug}` : "/")
-      )
+      .then(() => {
+        if (invitationDetail.email === currentUser?.email) {
+          router.push(`/${invitationDetail.workspace.slug}`);
+        } else {
+          router.push("/");
+        }
+      })
       .catch((err: unknown) => console.error(err));
   };
 
@@ -64,7 +71,9 @@ function WorkspaceInvitationPage() {
         accepted: false,
         token: token,
       })
-      .then(() => router.push("/"))
+      .then(() => {
+        router.push("/");
+      })
       .catch((err: unknown) => console.error(err));
   };
 
@@ -73,38 +82,69 @@ function WorkspaceInvitationPage() {
       <div className="flex h-full w-full flex-col items-center justify-center px-3">
         {invitationDetail && !invitationDetail.responded_at ? (
           error ? (
-            <div className="shadow-2xl flex w-full flex-col space-y-4 rounded-sm border border-subtle bg-surface-1 px-4 py-8 text-center md:w-1/3">
-              <h2 className="text-18 uppercase">INVITATION NOT FOUND</h2>
-            </div>
+            <EmptyStateDetailed
+              align="center"
+              assetKey="invalid-link"
+              assetClassName="size-40"
+              title="INVITATION NOT FOUND"
+            />
           ) : (
-            <EmptySpace
+            <EmptyStateDetailed
+              align="center"
+              assetKey="inbox"
               title={`You have been invited to ${invitationDetail.workspace.name}`}
               description="Your workspace is where you'll create projects, collaborate on your work items, and organize different streams of work in your Plane account."
-            >
-              <EmptySpaceItem Icon={TickOutline} title="Accept" action={handleAccept} />
-              <EmptySpaceItem Icon={CloseOutline} title="Ignore" action={handleReject} />
-            </EmptySpace>
+              actions={[
+                { label: "Accept", variant: "primary", onClick: handleAccept },
+                { label: "Ignore", variant: "secondary", onClick: handleReject },
+              ]}
+            />
           )
         ) : error || invitationDetail?.responded_at ? (
           invitationDetail?.accepted ? (
-            <EmptySpace
+            <EmptyStateDetailed
+              align="center"
+              assetKey="project"
               title={`You are already a member of ${invitationDetail.workspace.name}`}
               description="Your workspace is where you'll create projects, collaborate on your work items, and organize different streams of work in your Plane account."
-            >
-              <EmptySpaceItem Icon={BoxesOutline} title="Continue to home" href="/" />
-            </EmptySpace>
+              customButton={
+                <Button
+                  variant="primary"
+                  size="lg"
+                  stretch="auto"
+                  label="Continue to home"
+                  nativeButton={false}
+                  render={<Link href="/" />}
+                />
+              }
+            />
           ) : (
-            <EmptySpace
+            <EmptyStateDetailed
+              align="center"
+              assetKey="invalid-link"
               title="This invitation link is not active anymore."
               description="Your workspace is where you'll create projects, collaborate on your work items, and organize different streams of work in your Plane account."
-              link={{ text: "Or start from an empty project", href: "/" }}
-            >
-              {!currentUser ? (
-                <EmptySpaceItem Icon={UserOutline} title="Sign in to continue" href="/" />
-              ) : (
-                <EmptySpaceItem Icon={BoxesOutline} title="Continue to home" href="/" />
-              )}
-            </EmptySpace>
+              customButton={
+                <div className="flex flex-col items-center gap-4">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    stretch="auto"
+                    label={!currentUser ? "Sign in to continue" : "Continue to home"}
+                    nativeButton={false}
+                    render={<Link href="/" />}
+                  />
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                    <AnchorButton
+                      variant="secondary"
+                      size="md"
+                      render={<Link href="/" />}
+                      label="Or start from an empty project"
+                    />
+                  </div>
+                </div>
+              }
+            />
           )
         ) : (
           <div className="flex h-full w-full items-center justify-center">

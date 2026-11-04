@@ -4,52 +4,38 @@
  * See the LICENSE file for details.
  */
 
-import { useTheme } from "next-themes";
 // plane imports
 import { Button } from "@makeplane/propel/components/button";
-// assets
-import maintenanceModeDarkModeImage from "@/app/assets/instance/maintenance-mode-dark.svg?url";
-import maintenanceModeLightModeImage from "@/app/assets/instance/maintenance-mode-light.svg?url";
+import { EmptyStateDetailed } from "@plane/blocks/empty-state";
 // layouts
 import DefaultLayout from "@/layouts/default-layout";
 
 // Production Error Component
 interface ProdErrorComponentProps {
   onGoHome: () => void;
+  onReload: () => void;
 }
 
-export function ProdErrorComponent({ onGoHome }: ProdErrorComponentProps) {
-  // hooks
-  const { resolvedTheme } = useTheme();
-
-  // derived values
-  const maintenanceModeImage = resolvedTheme === "dark" ? maintenanceModeDarkModeImage : maintenanceModeLightModeImage;
-
+export function ProdErrorComponent({ onGoHome, onReload }: ProdErrorComponentProps) {
   return (
     <DefaultLayout>
-      <div className="relative container mx-auto flex h-full w-full max-w-xl flex-col items-center justify-center gap-2 gap-y-6 bg-surface-1 px-6 text-center">
-        <div className="relative w-full">
-          <img
-            src={maintenanceModeImage}
-            height="176"
-            width="288"
-            alt="ProjectSettingImg"
-            className="h-full w-full object-fill object-center"
-          />
-        </div>
-        <div className="relative mt-4 flex w-full flex-col gap-4">
-          <div className="flex flex-col gap-2.5">
-            <h1 className="text-left text-18 font-semibold text-primary">&#x1F6A7; Looks like something went wrong!</h1>
-            <span className="text-left text-14 font-medium text-secondary">
-              We track these errors automatically and working on getting things back up and running. In the meantime,
-              try refreshing.
-            </span>
-          </div>
-
-          <div className="flex items-center justify-start gap-6">
-            <Button variant="primary" size="md" stretch="auto" label="Go to home" onClick={onGoHome} />
-          </div>
-        </div>
+      {/* The blocks illustration is themed through CSS tokens, so no theme lookup is needed here. */}
+      <div className="size-full px-6">
+        <EmptyStateDetailed
+          align="center"
+          assetKey="server-error"
+          assetClassName="size-40"
+          title="🚧 Looks like something went wrong!"
+          description="We track these errors automatically and working on getting things back up and running. In the meantime, try refreshing."
+          customButton={
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Button variant="primary" size="lg" stretch="auto" label="Reload" onClick={onReload} />
+                <Button variant="secondary" size="lg" stretch="auto" label="Go to home" onClick={onGoHome} />
+              </div>
+            </div>
+          }
+        />
       </div>
     </DefaultLayout>
   );

@@ -4,8 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { SlidersHorizontal } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import type { IconGlyph } from "@makeplane/propel/components/icon";
 import {
   CyclesOutline,
   EstimateOutline,
@@ -14,6 +13,7 @@ import {
   MembersOutline,
   ModuleOutline,
   PagesOutline,
+  PreferencesOutline,
   StateOutline,
   TriggerOutline,
   ViewsOutline,
@@ -24,7 +24,7 @@ import type { TProjectSettingsTabs } from "@plane/types";
 // components
 import { SettingIcon } from "@/components/icons/attachment";
 
-export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | React.FC<ISvgIcons>> = {
+export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, IconGlyph | React.FC<ISvgIcons>> = {
   general: SettingIcon,
   members: MembersOutline,
   features_cycles: CyclesOutline,
@@ -35,6 +35,6 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   states: StateOutline,
   labels: LabelsOutline,
   estimates: EstimateOutline,
-  attributes: SlidersHorizontal,
+  attributes: PreferencesOutline,
   automations: TriggerOutline,
 };

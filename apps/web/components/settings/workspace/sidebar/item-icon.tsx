@@ -4,17 +4,16 @@
  * See the LICENSE file for details.
  */
 
-import { SlidersHorizontal } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { BuildingOutline, ExportOutline, MembersOutline, WebhooksOutline } from "@makeplane/propel/icons";
+import type { IconGlyph } from "@makeplane/propel/components/icon";
+import { BuildingOutline, ExportOutline, MembersOutline, PreferencesOutline, WebhooksOutline } from "@makeplane/propel/icons";
 // plane imports
 import type { ISvgIcons } from "@plane/blocks/icons";
 import type { TWorkspaceSettingsTabs } from "@plane/types";
 
-export const WORKSPACE_SETTINGS_ICONS: Record<TWorkspaceSettingsTabs, LucideIcon | React.FC<ISvgIcons>> = {
+export const WORKSPACE_SETTINGS_ICONS: Record<TWorkspaceSettingsTabs, IconGlyph | React.FC<ISvgIcons>> = {
   general: BuildingOutline,
   members: MembersOutline,
   export: ExportOutline,
   webhooks: WebhooksOutline,
-  "attribute-library": SlidersHorizontal,
+  "attribute-library": PreferencesOutline,
 };
