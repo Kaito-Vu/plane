@@ -4,7 +4,7 @@ Tài liệu ngắn cho người vận hành. Thiết kế đầy đủ: `2026-11
 
 ## Hành vi
 
-- Workspace chỉ do super admin (god-mode) tạo, qua endpoint license của god-mode. Đặt `DISABLE_WORKSPACE_CREATION=1` (đã có trong `.env.prod.example`): `POST workspaces/` trả 403, god-mode không bị ảnh hưởng. Biến này cũng đọc được từ instance configuration.
+- Workspace chỉ do super admin (god-mode) tạo, qua endpoint license của god-mode. Cần `DISABLE_WORKSPACE_CREATION=1`: `POST workspaces/` trả 403, god-mode không bị ảnh hưởng. Xem mục "Danh sách kiểm tra khi triển khai": biến môi trường chỉ gieo giá trị cho instance mới.
 - Project chỉ do workspace Admin trở lên tạo. Workspace Member tạo project nhận 403 (app API và API v1).
 - Vào project: project Admin tìm user ĐÃ tồn tại (`GET workspaces/<slug>/projects/<id>/members/search/`, tối thiểu 3 ký tự, tối đa 10 kết quả, 30 lần/phút/user, email che một phần) rồi thêm. User chưa từng đăng nhập (Entra) thì chưa thêm được: không tìm thấy, và thêm trực tiếp trả 400 `USER_NOT_ELIGIBLE`.
 - Khi thêm, hệ thống tự cấp workspace role: project Admin/Member -> workspace Member (15); project Guest -> workspace Guest (5). Role project không nhận diện được cũng bị ép về Guest.
@@ -16,7 +16,29 @@ Tài liệu ngắn cho người vận hành. Thiết kế đầy đủ: `2026-11
 
 - Trang admin app: `/external-invites` (API: `GET/PATCH /api/instances/external-invites/`, khóa `ALLOW_EXTERNAL_INVITES`). Mặc định TẮT.
 - TẮT: mọi đường mời (mời/join workspace, bulk accept, mời/join project, mời của API v1) trả 410 `INVITES_DISABLED`, không tạo dòng nào.
-- BẬT: các endpoint đó chuyển tiếp xuống core (hành vi cũ, gồm cả lỗi sẵn có của core). Thêm trực tiếp vào project vẫn chỉ chấp nhận user đã tồn tại.
+- BẬT: các endpoint đó chuyển tiếp xuống core (gồm cả lỗi sẵn có của core). Thêm trực tiếp vào project vẫn chỉ chấp nhận user đã tồn tại. KHÔNG phải khôi phục hành vi cũ nguyên vẹn: user chấp nhận lời mời workspace mà chưa thuộc project nào sẽ bị task đối soát mỗi giờ tắt `WorkspaceMember` (xem mục sweep).
+
+## Danh sách kiểm tra khi triển khai
+
+1. `DISABLE_WORKSPACE_CREATION`: `settings.SKIP_ENV_VAR` mặc định "1" (`plane/settings/common.py`) nên `get_configuration_value` đọc dòng `InstanceConfiguration` trước; `configure_instance` chỉ `get_or_create` dòng đó. Vậy biến môi trường chỉ có tác dụng khi cài mới. Instance đã có: bật trong god-mode (trang Workspace, "Prevent anyone else from creating a workspace") hoặc sửa dòng DB. Kiểm tra: `GET /api/instances/`, trường `is_workspace_creation_disabled` phải là `true`.
+2. Trước khi deploy, liệt kê workspace member sẽ bị sweep tắt (xem mục sweep) để báo trước cho người dùng.
+3. `ENABLE_SIGNUP` / Entra: xem mục dưới.
+
+## Task đối soát (sweep)
+
+Mỗi giờ (phút 0), `ee_sweep_orphan_workspace_members` tắt mọi `WorkspaceMember` active mà user không phải workspace Admin, không phải owner và không có `ProjectMember` active nào ở project chưa xóa.
+- Lần chạy đầu sau khi deploy sẽ tắt hàng loạt các member hiện có nhưng chưa thuộc project nào. Truy vấn liệt kê trước khi deploy (Django shell):
+
+```python
+from django.db.models import Exists, F, OuterRef
+from plane.db.models import ProjectMember, WorkspaceMember
+live = ProjectMember.objects.filter(workspace_id=OuterRef("workspace_id"), member_id=OuterRef("member_id"),
+                                    is_active=True, project__deleted_at__isnull=True)
+(WorkspaceMember.objects.filter(is_active=True).exclude(role=20).exclude(member_id=F("workspace__owner_id"))
+ .annotate(has_live=Exists(live)).filter(has_live=False)
+ .values_list("workspace__slug", "member__email", "role"))
+```
+- Khi `ALLOW_EXTERNAL_INVITES` BẬT, user chấp nhận lời mời workspace mà chưa thuộc project nào sẽ bị tắt trong vòng một giờ.
 
 ## Đăng ký / Entra
 
@@ -35,3 +57,11 @@ XÓA CỨNG mọi `WorkspaceMemberInvite` và `ProjectMemberInvite` (kể cả �
 - Không phân biệt "workspace admin suspend" với "hết project" (cùng `is_active=False`): project admin có thể thêm lại user từng bị suspend, và kích hoạt lại hàng workspace Admin bị suspend sẽ đặt role theo bảng trên.
 - User không thuộc project nào thì không thấy workspace.
 - Các lối vào mời khác trên web (route /invitations, /workspace-invitations) chỉ còn là phần thừa giao diện, backend trả 410.
+
+## Rủi ro còn lại
+
+- Route invite của API v1 dạng format-suffix phân giải vào viewset core chưa được chặn công tắc; hiện `create` trả 500 do tham số `format` không mong đợi, không khai thác được.
+- Lời mời đã được chấp nhận khi công tắc BẬT nhưng chưa được replay lúc đăng nhập vẫn tạo workspace member sau khi chuyển sang TẮT; việc bật/tắt công tắc không xóa dữ liệu.
+- Tìm kiếm khớp email theo chuỗi con (`icontains`); che email chỉ mang tính hiển thị. Giới hạn: tối thiểu 3 ký tự, 30 lần/phút, chỉ project Admin.
+- Log của search chỉ ghi metadata (slug, project, actor, độ dài query), không ghi nội dung query.
+- POST thêm member chỉ để thêm: member đang active trả 400 `ALREADY_MEMBER` (đổi role dùng PATCH); role 20 cần người gọi là workspace Admin (`ROLE_NOT_ALLOWED`). Thêm lại qua API v1 một member đã bị gỡ vẫn bị core từ chối (ràng buộc unique của serializer core).
