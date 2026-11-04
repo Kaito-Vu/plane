@@ -87,7 +87,7 @@ Lần 1 (backend qua HTTP thật trên API đang chạy, trước các bản s�
 - Công tắc TẮT: POST lời mời workspace, POST lời mời project, workspace join, project join, POST `users/me/workspaces/invitations` đều 410 `INVITES_DISABLED`; GET danh sách lời mời vẫn 200. God-mode PATCH bật/tắt được; BẬT thì chuyển tiếp xuống core (POST lời mời workspace 200 và có tạo dòng); TẮT lại -> 410.
 - `POST /api/workspaces/` -> 403 "Workspace creation is not allowed" khi `DISABLE_WORKSPACE_CREATION=1`; god-mode `POST /api/instances/workspaces/` -> 201.
 - Task `plane.ee.project_members.tasks.ee_sweep_orphan_workspace_members` tắt đúng user mồ côi sau khi project duy nhất của họ bị xóa mềm (lần chạy thứ hai: 0); mục celery beat đã đăng ký mỗi giờ.
-- Không có 5xx/traceback trong log API (log của container đầu cho các bước a-d bị mất; các phản hồi của chúng không có 5xx).
+- Không có 5xx/traceback trong log API (log của container đầu cho một số bước đầu của lượt chạy bị mất; các phản hồi của chúng không có 5xx).
 
 Lần 2 (web + admin trên trình duyệt thật cùng API, ở commit `28ddbd7c1`), ĐẠT:
 - Trang Members tải được (lỗi crash trước đó đã sửa); modal mở với một dòng; gõ "ca" không gửi request và hiện gợi ý 3 ký tự; "car" liệt kê người khớp với email che một phần; thêm xong hiện toast thành công và user xuất hiện không cần tải lại.
