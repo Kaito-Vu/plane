@@ -4,6 +4,4 @@
  * See the LICENSE file for details.
  */
 
-export const EXTENDED_HEADER_SEGMENT_LABELS: Record<string, string> = {
-  "external-invites": "External invitations",
-};
+export const EXTENDED_HEADER_SEGMENT_LABELS: Record<string, string> = {};
