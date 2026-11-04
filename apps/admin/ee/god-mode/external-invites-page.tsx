@@ -13,7 +13,7 @@ import { Switch } from "@makeplane/propel/components/switch";
 import { godModeService as instanceService } from "./service";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
-import { Skeleton } from "@/components/common/skeleton";
+import { Skeleton } from "@plane/blocks/skeleton";
 
 const ExternalInvitesPage = observer(function ExternalInvitesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
