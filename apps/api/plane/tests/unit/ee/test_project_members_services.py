@@ -107,7 +107,8 @@ def test_eligible_users_rejects_unknown_inactive_bot_and_malformed(other_user):
 @pytest.mark.django_db
 def test_deprovision_disables_when_no_active_project_member(workspace, project, other_user):
     provision_workspace_member(workspace, other_user, 15)
-    _add_pm(project, other_user, active=False)
+    # queryset update bypasses the post_save receiver, which would deprovision on its own
+    ProjectMember.objects.filter(pk=_add_pm(project, other_user).pk).update(is_active=False)
     assert deprovision_if_orphan(workspace.id, other_user.id) is True
     assert _wm(workspace, other_user).is_active is False
 

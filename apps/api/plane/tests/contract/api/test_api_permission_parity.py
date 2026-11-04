@@ -178,8 +178,11 @@ class TestProjectMemberWritesRequireActiveWorkspaceMember:
     @pytest.mark.parametrize("is_active, expected", [(False, status.HTTP_400_BAD_REQUEST), (True, status.HTTP_200_OK)])
     def test_role_only_update(self, api_key_client, workspace, project, is_active, expected):
         user = UserFactory()
-        WorkspaceMemberFactory(workspace=workspace, member=user, role=MEMBER, is_active=is_active)
+        WorkspaceMemberFactory(workspace=workspace, member=user, role=MEMBER)
         project_member = ProjectMemberFactory(project=project, member=user, role=MEMBER)
+
+        # suspend after the project row exists (creating it would otherwise reactivate the ws row)
+        WorkspaceMember.objects.filter(workspace=workspace, member=user).update(is_active=is_active)
 
         response = api_key_client.patch(
             f"{_project_url(workspace, project)}/members/{project_member.id}/", {"role": GUEST}, format="json"
