@@ -1,12 +1,15 @@
 """Keep WorkspaceMember rows in step with project membership (project-first membership)."""
 
+import logging
 import uuid
 from typing import Iterable
 
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import Exists, F, OuterRef
 
 from plane.db.models import Profile, ProjectMember, User, Workspace, WorkspaceMember
+
+logger = logging.getLogger(__name__)
 
 PROJECT_TO_WORKSPACE_ROLE: dict[int, int] = {20: 15, 15: 15, 5: 5}
 
@@ -61,11 +64,17 @@ def _finish_onboarding(user: User) -> None:
     Profile row is ignored.
     """
     profile = Profile.objects.filter(user=user).first()
-    if profile is None or not (profile.onboarding_step or {}).get("profile_complete"):
+    if profile is None or not isinstance(profile.onboarding_step, dict):
+        return
+    if not profile.onboarding_step.get("profile_complete"):
         return
     profile.is_onboarded = True
     profile.onboarding_step = {**profile.onboarding_step, "workspace_join": True}
-    profile.save(update_fields=["is_onboarded", "onboarding_step", "updated_at"])
+    try:
+        with transaction.atomic():  # savepoint: a failed profile write must not roll back the membership add
+            profile.save(update_fields=["is_onboarded", "onboarding_step", "updated_at"])
+    except DatabaseError:
+        logger.exception("could not mark profile onboarded for user %s", user.pk)
 
 
 def deprovision_if_orphan(workspace_id, user_id) -> bool:

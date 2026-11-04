@@ -56,6 +56,9 @@ XÓA CỨNG mọi `WorkspaceMemberInvite` và `ProjectMemberInvite` (kể cả �
 - Còn nguyên từ core: workspace Admin chỉ được thêm làm project Admin (core chặn ở POST, và ee không đổi); workspace Guest chỉ làm được project Guest. Đã đổi so với core: project Admin không phải workspace Admin KHÔNG cấp được role 20 trên POST (ee trả 400 `ROLE_NOT_ALLOWED`; core vốn chỉ chặn ở PATCH). Modal ẩn các role không hợp lệ theo `workspace_role` của user đích (trả về trong kết quả tìm kiếm).
 - Không phân biệt "workspace admin suspend" với "hết project" (cùng `is_active=False`): project admin có thể thêm lại user từng bị suspend, và kích hoạt lại hàng workspace Admin bị suspend sẽ đặt role theo bảng trên.
 - User không thuộc project nào thì không thấy workspace.
+- Sau khi đổi công tắc god-mode, nút mời ở workspace Settings > Members chỉ đổi sau khi tải lại trang đầy đủ (giá trị được cache theo lần tải trang).
+- Tên role Guest/Member/Admin vẫn là tiếng Anh trong vi-VN (hằng số của core).
+- Core cho phép thêm một ws Member làm project Admin; chỉ đích là ws Admin và ws Guest bị khóa role.
 - Các lối vào mời khác trên web (route /invitations, /workspace-invitations) chỉ còn là phần thừa giao diện, backend trả 410.
 
 ## Đăng nhập lần đầu và onboarding
@@ -75,7 +78,26 @@ XÓA CỨNG mọi `WorkspaceMemberInvite` và `ProjectMemberInvite` (kể cả �
 
 ## Kết quả chạy kiểm thử trực tiếp (chỉ dev)
 
-Đợt chạy nghiệm thu trực tiếp (trình duyệt + HTTP, môi trường dev) xác nhận các luồng backend của tính năng này chạy đúng. Chưa kiểm thử trực tiếp: đường Entra / `ENABLE_SIGNUP`, và các endpoint mời / thêm member của API v1 (chỉ có test pytest).
+Lần 1 (backend qua HTTP thật trên API đang chạy, trước các bản sửa vòng 2; code ở commit `6f5250f1e`), ĐẠT:
+- bob (ws Member) tạo project nhận 403, ws Admin tạo được (201).
+- Search: `q=car` chỉ trả đúng người khớp với email che một phần; `q=ca` trả 400; bot và user inactive không xuất hiện; người không thuộc project nhận 403.
+- Thêm user chưa có hàng workspace (role 15): cấp hàng ws, workspace xuất hiện trong `/api/users/me/workspaces/`, user đó không tạo được project; role 5 -> ws Guest.
+- Thêm lại -> 400 `ALREADY_MEMBER`; project Admin không phải ws Admin thêm role 20 -> 400 `ROLE_NOT_ALLOWED`; bot / inactive / id không tồn tại -> cùng một 400 `USER_NOT_ELIGIBLE`; project Member không thêm được (403).
+- Gỡ khỏi project và `leave` đều tắt hàng ws và workspace biến mất; thêm lại thì bật lại (role được gán lại theo bảng).
+- Công tắc TẮT: POST lời mời workspace, POST lời mời project, workspace join, project join, POST `users/me/workspaces/invitations` đều 410 `INVITES_DISABLED`; GET danh sách lời mời vẫn 200. God-mode PATCH bật/tắt được; BẬT thì chuyển tiếp xuống core (POST lời mời workspace 200 và có tạo dòng); TẮT lại -> 410.
+- `POST /api/workspaces/` -> 403 "Workspace creation is not allowed" khi `DISABLE_WORKSPACE_CREATION=1`; god-mode `POST /api/instances/workspaces/` -> 201.
+- Task `plane.ee.project_members.tasks.ee_sweep_orphan_workspace_members` tắt đúng user mồ côi sau khi project duy nhất của họ bị xóa mềm (lần chạy thứ hai: 0); mục celery beat đã đăng ký mỗi giờ.
+- Không có 5xx/traceback trong log API (log của container đầu cho các bước a-d bị mất; các phản hồi của chúng không có 5xx).
+
+Lần 2 (web + admin trên trình duyệt thật cùng API, ở commit `28ddbd7c1`), ĐẠT:
+- Trang Members tải được (lỗi crash trước đó đã sửa); modal mở với một dòng; gõ "ca" không gửi request và hiện gợi ý 3 ký tự; "car" liệt kê người khớp với email che một phần; thêm xong hiện toast thành công và user xuất hiện không cần tải lại.
+- Ma trận role: ws Guest -> chỉ Guest, ws Admin -> chỉ Admin, user thường -> mọi role; project Admin không phải ws Admin không bao giờ được đề nghị Admin, và có thông báo rõ ngay trên dòng khi đích đòi ws Admin.
+- Toast dễ đọc, đã dịch cho `ALREADY_MEMBER` / `USER_NOT_ELIGIBLE` / xung đột role, form giữ nguyên lựa chọn; thêm nhiều người cùng lúc chạy đúng.
+- Onboarding: user đã xong profile rồi được thêm vào project vào thẳng workspace sau khi tải lại (không còn bước "nhờ admin mời"); user chưa xong profile hoàn tất profile rồi vào workspace.
+- Workspace Settings > Members ẩn nút mời khi công tắc TẮT và hiện khi BẬT (cần tải lại trang đầy đủ để thấy thay đổi, vì giá trị được cache theo lần tải trang); trang admin `/god-mode/external-invites` bật/tắt có toast và trạng thái API khớp.
+- Chuỗi vi-VN hiển thị tiếng Việt; locale khác dùng tiếng Anh, không lộ khóa thô; không có 5xx/traceback.
+
+KHÔNG chạy trực tiếp: đường Entra / `ENABLE_SIGNUP`; endpoint mời và thêm member của API v1 (chỉ có test tự động); celery worker / email; các bản sửa của đợt cuối này (chỉ có test tự động).
 
 ## Rủi ro còn lại
 
