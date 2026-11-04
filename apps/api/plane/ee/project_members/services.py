@@ -13,8 +13,11 @@ PROJECT_TO_WORKSPACE_ROLE: dict[int, int] = {20: 15, 15: 15, 5: 5}
 WS_ADMIN = 20
 
 
+NOT_ELIGIBLE_MESSAGE = "One or more users cannot be added"
+
+
 class UserNotEligible(Exception):
-    """A user id is malformed, unknown, inactive or a bot."""
+    """A user id is malformed, unknown, inactive or a bot (one message for every cause)."""
 
 
 def eligible_users(user_ids: Iterable[str]) -> list[User]:
@@ -23,11 +26,11 @@ def eligible_users(user_ids: Iterable[str]) -> list[User]:
         try:
             ids.append(uuid.UUID(str(raw)))
         except (ValueError, AttributeError, TypeError):
-            raise UserNotEligible(f"Invalid user id: {raw}")
+            raise UserNotEligible(NOT_ELIGIBLE_MESSAGE)
     ids = list(dict.fromkeys(ids))
     users = list(User.objects.filter(id__in=ids, is_active=True, is_bot=False))
     if len(users) != len(ids):
-        raise UserNotEligible("One or more users do not exist or are not eligible")
+        raise UserNotEligible(NOT_ELIGIBLE_MESSAGE)
     return users
 
 
@@ -35,13 +38,20 @@ def provision_workspace_member(workspace: Workspace, user: User, project_role: i
     """Create/reactivate the workspace row. Never lowers an active role; never grants Admin."""
     role = PROJECT_TO_WORKSPACE_ROLE[project_role]
     with transaction.atomic():
-        wm = WorkspaceMember.objects.select_for_update().filter(workspace=workspace, member=user).first()
-        if wm is None:
-            return WorkspaceMember.objects.create(workspace=workspace, member=user, role=role)
+        # get_or_create is race-safe on first creation (savepoint + re-get on IntegrityError)
+        wm, created = WorkspaceMember.objects.get_or_create(
+            workspace=workspace, member=user, defaults={"role": role}
+        )
+        if created:
+            return wm
+        wm = WorkspaceMember.objects.select_for_update().get(pk=wm.pk)
         if not wm.is_active:
             wm.is_active = True
             wm.role = role
             wm.save(update_fields=["is_active", "role", "updated_at"])
+        elif wm.role < role < WS_ADMIN:
+            wm.role = role
+            wm.save(update_fields=["role", "updated_at"])
         return wm
 
 

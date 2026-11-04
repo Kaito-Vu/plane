@@ -65,6 +65,14 @@ def test_provision_never_downgrades_active_member_to_guest(workspace, other_user
 
 @pytest.mark.unit
 @pytest.mark.django_db
+def test_provision_raises_active_guest_to_member(workspace, other_user):
+    WorkspaceMember.objects.create(workspace=workspace, member=other_user, role=5)
+    assert provision_workspace_member(workspace, other_user, 20).role == 15
+    assert _wm(workspace, other_user).role == 15
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
 def test_provision_reactivates_inactive_row_with_mapped_role(workspace, other_user):
     WorkspaceMember.objects.create(workspace=workspace, member=other_user, role=20, is_active=False)
     wm = provision_workspace_member(workspace, other_user, 5)
@@ -86,9 +94,13 @@ def test_eligible_users_rejects_unknown_inactive_bot_and_malformed(other_user):
     assert eligible_users([str(other_user.id)]) == [other_user]
     inactive = _user(email="i@plane.so", is_active=False)
     bot = _user(email="b@plane.so", is_bot=True)
+    messages = set()
     for bad in (str(uuid.uuid4()), str(inactive.id), str(bot.id), "not-a-uuid"):
-        with pytest.raises(UserNotEligible):
+        with pytest.raises(UserNotEligible) as exc:
             eligible_users([str(other_user.id), bad])
+        messages.add(str(exc.value))
+    assert len(messages) == 1
+    assert "not-a-uuid" not in messages.pop()
 
 
 @pytest.mark.unit
