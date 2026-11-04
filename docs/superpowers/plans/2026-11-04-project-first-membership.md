@@ -1,5 +1,11 @@
 # Project-first membership Implementation Plan
 
+> **Superseded by rulings during execution** (the body below is the original plan, not rewritten):
+> - Task 2: no ee `partial_update` override; role changes use core behavior unchanged.
+> - Task 6: the `post_save` safety net provisions on row CREATION only (not on every active save).
+> - Review Focus: POST of an already-active member returns 400 `ALREADY_MEMBER` instead of an idempotent re-add; role 20 requires a workspace Admin caller (`ROLE_NOT_ALLOWED`).
+> - Task 8 actual files: `add-members-and-refresh.ts`, `fetch-candidates.ts`, `allowed-roles.ts`, `member-add-error.ts`, `invites-cache.ts` (pure helpers with vitest tests) in place of `__tests__/modal.test.tsx` (no React test harness in `apps/web`).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Project admins add existing users straight to a project (a workspace membership is created automatically); every email-invite path is closed behind a god-mode switch that defaults to OFF.

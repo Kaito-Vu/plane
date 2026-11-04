@@ -1,7 +1,14 @@
 import { API_BASE_URL } from "@plane/constants";
 import { APIService } from "@/services/api.service";
 
-export type TProjectMemberSearchResult = { id: string; display_name: string; avatar_url: string; email: string };
+export type TProjectMemberSearchResult = {
+  id: string;
+  display_name: string;
+  avatar_url: string;
+  email: string;
+  // the user's ACTIVE role in this workspace (5/15/20), null when they have none
+  workspace_role: number | null;
+};
 
 export class ProjectMemberSearchService extends APIService {
   constructor() {
@@ -16,10 +23,13 @@ export class ProjectMemberSearchService extends APIService {
       });
   }
 
+  // rejects on error so callers can tell a failure from a real "off"
   async externalInvitesEnabled(): Promise<boolean> {
     return this.get(`/api/external-invites/`)
       .then((r) => Boolean(r?.data?.enabled))
-      .catch(() => false);
+      .catch((e) => {
+        throw e?.response?.data ?? e;
+      });
   }
 }
 

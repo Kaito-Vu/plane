@@ -12,7 +12,7 @@ from plane.app.views.project.base import ProjectViewSet
 from plane.app.views.project.member import ProjectMemberViewSet
 from plane.app.views.base import BaseAPIView
 from plane.api.views.member import ProjectMemberListCreateAPIEndpoint
-from plane.db.models import ProjectMember, User, Workspace
+from plane.db.models import ProjectMember, User, Workspace, WorkspaceMember
 
 from .permissions import is_workspace_admin
 from .services import (
@@ -152,9 +152,22 @@ class ProjectMemberSearchEndpoint(BaseAPIView):
             .exclude(id__in=ProjectMember.objects.filter(project_id=project_id, is_active=True).values("member_id"))
             .order_by("email")[:10]
         )
+        users = list(users)
+        # target's ACTIVE role in THIS workspace (null when none); the modal offers only legal project roles from it
+        ws_roles = dict(
+            WorkspaceMember.objects.filter(
+                workspace__slug=slug, is_active=True, member_id__in=[u.id for u in users]
+            ).values_list("member_id", "role")
+        )
         return Response(
             [
-                {"id": u.id, "display_name": u.display_name, "avatar_url": u.avatar_url, "email": _mask_email(u.email)}
+                {
+                    "id": u.id,
+                    "display_name": u.display_name,
+                    "avatar_url": u.avatar_url,
+                    "email": _mask_email(u.email),
+                    "workspace_role": ws_roles.get(u.id),
+                }
                 for u in users
             ]
         )
