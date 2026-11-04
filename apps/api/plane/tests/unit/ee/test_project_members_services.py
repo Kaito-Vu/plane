@@ -65,10 +65,10 @@ def test_provision_never_downgrades_active_member_to_guest(workspace, other_user
 
 @pytest.mark.unit
 @pytest.mark.django_db
-def test_provision_raises_active_guest_to_member(workspace, other_user):
+def test_provision_never_raises_active_guest(workspace, other_user):
     WorkspaceMember.objects.create(workspace=workspace, member=other_user, role=5)
-    assert provision_workspace_member(workspace, other_user, 20).role == 15
-    assert _wm(workspace, other_user).role == 15
+    assert provision_workspace_member(workspace, other_user, 20).role == 5
+    assert _wm(workspace, other_user).role == 5
 
 
 @pytest.mark.unit

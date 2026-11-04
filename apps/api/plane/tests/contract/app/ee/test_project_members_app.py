@@ -113,15 +113,15 @@ class TestEeProjectMembers:
         assert WorkspaceMember.objects.filter(workspace=workspace, member=user).count() == 1
         assert ProjectMember.objects.filter(project=project, member=user).count() == 1
 
-    def test_patch_role_to_member_raises_ws_guest_to_15(self, session_client, workspace, project):
+    def test_patch_ws_guest_to_project_member_returns_core_400_no_ws_change(self, session_client, workspace, project):
         user = mk_user()
         WorkspaceMember.objects.create(workspace=workspace, member=user, role=5)
         pm = ProjectMember.objects.create(project=project, member=user, workspace=workspace, role=5)
         r = session_client.patch(url(workspace, project, pm.id), {"role": 15}, format="json")
-        assert r.status_code == 200
+        assert r.status_code == 400
         pm.refresh_from_db()
-        assert pm.role == 15
-        assert WorkspaceMember.objects.get(workspace=workspace, member=user).role == 15
+        assert pm.role == 5
+        assert WorkspaceMember.objects.get(workspace=workspace, member=user).role == 5
 
     def test_patch_role_20_by_non_ws_admin_keeps_core_403(self, workspace, project):
         admin = mk_user()

@@ -49,9 +49,6 @@ def provision_workspace_member(workspace: Workspace, user: User, project_role: i
             wm.is_active = True
             wm.role = role
             wm.save(update_fields=["is_active", "role", "updated_at"])
-        elif wm.role < role < WS_ADMIN:
-            wm.role = role
-            wm.save(update_fields=["role", "updated_at"])
         return wm
 
 

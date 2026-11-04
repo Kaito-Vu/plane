@@ -98,24 +98,6 @@ class EeProjectMemberViewSet(ProjectMemberViewSet):
                 transaction.set_rollback(True)  # core refused (e.g. ws Admin target): undo provisioning
         return response
 
-    @allow_permission([ROLE.ADMIN])
-    def partial_update(self, request, slug, project_id, pk):
-        role = request.data.get("role")
-        target = (
-            ProjectMember.objects.filter(pk=pk, workspace__slug=slug, project_id=project_id, is_active=True)
-            .select_related("workspace", "member")
-            .first()
-        )
-        if not _valid_role(role) or target is None:
-            return super().partial_update(request, slug=slug, project_id=project_id, pk=pk)
-
-        with transaction.atomic():
-            provision_workspace_member(target.workspace, target.member, role)
-            response = super().partial_update(request, slug=slug, project_id=project_id, pk=pk)
-            if response.status_code >= 400:
-                transaction.set_rollback(True)
-        return response
-
 
 logger = logging.getLogger(__name__)
 

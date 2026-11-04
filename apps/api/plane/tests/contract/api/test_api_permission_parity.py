@@ -14,7 +14,7 @@ import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from plane.db.models import Cycle, Label, ProjectMember
+from plane.db.models import Cycle, Label, ProjectMember, WorkspaceMember
 from plane.db.models.api import APIToken
 from plane.tests.factories import ProjectFactory, ProjectMemberFactory, UserFactory, WorkspaceMemberFactory
 
@@ -161,10 +161,9 @@ class TestWorkspaceAdminCountsAsProjectAdmin:
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestProjectMemberWritesRequireActiveWorkspaceMember:
-    @pytest.mark.parametrize(
-        "is_active, expected", [(False, status.HTTP_400_BAD_REQUEST), (True, status.HTTP_201_CREATED)]
-    )
-    def test_add_member(self, api_key_client, workspace, project, is_active, expected):
+    @pytest.mark.parametrize("is_active", [False, True])
+    def test_add_member(self, api_key_client, workspace, project, is_active):
+        # project-first membership: a user without an active ws row is provisioned (201)
         user = UserFactory()
         WorkspaceMemberFactory(workspace=workspace, member=user, role=MEMBER, is_active=is_active)
 
@@ -172,8 +171,9 @@ class TestProjectMemberWritesRequireActiveWorkspaceMember:
             f"{_project_url(workspace, project)}/members/", {"member": str(user.id), "role": MEMBER}, format="json"
         )
 
-        assert response.status_code == expected, response.data
-        assert ProjectMember.objects.filter(project=project, member=user).exists() is is_active
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+        assert ProjectMember.objects.filter(project=project, member=user).exists()
+        assert WorkspaceMember.objects.get(workspace=workspace, member=user).is_active
 
     @pytest.mark.parametrize("is_active, expected", [(False, status.HTTP_400_BAD_REQUEST), (True, status.HTTP_200_OK)])
     def test_role_only_update(self, api_key_client, workspace, project, is_active, expected):
