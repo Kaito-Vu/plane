@@ -33,7 +33,11 @@
       "invite_members": {
         "title": "Invite members",
         "sub_heading": "Invite members to work on your project.",
-        "select_co_worker": "Select co-worker"
+        "select_co_worker": "Select co-worker",
+        "search_placeholder": "Search by name or email",
+        "no_user_found": "No user found",
+        "type_min_chars": "Type at least 3 characters to search",
+        "not_eligible": "This user can't be added to the project"
       }
     },
     "states": {
