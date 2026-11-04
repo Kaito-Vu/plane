@@ -1,12 +1,16 @@
+import logging
 from uuid import UUID
 
 from django.db import transaction
+from django.db.models import Q
 from rest_framework import status
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.response import Response
 
 from plane.app.permissions.base import ROLE, allow_permission
 from plane.app.views.project.member import ProjectMemberViewSet
-from plane.db.models import ProjectMember, Workspace
+from plane.app.views.base import BaseAPIView
+from plane.db.models import ProjectMember, User, Workspace
 
 from .services import (
     NOT_ELIGIBLE_MESSAGE,
@@ -80,3 +84,42 @@ class EeProjectMemberViewSet(ProjectMemberViewSet):
             if response.status_code >= 400:
                 transaction.set_rollback(True)
         return response
+
+
+logger = logging.getLogger(__name__)
+
+
+class MemberSearchThrottle(UserRateThrottle):
+    rate = "30/min"
+    scope = "ee_member_search"
+
+
+def _mask_email(email):
+    local, _, domain = email.partition("@")
+    return f"{local[:1]}***@{domain}"
+
+
+class ProjectMemberSearchEndpoint(BaseAPIView):
+    """Project admin searches existing users to add; emails are masked, results capped."""
+
+    throttle_classes = [MemberSearchThrottle]
+
+    @allow_permission([ROLE.ADMIN])
+    def get(self, request, slug, project_id):
+        q = request.query_params.get("q", "").strip()
+        if len(q) < 3:
+            return Response({"error": "Query must be at least 3 characters"}, status=status.HTTP_400_BAD_REQUEST)
+        logger.info("member search slug=%s project_id=%s actor=%s qlen=%d", slug, project_id, request.user.id, len(q))
+
+        users = (
+            User.objects.filter(is_active=True, is_bot=False)
+            .filter(Q(email__icontains=q) | Q(display_name__icontains=q))
+            .exclude(id__in=ProjectMember.objects.filter(project_id=project_id, is_active=True).values("member_id"))
+            .order_by("email")[:10]
+        )
+        return Response(
+            [
+                {"id": u.id, "display_name": u.display_name, "avatar_url": u.avatar_url, "email": _mask_email(u.email)}
+                for u in users
+            ]
+        )
