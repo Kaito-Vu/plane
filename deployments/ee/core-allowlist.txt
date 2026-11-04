@@ -172,3 +172,5 @@ apps/web/components/project/member-list.tsx
 apps/web/app/(all)/[workspaceSlug]/(settings)/settings/(workspace)/members/page.tsx
 packages/i18n/src/locales/en/project-settings.json
 packages/i18n/src/locales/vi-VN/project-settings.json
+
+.env.prod.example
