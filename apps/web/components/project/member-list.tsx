@@ -19,7 +19,7 @@ import { useUserPermissions } from "@/hooks/store/user";
 // local imports
 import { MemberListFiltersDropdown } from "./dropdowns/filters/member-list";
 import { ProjectMemberListItem } from "./member-list-item";
-import { SendProjectInvitationModal } from "./send-project-invitation-modal";
+import { SendProjectInvitationModal } from "@/ee/project-members/send-project-invitation-modal";
 
 type TProjectMemberListProps = {
   projectId: string;

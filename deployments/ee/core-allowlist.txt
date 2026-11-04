@@ -167,3 +167,7 @@ apps/web/app/routes/extended.ts
 apps/web/components/account/auth-forms/auth-root.tsx
 apps/web/services/api.service.ts
 apps/api/plane/authentication/views/app/signout.py
+apps/web/components/project/member-list.tsx
+apps/web/app/(all)/[workspaceSlug]/(settings)/settings/(workspace)/members/page.tsx
+packages/i18n/src/locales/en/project-settings.json
+packages/i18n/src/locales/vi-VN/project-settings.json
