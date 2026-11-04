@@ -165,3 +165,66 @@ def test_sweep_disables_orphans_after_project_soft_delete(workspace, project, ot
 def test_provision_unknown_role_clamps_to_guest(workspace, other_user, bad_role):
     wm = provision_workspace_member(workspace, other_user, bad_role)
     assert wm.role == 5 and wm.is_active
+
+
+def _profile(user, **kw):
+    from plane.db.models import Profile
+
+    return Profile.objects.create(user=user, **kw)
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_onboards_user_whose_profile_step_is_complete(workspace, other_user):
+    p = _profile(
+        other_user, onboarding_step={"profile_complete": True, "workspace_create": False, "workspace_join": False}
+    )
+    provision_workspace_member(workspace, other_user, 15)
+    p.refresh_from_db()
+    assert p.is_onboarded is True
+    assert p.onboarding_step["workspace_join"] is True and p.onboarding_step["profile_complete"] is True
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_onboards_on_reactivation_too(workspace, other_user):
+    WorkspaceMember.objects.create(workspace=workspace, member=other_user, role=15, is_active=False)
+    p = _profile(other_user, onboarding_step={"profile_complete": True})
+    provision_workspace_member(workspace, other_user, 15)
+    p.refresh_from_db()
+    assert p.is_onboarded is True
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_leaves_incomplete_profile_untouched(workspace, other_user):
+    p = _profile(other_user)
+    provision_workspace_member(workspace, other_user, 15)
+    p.refresh_from_db()
+    assert p.is_onboarded is False
+    assert p.onboarding_step["workspace_join"] is False
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_already_active_row_leaves_profile_untouched(workspace, other_user):
+    WorkspaceMember.objects.create(workspace=workspace, member=other_user, role=15)
+    p = _profile(other_user, onboarding_step={"profile_complete": True})
+    provision_workspace_member(workspace, other_user, 15)
+    p.refresh_from_db()
+    assert p.is_onboarded is False
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_provision_without_profile_row_does_not_raise(workspace, other_user):
+    assert provision_workspace_member(workspace, other_user, 15).is_active
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+def test_signal_ignores_project_member_without_user(workspace, project):
+    pm = ProjectMember.objects.create(project=project, member=None, workspace=workspace, role=15)
+    assert pm.pk
+    pm.is_active = False
+    pm.save()  # deactivation path also skipped

@@ -56,7 +56,7 @@ class TestProjectMemberSearch:
         r = search(session_client, workspace, project, "alice")
         assert r.status_code == 200
         assert len(r.json()) == 1
-        assert set(r.json()[0]) == {"id", "display_name", "avatar_url", "email"}
+        assert set(r.json()[0]) == {"id", "display_name", "avatar_url", "email", "workspace_role"}
 
     def test_email_masked(self, session_client, workspace, project):
         mk_user("alice@x.com")
@@ -100,3 +100,23 @@ class TestProjectMemberSearch:
         assert r.status_code == 200
         assert r.json()[0]["id"] == str(u.id)
         assert r.json()[0]["email"] == ""
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+class TestSearchWorkspaceRole:
+    def test_workspace_role_is_active_role_in_this_workspace_else_null(self, session_client, workspace, project):
+        ws_admin = mk_user("wsr-admin@x.com")
+        ws_guest = mk_user("wsr-guest@x.com")
+        ws_off = mk_user("wsr-off@x.com")
+        stranger = mk_user("wsr-none@x.com")
+        WorkspaceMember.objects.create(workspace=workspace, member=ws_admin, role=20)
+        WorkspaceMember.objects.create(workspace=workspace, member=ws_guest, role=5)
+        WorkspaceMember.objects.create(workspace=workspace, member=ws_off, role=15, is_active=False)
+        roles = {r["id"]: r["workspace_role"] for r in search(session_client, workspace, project, "wsr-").json()}
+        assert roles == {
+            str(ws_admin.id): 20,
+            str(ws_guest.id): 5,
+            str(ws_off.id): None,
+            str(stranger.id): None,
+        }
