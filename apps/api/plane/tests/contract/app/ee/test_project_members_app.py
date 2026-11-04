@@ -143,3 +143,37 @@ class TestEeProjectMembers:
         assert r.status_code == 400
         assert WorkspaceMember.objects.get(workspace=workspace, member=wsadmin).role == 20
         assert not ProjectMember.objects.filter(project=project, member=wsadmin).exists()
+
+    def test_hyphenless_member_id_adds_user_201(self, session_client, workspace, project):
+        user = mk_user()
+        r = add(session_client, workspace, project, [{"member_id": user.id.hex, "role": 15}])
+        assert r.status_code == 201
+        assert ProjectMember.objects.get(project=project, member=user).is_active
+
+    def test_uppercase_member_id_readd_inactive_member_no_500(self, session_client, workspace, project):
+        user = mk_user()
+        WorkspaceMember.objects.create(workspace=workspace, member=user, role=15)
+        ProjectMember.objects.create(project=project, member=user, workspace=workspace, role=5, is_active=False)
+        r = add(session_client, workspace, project, [{"member_id": str(user.id).upper(), "role": 15}])
+        assert r.status_code == 201
+        pm = ProjectMember.objects.get(project=project, member=user)
+        assert pm.is_active and pm.role == 15
+
+    def test_duplicate_ids_different_spelling_single_project_member_row(self, session_client, workspace, project):
+        user = mk_user()
+        r = add(
+            session_client,
+            workspace,
+            project,
+            [{"member_id": str(user.id), "role": 5}, {"member_id": user.id.hex, "role": 15}],
+        )
+        assert r.status_code == 201
+        assert ProjectMember.objects.filter(project=project, member=user).count() == 1
+        assert ProjectMember.objects.get(project=project, member=user).role == 15  # last wins
+
+    @pytest.mark.parametrize("role", [[15], {"a": 1}])
+    def test_unhashable_role_400(self, session_client, workspace, project, role):
+        user = mk_user()
+        r = add(session_client, workspace, project, [{"member_id": str(user.id), "role": role}])
+        assert r.status_code == 400
+        assert not WorkspaceMember.objects.filter(member=user).exists()
