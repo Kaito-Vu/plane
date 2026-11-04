@@ -53,10 +53,29 @@ XÓA CỨNG mọi `WorkspaceMemberInvite` và `ProjectMemberInvite` (kể cả �
 - Không có cờ ẩn: user được thêm hiện trong danh sách thành viên workspace và thấy/join được mọi project public khác (project cần kín thì đặt Private khi tạo).
 - Modal thêm member của plugin là bản sao; upstream đổi modal gốc không tự lan sang.
 - Shadow route và bản vá `ProjectBasePermission` phụ thuộc cấu trúc core; test sẽ lỗi khi merge upstream. Chạy `scripts/check-core-allowlist.sh` sau mỗi lần merge.
-- Còn nguyên từ core: workspace Admin chỉ được thêm làm project Admin; project Admin không phải workspace Admin không cấp được role 20.
+- Còn nguyên từ core: workspace Admin chỉ được thêm làm project Admin (core chặn ở POST, và ee không đổi); workspace Guest chỉ làm được project Guest. Đã đổi so với core: project Admin không phải workspace Admin KHÔNG cấp được role 20 trên POST (ee trả 400 `ROLE_NOT_ALLOWED`; core vốn chỉ chặn ở PATCH). Modal ẩn các role không hợp lệ theo `workspace_role` của user đích (trả về trong kết quả tìm kiếm).
 - Không phân biệt "workspace admin suspend" với "hết project" (cùng `is_active=False`): project admin có thể thêm lại user từng bị suspend, và kích hoạt lại hàng workspace Admin bị suspend sẽ đặt role theo bảng trên.
 - User không thuộc project nào thì không thấy workspace.
 - Các lối vào mời khác trên web (route /invitations, /workspace-invitations) chỉ còn là phần thừa giao diện, backend trả 410.
+
+## Đăng nhập lần đầu và onboarding
+
+- User phải đăng nhập (Entra) một lần để tồn tại thì mới thêm được. Khi được thêm vào project, hàm cấp workspace member (tạo mới HOẶC bật lại hàng) kiểm tra `Profile` của user: nếu `onboarding_step.profile_complete` đã true thì đặt `is_onboarded=true` và `onboarding_step.workspace_join=true`, để web không đưa user vào /onboarding ở bước "nhờ admin mời" mãi mãi. Không đụng Profile khi hàng workspace đã active sẵn, khi không có Profile, hoặc khi bước profile chưa xong.
+- User chưa xong bước profile: vẫn vào onboarding để điền profile. Với bản self-hosted, xong profile thì `components/onboarding/root.tsx` thấy user đã có workspace (`workspacesList.length > 0`) và kết thúc onboarding, vào thẳng workspace.
+
+## Hiển thị và giới hạn bổ sung
+
+- User bị tắt (sweep hoặc gỡ khỏi project cuối) vẫn hiện là hàng "Suspended" và được tính vào chip đếm trong Workspace Settings > Members, và vẫn xuất hiện trong ô chọn project lead (hành vi của core với `WorkspaceMember.is_active=False`).
+- Bất kỳ user nào được thêm vào project đều thành workspace Member, và core trả EMAIL ĐẦY ĐỦ của mọi workspace member qua `GET workspaces/<slug>/members/` (`WorkspaceMemberAdminSerializer` cho role trên Guest). Vì vậy việc che email ở ô tìm kiếm chỉ mang tính hiển thị. Giới hạn đã biết, không đổi core.
+- Tạo project bởi workspace Admin với `project_lead` là user chưa có hàng workspace sẽ cấp hàng workspace cho user đó, và có thể bật lại một workspace member đang bị suspend.
+- Project đã archive vẫn được tính là "còn sống" cho sweep: user mà mọi project đều archive vẫn giữ quyền vào workspace.
+- Hạ một workspace Admin không thuộc project nào xuống Member/Guest thì lần sweep kế tiếp tắt `WorkspaceMember` của họ.
+- Race hiếm: user tự join một project public đồng thời với việc bị gỡ khỏi project cuối cùng còn lại có thể để lại `ProjectMember` active với hàng workspace không active, và không gì tự sửa. Cách xử lý: thêm lại user qua endpoint thêm member.
+- Phần thừa trên web còn trỏ tới lời mời workspace khi công tắc TẮT (chỉ là giao diện, không đổi để giữ sửa core ở mức tối thiểu): `workspace/sidebar/dropdown-item.tsx` (mục "Invite members"), trạng thái rỗng ở trang chủ `no-projects.tsx`, các trang `/invitations`, bước mời team trong onboarding, nút Accept ở `/workspace-invitations` (không có tác dụng nhìn thấy được), và thông báo "liên hệ admin workspace để được mời" ở `not-a-member.tsx` / `workspace-wrapper`.
+
+## Kết quả chạy kiểm thử trực tiếp (chỉ dev)
+
+Đợt chạy nghiệm thu trực tiếp (trình duyệt + HTTP, môi trường dev) xác nhận các luồng backend của tính năng này chạy đúng. Chưa kiểm thử trực tiếp: đường Entra / `ENABLE_SIGNUP`, và các endpoint mời / thêm member của API v1 (chỉ có test pytest).
 
 ## Rủi ro còn lại
 

@@ -1,6 +1,6 @@
 # Thiết kế: thêm thành viên theo project, bỏ lời mời workspace (v2, đã qua review)
 
-Trạng thái: CHỜ CHỦ SẢN PHẨM DUYỆT. Chưa viết code.
+Trạng thái: Đã triển khai trong PR #2.
 Nguồn: hội đồng 4 chuyên gia (backend, frontend/UX, bảo mật, tối thiểu hóa core) + 2 reviewer (đối kháng, builder), đọc code ngày 2026-11-04.
 Quyết định của chủ sản phẩm (2026-11-04): xem mục 3, đánh dấu [CSP].
 
@@ -45,15 +45,15 @@ D4. Backend, 0 file core. Trong `plane/ee/project_members/`:
 
 - Hàm dịch vụ `provision_workspace_member(workspace, user, project_role)`: một `transaction.atomic`, khóa hàng `WorkspaceMember` TRƯỚC (cùng thứ tự với deprovision), idempotent, không hạ role đang có (trừ khi kích hoạt lại, theo D1).
 - `ProjectMemberViewSet` con, shadow route `workspaces/<slug>/projects/<id>/members/` (chỉ `create`; `partial_update` giữ nguyên của core).
-- `create`: mọi `member_id` phải là User tồn tại, `is_active`, không bot. Sai một người thì trả 400, mã `USER_NOT_ELIGIBLE`, cùng một dạng lỗi cho "không tồn tại" và "không đủ điều kiện", không ghi gì. Sau đó cấp ws member rồi gọi `super().create()`.
-- Giới hạn còn nguyên từ core, ghi rõ trong tài liệu: ws Admin chỉ thêm được làm project Admin (`member.py:83`); project Admin không phải ws Admin không cấp được role 20 (`:271`). Hàm dịch vụ KHÔNG BAO GIỜ nâng role của dòng workspace đang active (ranh giới của core: ws Guest không thể là project Member/Admin; muốn nâng phải do ws Admin). Chỉ tạo dòng còn thiếu hoặc bật lại dòng không active với role theo bảng D1. Ruling 2026-11-04.
+- `create`: mọi `member_id` phải là User tồn tại, `is_active`, không bot. Sai một người thì trả 400, mã `USER_NOT_ELIGIBLE`, cùng một dạng lỗi cho "không tồn tại" và "không đủ điều kiện", không ghi gì. Sau đó cấp ws member rồi gọi `super().create()`. Các lỗi 400/403 khác của ee: `ALREADY_MEMBER` (user đã là member active của project; POST chỉ để thêm, đổi role dùng PATCH), `ROLE_NOT_ALLOWED` (role 20 mà người gọi không phải workspace Admin) và `Invalid role` (400, không có mã) cho role không thuộc {20, 15, 5}. Hàm dịch vụ ép role project không nhận diện được về Guest (5). Khi thêm nhiều người, ws member được cấp theo thứ tự id đã sắp xếp (các admin đồng thời khóa hàng theo cùng thứ tự, tránh deadlock); core từ chối thì rollback cả phần đã cấp.
+- Giới hạn còn nguyên từ core, ghi rõ trong tài liệu: ws Admin chỉ thêm được làm project Admin (`member.py:83`); project Admin không phải ws Admin không cấp được role 20: core chặn ở `partial_update` (`:271`), còn trên POST thì ee chặn (`ROLE_NOT_ALLOWED`). Hàm dịch vụ KHÔNG BAO GIỜ nâng role của dòng workspace đang active (ranh giới của core: ws Guest không thể là project Member/Admin; muốn nâng phải do ws Admin). Chỉ tạo dòng còn thiếu hoặc bật lại dòng không active với role theo bảng D1. Ruling 2026-11-04.
 - Shadow cả route thêm member của API v1 (`ee/api_urls.py`) dùng cùng hàm dịch vụ, nếu không khóa API vẫn qua mặt.
 
 D5. Gỡ khi hết project [CSP]: khi user không còn `ProjectMember` active nào trong workspace, không phải ws Admin và không phải `Workspace.owner` thì tắt `WorkspaceMember` (`is_active=False`). Cơ chế:
 
 - `post_save` trên `ProjectMember` khi `is_active=False` (bắn ở `destroy`, `leave`, API v1 delete vì chúng dùng `.save()`), gọi hàm `deprovision_if_orphan`.
 - Task định kỳ (celery beat, `ee/tasks.py`) đối soát toàn bộ: là cơ chế chính, vì xóa mềm project, `bulk_update`, `queryset.update` không bắn signal. Việc project bị xóa mềm làm user mất project cuối cũng được sweep bắt.
-- Receiver `post_save` còn gọi `provision_workspace_member` cho hàng active (lưới an toàn cho đường `.save()` khác); bulk write không bắn signal nên bước chặn ở view vẫn bắt buộc.
+- Receiver `post_save` còn gọi `provision_workspace_member` CHỈ khi hàng `ProjectMember` active được TẠO MỚI (lưới an toàn cho đường `.save()` khác; lưu thường không được bật lại ws member đã bị suspend). Hàng không có user (`member` NULL) bị bỏ qua. Bulk write không bắn signal nên bước chặn ở view vẫn bắt buộc.
 - Giới hạn đã biết: không phân biệt được "ws admin suspend" với "hết project" (cùng `is_active=False`), nên project admin có thể thêm lại user từng bị ws admin suspend. Chấp nhận ở v1; marker trong ee là nâng cấp khi cần.
 - User chưa thuộc project nào: hành vi hiện tại, không thấy workspace [CSP].
 
@@ -63,13 +63,15 @@ D6. Đóng mọi đường mời (khi công tắc D8 TẮT):
 - Migration dữ liệu ee 0004: XÓA CỨNG mọi lời mời workspace/project (kể cả đã accepted nhưng chưa replay) để `workspace_project_join.py` không tạo hàng khi đăng nhập. Mất lịch sử lời mời (lựa chọn của tôi).
 - Yêu cầu vận hành: `ENABLE_SIGNUP=0` đòi lời mời mới đăng ký được; xóa hết lời mời cộng `ENABLE_SIGNUP=0` thì không ai mới vào được. Với Entra, chạy `ENABLE_SIGNUP=1` cùng danh sách domain cho phép của Entra (cần xác minh Entra có đi qua cổng `ENABLE_SIGNUP` không, ở bước lập kế hoạch).
 
-D7. Tìm user: `GET workspaces/<slug>/projects/<id>/members/search/` (đặt trước `members/<pk>/`). Chỉ project Admin của project đó; query tối thiểu 3 ký tự, tối đa 10 kết quả; throttle `30/min`/user; loại inactive, bot, và người đã là member active của project; trả `id, display_name, avatar`, email che một phần (`a***@domain`); serializer riêng, không dùng `UserLiteSerializer`; ghi log truy vấn.
+D7. Tìm user: `GET workspaces/<slug>/projects/<id>/members/search/` (đặt trước `members/<pk>/`). Chỉ project Admin của project đó; query tối thiểu 3 ký tự, tối đa 10 kết quả; throttle `30/min`/user; loại inactive, bot, và người đã là member active của project; trả `id, display_name, avatar_url, email, workspace_role`, email che một phần (`a***@domain`); `workspace_role` là role (5/15/20) của `WorkspaceMember` ACTIVE của user đó trong workspace này, `null` nếu chưa có; serializer riêng, không dùng `UserLiteSerializer`; ghi log truy vấn.
 
 D8. Công tắc god-mode "Cho phép mời user ngoài hệ thống" (`InstanceConfiguration` khóa `ALLOW_EXTERNAL_INVITES`, mặc định TẮT). TẮT: D6 hiệu lực. BẬT: shadow D6 chuyển tiếp xuống core (hành vi cũ, gồm cả lỗi sẵn có). Quy tắc "chỉ user tồn tại" của D4 luôn giữ cho đường thêm trực tiếp. Endpoint đọc/ghi trong `ee/god_mode/`; mục trên trang admin là 1 seam core web (`apps/admin`).
 
 D9. Web (plugin `apps/web/ee/project-members/`):
 
-- Modal thêm member bản mới dùng D7 thay danh sách workspace member; role mặc định Member (15), trần theo role của admin trong project. Header file ghi commit gốc của modal.
+- Modal thêm member bản mới dùng D7 thay danh sách workspace member; role mặc định Member (15). Header file ghi commit gốc của modal.
+- Role được chọn trong modal theo cùng quy tắc với backend (`allowed-roles.ts`): trần theo role project của người gọi; role 20 chỉ khi người gọi là workspace Admin đang active; user đích có ws role 20 thì chỉ thêm được làm project Admin (20); user đích có ws role 5 chỉ thêm được làm Guest (5); `null` hoặc 15 thì mọi role còn lại được phép (backend cấp ws role 15 cho project Admin/Member, 5 cho Guest). Tập role rỗng (người gọi không phải ws Admin mà đích là ws Admin) thì dòng hiện thông báo và không gửi được. Role của dòng được ép lại khi đổi user.
+- Lỗi thêm member được ánh xạ sang chuỗi i18n bởi `member-add-error.ts`: `USER_NOT_ELIGIBLE`, `ALREADY_MEMBER`, `ROLE_NOT_ALLOWED` (và `Invalid role`), lỗi tiếng Anh của core về role cao/thấp hơn role workspace (`role_conflict`), còn lại là thông báo chung. Thêm thành công mà làm mới danh sách workspace member lỗi thì hiện cảnh báo tải lại trang.
 - Seam core web (đưa vào `deployments/ee/core-allowlist.txt` cùng PR): (1) `components/project/member-list.tsx` đổi 1 dòng import; (2) `settings/(workspace)/members/page.tsx` ẩn nút mời workspace; (3) trang admin cho công tắc D8. Tránh `routes/core.ts`.
 - Chuỗi i18n mới: `en` và `vi-VN` (theo thực hành hiện tại), các locale khác dùng fallback; theo skill `translate`.
 
@@ -92,7 +94,7 @@ D9. Web (plugin `apps/web/ee/project-members/`):
 - Gỡ khỏi project cuối: ws member bị tắt; ws Admin/owner không bị tắt; còn project khác thì không tắt; xóa mềm project rồi chạy sweep thì user mồ côi bị tắt; thêm lại thì bật lại.
 - Search: 2 ký tự -> 400; lần gọi thứ 31 -> 429; bot/inactive không xuất hiện; khóa phản hồi đúng danh sách.
 - Công tắc TẮT: mọi endpoint mời cũ trả 410, không tạo `WorkspaceMember`; BẬT: chuyển tiếp xuống core. Đăng nhập với lời mời cũ không tạo hàng nào (sau migration 0004).
-- Web: unit test cho modal mới (debounce, tối thiểu 3 ký tự, role mặc định) và nút mời workspace bị ẩn.
+- Web: apps/web không có React test harness nên chỉ có unit test (vitest) cho các hàm thuần: `search-query` (tối thiểu 3 ký tự), `fetch-candidates`, `add-members-and-refresh`, `allowed-roles` (ma trận role), `member-add-error`, `invites-cache`. Debounce dựa vào debounce 300 ms có sẵn của `Select`, không có test riêng; modal và việc ẩn nút mời workspace chưa có test tự động (kiểm tra bằng tay trên trình duyệt).
 - Cập nhật các test core đang giả định endpoint mời hoạt động.
 
 ## 6. Giới hạn đã biết
