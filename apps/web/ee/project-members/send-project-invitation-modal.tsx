@@ -92,7 +92,7 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
     reset,
     handleSubmit,
     control,
-  } = useForm<FormValues>();
+  } = useForm<FormValues>({ defaultValues });
   const { fields, append, remove } = useFieldArray({
     control,
     name: "members",
