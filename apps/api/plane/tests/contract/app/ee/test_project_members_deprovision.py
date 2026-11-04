@@ -134,3 +134,11 @@ class TestDeprovision:
 
     def test_sweep_task_registered(self):
         assert "plane.ee.project_members.tasks.ee_sweep_orphan_workspace_members" in app.tasks
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_project_member_created_with_unknown_role_gets_guest_ws_row(workspace, project):
+    user = mk_user()
+    add_member(workspace, project, user, role=25)  # must not raise
+    assert ws_row(workspace, user).role == 5

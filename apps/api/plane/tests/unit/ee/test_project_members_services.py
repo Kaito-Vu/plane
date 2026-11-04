@@ -157,3 +157,11 @@ def test_sweep_disables_orphans_after_project_soft_delete(workspace, project, ot
     assert sweep_orphan_workspace_members() == 1
     assert _wm(workspace, other_user).is_active is False
     assert sweep_orphan_workspace_members() == 0
+
+
+@pytest.mark.unit
+@pytest.mark.django_db
+@pytest.mark.parametrize("bad_role", [10, 25, None, "15", [15]])
+def test_provision_unknown_role_clamps_to_guest(workspace, other_user, bad_role):
+    wm = provision_workspace_member(workspace, other_user, bad_role)
+    assert wm.role == 5 and wm.is_active

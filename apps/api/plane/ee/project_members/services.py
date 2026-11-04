@@ -36,7 +36,8 @@ def eligible_users(user_ids: Iterable[str]) -> list[User]:
 
 def provision_workspace_member(workspace: Workspace, user: User, project_role: int) -> WorkspaceMember:
     """Create/reactivate the workspace row. Never lowers an active role; never grants Admin."""
-    role = PROJECT_TO_WORKSPACE_ROLE[project_role]
+    # unknown/malformed project roles clamp to Guest (least privilege); row validity is core's concern
+    role = PROJECT_TO_WORKSPACE_ROLE.get(project_role, 5) if isinstance(project_role, int) else 5
     with transaction.atomic():
         # get_or_create is race-safe on first creation (savepoint + re-get on IntegrityError)
         wm, created = WorkspaceMember.objects.get_or_create(
