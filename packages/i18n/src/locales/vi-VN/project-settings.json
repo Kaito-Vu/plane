@@ -43,7 +43,10 @@
         "search_placeholder": "Tìm theo tên hoặc email",
         "no_user_found": "Không tìm thấy người dùng",
         "type_min_chars": "Nhập ít nhất {count} ký tự để tìm kiếm",
+        "start_date": "Ngày bắt đầu",
+        "end_date": "Ngày kết thúc",
         "errors": {
+          "end_before_start": "Ngày kết thúc không được trước ngày bắt đầu.",
           "not_eligible": "Không thể thêm một hoặc nhiều người dùng đã chọn vào dự án này.",
           "already_member": "Một hoặc nhiều người dùng đã chọn đã là thành viên của dự án này.",
           "role_not_allowed": "Bạn không thể gán vai trò đó. Chỉ quản trị viên workspace mới thêm được quản trị viên dự án.",

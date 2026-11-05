@@ -1,4 +1,6 @@
-type TPayload = { members: { member_id: string; role: number }[] };
+type TPayload = {
+  members: { member_id: string; role: number; start_date?: string | null; end_date?: string | null }[];
+};
 
 // The core store's bulk add only writes projectMemberMap; a user new to the workspace stays invisible until the
 // workspace member map is refetched, so refresh it (then the project members) after a successful add.
@@ -13,18 +15,17 @@ export const addMembersAndRefresh = async (
 ): Promise<{ failedRefreshes: ("workspace" | "project")[] }> => {
   const { workspaceSlug, projectId, payload } = args;
   await deps.add(workspaceSlug, projectId, payload);
-  const failedRefreshes: ("workspace" | "project")[] = [];
   const steps = [
-    ["workspace", () => deps.refreshWorkspace(workspaceSlug)],
-    ["project", () => deps.refreshProject(workspaceSlug, projectId)],
+    ["workspace", deps.refreshWorkspace(workspaceSlug)],
+    ["project", deps.refreshProject(workspaceSlug, projectId)],
   ] as const;
-  for (const [name, refresh] of steps) {
-    try {
-      await refresh();
-    } catch (error) {
-      console.error(error);
-      failedRefreshes.push(name);
+  const results = await Promise.allSettled(steps.map(([, p]) => p));
+  const failedRefreshes: ("workspace" | "project")[] = [];
+  results.forEach((result, i) => {
+    if (result.status === "rejected") {
+      console.error(result.reason);
+      failedRefreshes.push(steps[i][0]);
     }
-  }
+  });
   return { failedRefreshes };
 };

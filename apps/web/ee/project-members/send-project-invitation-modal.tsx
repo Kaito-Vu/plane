@@ -55,6 +55,8 @@ type Props = {
 type member = {
   role: EUserPermissions;
   member_id: string;
+  start_date: string; // YYYY-MM-DD, "" = not set
+  end_date: string; // "" = open-ended
 };
 
 type FormValues = {
@@ -66,14 +68,14 @@ type TRoleOption = {
   label: string;
 };
 
-const defaultValues: FormValues = {
-  members: [
-    {
-      role: DEFAULT_ROLE,
-      member_id: "",
-    },
-  ],
-};
+// local date as YYYY-MM-DD (sv-SE format); a function so a modal left open overnight isn't stale
+const newMember = (): member => ({
+  role: DEFAULT_ROLE,
+  member_id: "",
+  start_date: new Date().toLocaleDateString("sv-SE"),
+  end_date: "",
+});
+const getDefaultValues = (): FormValues => ({ members: [newMember()] });
 
 export const SendProjectInvitationModal = observer(function SendProjectInvitationModal(props: Props) {
   const { isOpen, onClose, onSuccess, projectId, workspaceSlug } = props;
@@ -91,12 +93,13 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
   const {
     formState: { errors, isSubmitting },
     watch,
+    register,
     setValue,
     getValues,
     reset,
     handleSubmit,
     control,
-  } = useForm<FormValues>({ defaultValues });
+  } = useForm<FormValues>({ defaultValues: getDefaultValues() });
   const { fields, append, remove } = useFieldArray({
     control,
     name: "members",
@@ -115,66 +118,64 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
   const onSubmit = async (formData: FormValues) => {
     if (!workspaceSlug || !projectId || isSubmitting) return;
 
-    const payload = { members: formData.members.map(({ member_id, role }) => ({ member_id, role })) };
+    const payload = {
+      members: formData.members.map(({ member_id, role, start_date, end_date }) => ({
+        member_id,
+        role,
+        start_date: start_date || null,
+        end_date: end_date || null,
+      })),
+    };
 
-    await addMembersAndRefresh(
-      {
-        add: bulkAddMembersToProject,
-        refreshWorkspace: fetchWorkspaceMembers,
-        refreshProject: (ws, pid) => fetchProjectMembers(ws, pid),
-      },
-      { workspaceSlug: workspaceSlug.toString(), projectId: projectId.toString(), payload }
-    )
-      .then(({ failedRefreshes }) => {
-        reset(defaultValues);
-        if (onSuccess) onSuccess();
-        onClose();
-        setToast({
-          title: "Success!",
-          type: "success",
-          message: "Members added successfully.",
-        });
-        if (failedRefreshes.length > 0)
-          setToast({
-            title: t("warning"),
-            type: "warning",
-            message: t("project_settings.members.invite_members.errors.refresh_failed"),
-          });
-      })
-      .catch((error) => {
-        console.error(error);
-        setToast({
-          title: t("error"),
-          type: "error",
-          message: t(memberAddErrorKey(error)),
-        });
+    try {
+      const { failedRefreshes } = await addMembersAndRefresh(
+        {
+          add: bulkAddMembersToProject,
+          refreshWorkspace: fetchWorkspaceMembers,
+          refreshProject: (ws, pid) => fetchProjectMembers(ws, pid),
+        },
+        { workspaceSlug: workspaceSlug.toString(), projectId: projectId.toString(), payload }
+      );
+      reset(getDefaultValues());
+      if (onSuccess) onSuccess();
+      onClose();
+      setToast({
+        title: "Success!",
+        type: "success",
+        message: "Members added successfully.",
       });
+      if (failedRefreshes.length > 0)
+        setToast({
+          title: t("warning"),
+          type: "warning",
+          message: t("project_settings.members.invite_members.errors.refresh_failed"),
+        });
+    } catch (error) {
+      console.error(error);
+      setToast({
+        title: t("error"),
+        type: "error",
+        message: t(memberAddErrorKey(error)),
+      });
+    }
   };
 
   const handleClose = () => {
     onClose();
 
     const timeout = setTimeout(() => {
-      reset(defaultValues);
+      reset(getDefaultValues());
       clearTimeout(timeout);
     }, 500);
   };
 
   const appendField = () => {
-    append({
-      role: DEFAULT_ROLE,
-      member_id: "",
-    });
+    append(newMember());
   };
 
   useEffect(() => {
     if (fields.length === 0) {
-      append([
-        {
-          role: DEFAULT_ROLE,
-          member_id: "",
-        },
-      ]);
+      append([newMember()]);
     }
   }, [fields, append]);
 
@@ -206,146 +207,182 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
             <DialogBody>
               <div className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="group mb-1 flex w-full items-start justify-between gap-x-4 text-13">
-                    <div className="flex w-full grow flex-col gap-1">
-                      <Controller
-                        control={control}
-                        name={`members.${index}.member_id`}
-                        rules={{
-                          required: "Please select a member",
-                          validate: (id) =>
-                            rolesFor(id).length > 0 ||
-                            t("project_settings.members.invite_members.errors.no_role_available"),
-                        }}
-                        render={({ field: { value, onChange } }) => (
-                          <Select<TProjectMemberSearchResult>
-                            infinite
-                            getValues={async ({ search }) => {
-                              const res = await fetchCandidates(
-                                projectMemberSearchService,
-                                workspaceSlug,
-                                projectId,
-                                search
-                              );
-                              res.results.forEach((u) => knownUsers.current.set(u.id, u));
-                              return res;
-                            }}
-                            value={(value && knownUsers.current.get(value)) || null}
-                            onChange={(id: string) => {
-                              onChange(id);
-                              // never carry the previous user's role over: reset to the new user's default
-                              setValue(
-                                `members.${index}.role`,
-                                roleAfterUserChange(rolesFor(id), DEFAULT_ROLE) as EUserPermissions
-                              );
-                            }}
-                            getOptionValue={(u) => u.id}
-                            getOptionLabel={(u) => u.display_name || u.email}
-                            getOptionDescription={(u) => u.email}
-                            getOptionIcon={(u) => (
-                              <Avatar
-                                alt={u.display_name}
-                                fallback={u.display_name?.[0]?.toUpperCase()}
-                                size="2xs"
-                                src={getFileURL(u.avatar_url)}
-                              />
-                            )}
-                            filterOption={(u) => u.id === value || !chosenIds.includes(u.id)}
-                            placeholder={t("project_settings.members.invite_members.select_co_worker")}
-                            searchPlaceholder={t("project_settings.members.invite_members.search_placeholder")}
-                            emptyMessage={(query) =>
-                              shouldSearch(query)
-                                ? t("project_settings.members.invite_members.no_user_found")
-                                : t("project_settings.members.invite_members.type_min_chars", {
-                                    count: MIN_SEARCH_CHARS,
-                                  })
-                            }
-                          >
-                            <Select.Trigger<TProjectMemberSearchResult>
-                              variant="select-lg"
-                              appendIcon={<ChevronDownOutline />}
-                            >
-                              <span className="min-w-0 grow truncate text-left">
-                                {(value &&
-                                  (knownUsers.current.get(value)?.display_name ||
-                                    knownUsers.current.get(value)?.email)) ||
-                                  t("project_settings.members.invite_members.select_co_worker")}
-                              </span>
-                            </Select.Trigger>
-                          </Select>
-                        )}
-                      />
-                      {chosenIds[index] && rolesFor(chosenIds[index]).length === 0 ? (
-                        <span className="px-1 text-13 text-danger-primary">
-                          {t("project_settings.members.invite_members.errors.no_role_available")}
-                        </span>
-                      ) : (
-                        errors.members &&
-                        errors.members[index]?.member_id && (
-                          <span className="px-1 text-13 text-danger-primary">
-                            {errors.members[index]?.member_id?.message}
-                          </span>
-                        )
-                      )}
-                    </div>
-
-                    <div className="flex shrink-0 items-center justify-between gap-2">
-                      <div className="flex flex-col gap-1">
+                  <div key={field.id} className="mb-1 space-y-2">
+                    <div className="group flex w-full items-start justify-between gap-x-4 text-13">
+                      <div className="flex w-full grow flex-col gap-1">
                         <Controller
-                          name={`members.${index}.role`}
                           control={control}
+                          name={`members.${index}.member_id`}
                           rules={{
-                            required: "Select Role",
-                            validate: (role) =>
-                              rolesFor(getValues(`members.${index}.member_id`)).includes(role) || "Select Role",
+                            required: "Please select a member",
+                            validate: (id) =>
+                              rolesFor(id).length > 0 ||
+                              t("project_settings.members.invite_members.errors.no_role_available"),
                           }}
-                          render={({ field: { value, onChange } }) => {
-                            const roleOptions = getRoleOptions(chosenIds[index]);
-                            return (
-                              <div className="w-32">
-                                <Select<TRoleOption>
-                                  getValues={() => roleOptions}
-                                  value={roleOptions.find((role) => role.key === value) ?? null}
-                                  onChange={(key) => onChange(parseInt(key))}
-                                  getOptionValue={(role) => String(role.key)}
-                                  getOptionLabel={(role) => role.label}
-                                  placeholder="Select role"
-                                  showSearch={false}
-                                  pinSelected={false}
-                                >
-                                  <Select.Trigger<TRoleOption>
-                                    variant="pill-md"
-                                    appendIcon={<ChevronDownOutline />}
-                                    tooltip={{ emptyContent: "Select role" }}
-                                  >
-                                    <span className="min-w-0 grow truncate text-left capitalize">
-                                      {value ? ROLE[value] : "Select role"}
-                                    </span>
-                                  </Select.Trigger>
-                                </Select>
-                              </div>
-                            );
-                          }}
+                          render={({ field: { value, onChange } }) => (
+                            <Select<TProjectMemberSearchResult>
+                              infinite
+                              getValues={async ({ search }) => {
+                                const res = await fetchCandidates(
+                                  projectMemberSearchService,
+                                  workspaceSlug,
+                                  projectId,
+                                  search
+                                );
+                                res.results.forEach((u) => knownUsers.current.set(u.id, u));
+                                return res;
+                              }}
+                              value={(value && knownUsers.current.get(value)) || null}
+                              onChange={(id: string) => {
+                                onChange(id);
+                                // never carry the previous user's role over: reset to the new user's default
+                                setValue(
+                                  `members.${index}.role`,
+                                  roleAfterUserChange(rolesFor(id), DEFAULT_ROLE) as EUserPermissions
+                                );
+                              }}
+                              getOptionValue={(u) => u.id}
+                              getOptionLabel={(u) => u.display_name || u.email}
+                              getOptionDescription={(u) => u.email}
+                              getOptionIcon={(u) => (
+                                <Avatar
+                                  alt={u.display_name}
+                                  fallback={u.display_name?.[0]?.toUpperCase()}
+                                  size="2xs"
+                                  src={getFileURL(u.avatar_url)}
+                                />
+                              )}
+                              filterOption={(u) => u.id === value || !chosenIds.includes(u.id)}
+                              placeholder={t("project_settings.members.invite_members.select_co_worker")}
+                              searchPlaceholder={t("project_settings.members.invite_members.search_placeholder")}
+                              emptyMessage={(query) =>
+                                shouldSearch(query)
+                                  ? t("project_settings.members.invite_members.no_user_found")
+                                  : t("project_settings.members.invite_members.type_min_chars", {
+                                      count: MIN_SEARCH_CHARS,
+                                    })
+                              }
+                            >
+                              <Select.Trigger<TProjectMemberSearchResult>
+                                variant="select-lg"
+                                appendIcon={<ChevronDownOutline />}
+                              >
+                                <span className="min-w-0 grow truncate text-left">
+                                  {(value &&
+                                    (knownUsers.current.get(value)?.display_name ||
+                                      knownUsers.current.get(value)?.email)) ||
+                                    t("project_settings.members.invite_members.select_co_worker")}
+                                </span>
+                              </Select.Trigger>
+                            </Select>
+                          )}
                         />
-                        {errors.members && errors.members[index]?.role && (
+                        {chosenIds[index] && rolesFor(chosenIds[index]).length === 0 ? (
                           <span className="px-1 text-13 text-danger-primary">
-                            {errors.members[index]?.role?.message}
+                            {t("project_settings.members.invite_members.errors.no_role_available")}
                           </span>
+                        ) : (
+                          errors.members &&
+                          errors.members[index]?.member_id && (
+                            <span className="px-1 text-13 text-danger-primary">
+                              {errors.members[index]?.member_id?.message}
+                            </span>
+                          )
                         )}
                       </div>
 
-                      {fields.length > 1 && (
-                        <div className="flex-item flex w-6">
-                          <button
-                            type="button"
-                            aria-label={t("remove")}
-                            className="place-items-center self-center rounded-sm"
-                            onClick={() => remove(index)}
-                          >
-                            <CloseOutline className="h-4 w-4 text-secondary" />
-                          </button>
+                      <div className="flex shrink-0 items-center justify-between gap-2">
+                        <div className="flex flex-col gap-1">
+                          <Controller
+                            name={`members.${index}.role`}
+                            control={control}
+                            rules={{
+                              required: "Select Role",
+                              validate: (role) =>
+                                rolesFor(getValues(`members.${index}.member_id`)).includes(role) || "Select Role",
+                            }}
+                            render={({ field: { value, onChange } }) => {
+                              const roleOptions = getRoleOptions(chosenIds[index]);
+                              return (
+                                <div className="w-32">
+                                  <Select<TRoleOption>
+                                    getValues={() => roleOptions}
+                                    value={roleOptions.find((role) => role.key === value) ?? null}
+                                    onChange={(key) => onChange(parseInt(key))}
+                                    getOptionValue={(role) => String(role.key)}
+                                    getOptionLabel={(role) => role.label}
+                                    placeholder="Select role"
+                                    showSearch={false}
+                                    pinSelected={false}
+                                  >
+                                    <Select.Trigger<TRoleOption>
+                                      variant="pill-md"
+                                      appendIcon={<ChevronDownOutline />}
+                                      tooltip={{ emptyContent: "Select role" }}
+                                    >
+                                      <span className="min-w-0 grow truncate text-left capitalize">
+                                        {value ? ROLE[value] : "Select role"}
+                                      </span>
+                                    </Select.Trigger>
+                                  </Select>
+                                </div>
+                              );
+                            }}
+                          />
+                          {errors.members && errors.members[index]?.role && (
+                            <span className="px-1 text-13 text-danger-primary">
+                              {errors.members[index]?.role?.message}
+                            </span>
+                          )}
                         </div>
-                      )}
+
+                        {fields.length > 1 && (
+                          <div className="flex-item flex w-6">
+                            <button
+                              type="button"
+                              aria-label={t("remove")}
+                              className="place-items-center self-center rounded-sm"
+                              onClick={() => remove(index)}
+                            >
+                              <CloseOutline className="h-4 w-4 text-secondary" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 text-13">
+                      <label className="flex flex-col gap-1">
+                        <span className="px-1 text-secondary">
+                          {t("project_settings.members.invite_members.start_date")}
+                        </span>
+                        <input
+                          type="date"
+                          className="rounded-md border border-subtle bg-layer-2 px-2 py-1.5"
+                          {...register(`members.${index}.start_date`)}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1">
+                        <span className="px-1 text-secondary">
+                          {t("project_settings.members.invite_members.end_date")}
+                        </span>
+                        <input
+                          type="date"
+                          min={watch(`members.${index}.start_date`) || undefined}
+                          className="rounded-md border border-subtle bg-layer-2 px-2 py-1.5"
+                          {...register(`members.${index}.end_date`, {
+                            validate: (end) =>
+                              !end ||
+                              !getValues(`members.${index}.start_date`) ||
+                              end >= getValues(`members.${index}.start_date`) ||
+                              t("project_settings.members.invite_members.errors.end_before_start"),
+                          })}
+                        />
+                        {errors.members?.[index]?.end_date && (
+                          <span className="px-1 text-13 text-danger-primary">
+                            {errors.members[index]?.end_date?.message}
+                          </span>
+                        )}
+                      </label>
                     </div>
                   </div>
                 ))}

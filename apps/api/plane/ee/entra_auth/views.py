@@ -12,6 +12,7 @@ from plane.authentication.utils.oauth_state import validate_oauth_state
 from plane.authentication.utils.redirection_path import get_redirection_path
 from plane.authentication.utils.user_auth_workflow import post_user_auth_workflow
 from plane.ee.entra_auth.entra import EntraProvider
+from plane.ee.god_mode.sso import finish_entra_login
 from plane.license.models import Instance
 from plane.license.utils.instance_value import get_configuration_value
 from plane.utils.path_validator import validate_next_path
@@ -45,7 +46,8 @@ class _EntraInitiate(View):
 
     def get(self, request):
         is_app = self.surface == "app"
-        host = base_host(request=request, is_app=is_app, is_space=not is_app)
+        is_admin = self.surface == "admin"
+        host = base_host(request=request, is_admin=is_admin, is_app=is_app, is_space=not (is_app or is_admin))
         request.session["host"] = host
         request.session[SESSION_SURFACE] = self.surface
         next_path = request.GET.get("next_path")
@@ -80,9 +82,13 @@ class EntraCallbackEndpoint(View):
     def get(self, request):
         code = request.GET.get("code")
         state = request.GET.get("state")
-        is_space = request.session.get(SESSION_SURFACE) == "space"
-        is_app = not is_space
-        host = request.session.get("host") or base_host(request=request, is_app=is_app, is_space=is_space)
+        surface = request.session.get(SESSION_SURFACE)
+        is_admin = surface == "admin"  # god-mode: handled by plane.ee.god_mode.sso
+        is_space = surface == "space"
+        is_app = not (is_space or is_admin)
+        host = request.session.get("host") or base_host(
+            request=request, is_admin=is_admin, is_app=is_app, is_space=is_space
+        )
         next_path = request.session.pop("next_path", None)
 
         if not _entra_enabled():
@@ -97,6 +103,8 @@ class EntraCallbackEndpoint(View):
             provider = EntraProvider(
                 request=request, code=code, callback=post_user_auth_workflow if is_app else None
             )
+            if is_admin:
+                return finish_entra_login(request, provider)
             user = provider.authenticate()
             user_login(request=request, user=user, is_app=is_app, is_space=is_space)
             if next_path:

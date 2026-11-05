@@ -225,6 +225,34 @@ class TestMemberCreateHardening:
         assert add(session_client, workspace, project, [{"member_id": str(user.id), "role": 15}]).status_code == 201
         assert ProjectMember.objects.get(project=project, member=user).is_active
 
+    def test_add_with_allocation_dates_saved_and_listed(self, session_client, workspace, project):
+        user = mk_user()
+        m = {"member_id": str(user.id), "role": 15, "start_date": "2026-01-01", "end_date": "2026-06-30"}
+        assert add(session_client, workspace, project, [m]).status_code == 201
+        pm = ProjectMember.objects.get(project=project, member=user)
+        assert str(pm.allocation.start_date) == "2026-01-01" and str(pm.allocation.end_date) == "2026-06-30"
+        rows = session_client.get(url(workspace, project) + "allocations/").json()
+        assert rows[str(pm.id)] == {"start_date": "2026-01-01", "end_date": "2026-06-30"}
+
+    @pytest.mark.parametrize("start,end", [("2026-06-30", "2026-01-01"), ("not-a-date", None), ("2026-13-45", None)])
+    def test_add_with_bad_dates_400_nothing_written(self, session_client, workspace, project, start, end):
+        user = mk_user()
+        m = {"member_id": str(user.id), "role": 15, "start_date": start, "end_date": end}
+        assert add(session_client, workspace, project, [m]).status_code == 400
+        assert not ProjectMember.objects.filter(project=project, member=user).exists()
+        assert not WorkspaceMember.objects.filter(member=user).exists()  # provisioning rolled back too
+
+    def test_patch_end_date_before_start_400(self, session_client, workspace, project):
+        user = mk_user()
+        m = {"member_id": str(user.id), "role": 15, "start_date": "2026-03-01"}
+        assert add(session_client, workspace, project, [m]).status_code == 201
+        pm = ProjectMember.objects.get(project=project, member=user)
+        r = session_client.patch(url(workspace, project, pm.id), {"end_date": "2026-02-01"}, format="json")
+        assert r.status_code == 400
+        r = session_client.patch(url(workspace, project, pm.id), {"end_date": "2026-09-01"}, format="json")
+        assert r.status_code == 200
+        assert str(pm.allocation.end_date) == "2026-09-01" and str(pm.allocation.start_date) == "2026-03-01"
+
     @pytest.mark.parametrize("body", ["[]", "null", '"x"', "5"])
     def test_non_dict_body_400_not_500(self, session_client, workspace, project, body):
         r = session_client.generic("POST", url(workspace, project), body, content_type="application/json")

@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .sso import GodModeSsoEndpoint
 from .views import (
     GodModeExternalInvitesEndpoint,
     GodModeAdminEndpoint,
@@ -10,6 +11,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path("god-mode/sso/", GodModeSsoEndpoint.as_view(), name="god-mode-sso"),
     path("instances/admins/", GodModeAdminEndpoint.as_view(), name="god-mode-admins"),
     path("instances/admins/<uuid:pk>/", GodModeAdminEndpoint.as_view(), name="god-mode-admin-detail"),
     path("instances/admins/sign-in/", GodModeSignInEndpoint.as_view(), name="god-mode-sign-in"),
