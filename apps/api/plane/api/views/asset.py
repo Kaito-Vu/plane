@@ -149,7 +149,7 @@ class UserAssetEndpoint(BaseAPIView):
             )
 
         # asset key
-        asset_key = f"{uuid.uuid4().hex}-{name}"
+        asset_key = f"user_info/{entity_type[5:].lower()}/{uuid.uuid4().hex}-{name}"  # user_info/avatar/ or user_info/cover/
 
         # Create a File Asset
         asset = FileAsset.objects.create(
@@ -322,7 +322,7 @@ class UserServerAssetEndpoint(BaseAPIView):
             )
 
         # asset key
-        asset_key = f"{uuid.uuid4().hex}-{name}"
+        asset_key = f"user_info/{entity_type[5:].lower()}/{uuid.uuid4().hex}-{name}"  # user_info/avatar/ or user_info/cover/
 
         # Create a File Asset
         asset = FileAsset.objects.create(

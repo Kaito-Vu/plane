@@ -14,6 +14,10 @@ class EeConfig(AppConfig):
 
         permissions.install()
 
+        from . import timezone_default
+
+        timezone_default.install()
+
         from celery.schedules import crontab
 
         from plane.celery import app
