@@ -34,7 +34,11 @@ def base_host(
             admin_base_path += "/"
 
         if settings.ADMIN_BASE_URL:
-            return settings.ADMIN_BASE_URL + admin_base_path
+            # ADMIN_BASE_URL may already include the base path (e.g. https://host/god-mode)
+            admin_url = settings.ADMIN_BASE_URL.rstrip("/")
+            if admin_url.endswith(admin_base_path.rstrip("/")):
+                return admin_url + "/"
+            return admin_url + admin_base_path
         else:
             return base_origin + admin_base_path
 

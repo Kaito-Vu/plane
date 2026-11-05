@@ -9,6 +9,7 @@ from plane.ee.tasks import soft_delete_issues_related
 
 from .constants import MAX_DEPTH
 from .exceptions import WorkItemValidationError
+from .value_codec import _rollup_hours
 
 DONE_GROUPS = ("completed", "cancelled")
 logger = logging.getLogger("plane.worker")
@@ -69,6 +70,7 @@ def soft_delete_subtree(issue: Issue, actor_id=None) -> int:
         id_strs = [str(pk) for pk in ids]
         transaction.on_commit(lambda: soft_delete_issues_related.delay(id_strs))
         _log_descendants(descendants, issue, actor_id, "issue.activity.deleted", {}, None)
+        _rollup_hours(issue.parent_id, reset=True)
     issue.deleted_at = now
     return count
 
@@ -81,6 +83,7 @@ def restore_subtree(issue: Issue) -> int:
     ids = [issue.id, *_descendant_ids([issue.id], deleted_at=stamp)]
     count = Issue.all_objects.filter(id__in=ids, deleted_at=stamp).update(deleted_at=None)
     issue.deleted_at = None
+    _rollup_hours(issue.parent_id)
     return count
 
 

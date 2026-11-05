@@ -33,7 +33,7 @@ from plane.utils.content_validator import (
 )
 
 from plane.ee.work_item_types.validators import validate_issue_payload
-from plane.ee.work_item_types.value_codec import write_values
+from plane.ee.work_item_types.value_codec import sync_hours, write_values
 
 from .base import BaseSerializer
 from .cycle import CycleLiteSerializer, CycleSerializer
@@ -206,6 +206,7 @@ class IssueSerializer(BaseSerializer):
             issue = Issue.objects.create(**validated_data, project_id=project_id, type=issue_type)
             if attribute_values:
                 write_values(issue, attribute_values, project=issue.project)
+            sync_hours(issue)
 
         # Issue Audit Users
         created_by_id = issue.created_by_id
@@ -328,10 +329,12 @@ class IssueSerializer(BaseSerializer):
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
         attribute_values = validated_data.pop("attribute_values", None)
+        old_parent_id = instance.parent_id
         with transaction.atomic():
             instance = super().update(instance, validated_data)
             if attribute_values is not None:
                 write_values(instance, attribute_values, project=instance.project)
+            sync_hours(instance, old_parent_id)
         return instance
 
     def to_representation(self, instance):

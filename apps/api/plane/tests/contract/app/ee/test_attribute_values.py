@@ -327,3 +327,23 @@ def test_batch_values_hide_others_issues_from_restricted_guest(workspace, projec
     c.force_authenticate(user=guest)
     r = c.get(_batch_url(workspace, project), {"issue_ids": str(story.id)})
     assert r.status_code == status.HTTP_200_OK and r.data == {}
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+def test_task_hours_are_sum_of_subtasks(session_client, workspace, project, story):
+    task = Issue.objects.create(name="T", project=project, type=get_type(workspace.id, T.TASK), parent=story)
+    keys = ("original_estimate", "remaining_work", "spent_time")
+    sub_attrs = {k: _attr(project, T.SUB_TASK, k) for k in keys}
+    for est, rem, spent in ((8, 8, 0), (4, 1, 3)):
+        body = {
+            "name": "st",
+            "type_id": str(get_type(workspace.id, T.SUB_TASK).id),
+            "parent_id": str(task.id),
+            "attribute_values": {str(sub_attrs[k].id): v for k, v in zip(keys, (est, rem, spent))},
+        }
+        r = session_client.post(_issues(workspace, project), body, format="json")
+        assert r.status_code == status.HTTP_201_CREATED, r.data
+    got = session_client.get(_values_url(workspace, project, task)).data
+    task_attrs = {k: _attr(project, T.TASK, k) for k in keys}
+    assert [float(got[str(task_attrs[k].id)]) for k in keys] == [12, 9, 3]

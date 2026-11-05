@@ -7,10 +7,11 @@ from uuid import UUID
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
-from plane.db.models import ProjectMember
+from plane.db.models import Issue, ProjectMember
 from plane.ee.models import Attribute, AttributeValue
 
 from .exceptions import WorkItemValidationError
@@ -180,3 +181,40 @@ def missing_required(project_id: UUID, issue_type_id: UUID, values: dict[UUID, A
         project_id=project_id, issue_type_id=issue_type_id, is_required=True, is_active=True
     ).values_list("id", flat=True)
     return [a for a in required if is_empty(provided.get(a))]
+
+
+HOURS_KEYS = ("original_estimate", "remaining_work", "spent_time")
+
+
+def _rollup_hours(task_id, reset: bool = False) -> None:
+    """A Task with Sub-tasks carries the sum of their original estimate / remaining work / spent time."""
+    if task_id is None:
+        return
+    task = Issue.issue_objects.select_related("project").filter(pk=task_id).first()
+    if task is None or task.type_id is None:
+        return
+    children = Issue.issue_objects.filter(parent_id=task.id, type__external_id="sub_task")
+    if not reset and not children.exists():  # reset: a sub-task just left, so the sums go back to 0
+        return
+    attrs = {
+        a.system_key: a.id
+        for a in Attribute.objects.filter(
+            project_id=task.project_id, issue_type_id=task.type_id, is_active=True, system_key__in=HOURS_KEYS
+        )
+    }
+    if len(attrs) < len(HOURS_KEYS):  # parent type has no hour fields (e.g. Bug)
+        return
+    sums = dict(
+        AttributeValue.objects.filter(issue__in=children, attribute__system_key__in=HOURS_KEYS)
+        .values_list("attribute__system_key")
+        .annotate(total=Sum("value_number"))
+    )
+    write_values(task, {attrs[k]: sums.get(k) or Decimal(0) for k in HOURS_KEYS}, project=task.project)
+
+
+def sync_hours(issue, old_parent_id=None) -> None:
+    """Call after an issue is saved: refreshes its own rollup and that of its (old and new) parent."""
+    for pk in {issue.id, issue.parent_id} - {None}:
+        _rollup_hours(pk)
+    if old_parent_id != issue.parent_id:
+        _rollup_hours(old_parent_id, reset=True)
