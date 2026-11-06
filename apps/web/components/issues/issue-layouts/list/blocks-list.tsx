@@ -5,6 +5,7 @@
  */
 
 import type { MutableRefObject } from "react";
+import { useState } from "react";
 // components
 import type { TIssue, IIssueDisplayProperties, TIssueMap, TGroupedIssues } from "@plane/types";
 // hooks
@@ -30,7 +31,7 @@ interface Props {
 
 // Orders a flat id list depth-first by parent_id (children right under their parent).
 // Items whose parent is not in the list are treated as roots.
-const orderAsTree = (ids: string[], issuesMap: TIssueMap) => {
+const orderAsTree = (ids: string[], issuesMap: TIssueMap, collapsed: Set<string>) => {
   const present = new Set(ids);
   const children = new Map<string, string[]>();
   const roots: string[] = [];
@@ -40,13 +41,14 @@ const orderAsTree = (ids: string[], issuesMap: TIssueMap) => {
       children.set(parentId, [...(children.get(parentId) ?? []), id]);
     else roots.push(id);
   });
-  const out: { id: string; depth: number }[] = [];
+  const out: { id: string; depth: number; hasChildren: boolean }[] = [];
   const seen = new Set<string>();
   const walk = (id: string, depth: number) => {
     if (seen.has(id)) return;
     seen.add(id);
-    out.push({ id, depth });
-    children.get(id)?.forEach((c) => walk(c, depth + 1));
+    const kids = children.get(id);
+    out.push({ id, depth, hasChildren: !!kids?.length });
+    if (!collapsed.has(id)) kids?.forEach((c) => walk(c, depth + 1));
   };
   roots.forEach((id) => walk(id, 0));
   return out;
@@ -68,12 +70,19 @@ export function IssueBlocksList(props: Props) {
     isEpic = false,
   } = props;
 
-  const rows = Array.isArray(issueIds) ? orderAsTree(issueIds, issuesMap) : [];
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  const rows = Array.isArray(issueIds) ? orderAsTree(issueIds, issuesMap, collapsed) : [];
 
   return (
     <div className="relative h-full w-full">
       {rows.length > 0 &&
-        rows.map(({ id: issueId, depth }, index) => (
+        rows.map(({ id: issueId, depth, hasChildren }, index) => (
           <IssueBlockRoot
             key={issueId}
             issueId={issueId}
@@ -84,7 +93,7 @@ export function IssueBlocksList(props: Props) {
             displayProperties={displayProperties}
             nestingLevel={depth}
             spacingLeft={depth * 24}
-            hideExpand
+            treeToggle={{ hasChildren, collapsed: collapsed.has(issueId), onToggle: () => toggle(issueId) }}
             containerRef={containerRef}
             selectionHelpers={selectionHelpers}
             groupId={groupId}

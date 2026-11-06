@@ -34,6 +34,8 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 import { calculateIdentifierWidth } from "../utils";
 import type { TRenderQuickActions } from "./list-view-types";
 
+export type TTreeToggle = { hasChildren: boolean; collapsed: boolean; onToggle: () => void };
+
 interface IssueBlockProps {
   issueId: string;
   issuesMap: TIssueMap;
@@ -51,7 +53,7 @@ interface IssueBlockProps {
   setIsCurrentBlockDragging: React.Dispatch<React.SetStateAction<boolean>>;
   canDrag: boolean;
   isEpic?: boolean;
-  hideExpand?: boolean;
+  treeToggle?: TTreeToggle;
 }
 
 export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
@@ -72,7 +74,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
     setIsCurrentBlockDragging,
     canDrag,
     isEpic = false,
-    hideExpand = false,
+    treeToggle,
   } = props;
   // ref
   const issueRef = useRef<HTMLDivElement | null>(null);
@@ -242,15 +244,20 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
               )}
               {/* tree toggle: always reserves its slot so rows at one level line up */}
               <div className="grid size-4 flex-shrink-0 place-items-center">
-                {subIssuesCount > 0 && !isEpic && !hideExpand && (
+                {(treeToggle ? treeToggle.hasChildren : subIssuesCount > 0 && !isEpic) && (
                   <button
                     type="button"
                     className="grid size-4 place-items-center rounded-xs text-placeholder hover:text-tertiary"
-                    onClick={handleToggleExpand}
+                    onClick={(e) => {
+                      if (!treeToggle) return handleToggleExpand(e);
+                      e.stopPropagation();
+                      e.preventDefault();
+                      treeToggle.onToggle();
+                    }}
                   >
                     <ChevronRightOutline
                       className={cn("size-4", {
-                        "rotate-90": isExpanded,
+                        "rotate-90": treeToggle ? !treeToggle.collapsed : isExpanded,
                       })}
                     />
                   </button>

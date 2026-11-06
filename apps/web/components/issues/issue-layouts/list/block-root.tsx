@@ -26,6 +26,7 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // types
 import { HIGHLIGHT_CLASS, getIssueBlockId, isIssueNew } from "../utils";
 import { IssueBlock } from "./block";
+import type { TTreeToggle } from "./block";
 import type { TRenderQuickActions } from "./list-view-types";
 
 type Props = {
@@ -46,7 +47,7 @@ type Props = {
   isLastChild?: boolean;
   shouldRenderByDefault?: boolean;
   isEpic?: boolean;
-  hideExpand?: boolean;
+  treeToggle?: TTreeToggle;
 };
 
 export const IssueBlockRoot = observer(function IssueBlockRoot(props: Props) {
@@ -68,7 +69,7 @@ export const IssueBlockRoot = observer(function IssueBlockRoot(props: Props) {
     selectionHelpers,
     shouldRenderByDefault,
     isEpic = false,
-    hideExpand = false,
+    treeToggle,
   } = props;
   // states
   const [isExpanded, setExpanded] = useState<boolean>(false);
@@ -161,7 +162,7 @@ export const IssueBlockRoot = observer(function IssueBlockRoot(props: Props) {
           isCurrentBlockDragging={isParentIssueBeingDragged || isCurrentBlockDragging}
           setIsCurrentBlockDragging={setIsCurrentBlockDragging}
           isEpic={isEpic}
-          hideExpand={hideExpand}
+          treeToggle={treeToggle}
         />
       </RenderIfVisible>
 
