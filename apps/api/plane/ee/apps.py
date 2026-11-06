@@ -18,6 +18,10 @@ class EeConfig(AppConfig):
 
         timezone_default.install()
 
+        from . import workspace_buckets
+
+        workspace_buckets.install()
+
         from celery.schedules import crontab
 
         from plane.celery import app

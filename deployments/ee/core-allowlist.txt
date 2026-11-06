@@ -178,3 +178,8 @@ packages/i18n/src/locales/en/project-settings.json
 packages/i18n/src/locales/vi-VN/project-settings.json
 
 .env.prod.example
+
+apps/proxy/Caddyfile.ce
+apps/web/components/issues/issue-layouts/list/blocks-list.tsx
+apps/web/components/issues/issue-layouts/list/block-root.tsx
+apps/web/components/issues/issue-layouts/list/block.tsx

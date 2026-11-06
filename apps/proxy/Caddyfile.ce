@@ -20,6 +20,15 @@
 	reverse_proxy /{$BUCKET_NAME}/* plane-minio:9000
 	reverse_proxy /{$BUCKET_NAME} plane-minio:9000
 
+	# per-workspace buckets: /<bucket>/<project_id|workspace>/<file> and presigned-POST to /<bucket>
+	@ws_bucket_obj path_regexp ^/[a-z0-9][a-z0-9-]{1,62}/(workspace|[0-9a-f]{8}-[0-9a-f-]{27})/
+	reverse_proxy @ws_bucket_obj plane-minio:9000
+	@ws_bucket_post {
+		method POST
+		path_regexp ^/[a-z0-9][a-z0-9-]{1,62}/?$
+	}
+	reverse_proxy @ws_bucket_post plane-minio:9000
+
 	reverse_proxy /* web:3000
 }
 
