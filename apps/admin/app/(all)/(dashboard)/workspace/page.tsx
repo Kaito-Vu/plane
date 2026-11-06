@@ -69,14 +69,13 @@ const WorkspaceManagementPage = observer(function WorkspaceManagementPage(_props
       },
     });
 
-    await updateConfigPromise
-      .then(() => {
-        setIsSubmitting(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setIsSubmitting(false);
-      });
+    try {
+      await updateConfigPromise;
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -133,7 +132,7 @@ const WorkspaceManagementPage = observer(function WorkspaceManagementPage(_props
                   )}
                 </div>
                 <div className="text-body-xs-regular leading-5 text-tertiary">
-                  You can only go to the workspace if you are an Admin or a Member.
+                  Open a workspace if you are an Admin or Member, or use "Members" to add users or change roles.
                 </div>
               </div>
               <div className="flex items-center gap-2">

@@ -46,6 +46,7 @@ type Props = {
   isLastChild?: boolean;
   shouldRenderByDefault?: boolean;
   isEpic?: boolean;
+  hideExpand?: boolean;
 };
 
 export const IssueBlockRoot = observer(function IssueBlockRoot(props: Props) {
@@ -67,6 +68,7 @@ export const IssueBlockRoot = observer(function IssueBlockRoot(props: Props) {
     selectionHelpers,
     shouldRenderByDefault,
     isEpic = false,
+    hideExpand = false,
   } = props;
   // states
   const [isExpanded, setExpanded] = useState<boolean>(false);
@@ -159,6 +161,7 @@ export const IssueBlockRoot = observer(function IssueBlockRoot(props: Props) {
           isCurrentBlockDragging={isParentIssueBeingDragged || isCurrentBlockDragging}
           setIsCurrentBlockDragging={setIsCurrentBlockDragging}
           isEpic={isEpic}
+          hideExpand={hideExpand}
         />
       </RenderIfVisible>
 

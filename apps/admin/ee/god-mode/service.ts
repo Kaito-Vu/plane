@@ -38,6 +38,25 @@ class GodModeService extends InstanceService {
       });
   }
 
+  async searchWorkspaceUsers(
+    slug: string,
+    search: string
+  ): Promise<{ id: string; email: string; display_name: string; current_role: number | null }[]> {
+    return this.get(`/api/instances/workspaces/${encodeURIComponent(slug)}/members/`, { params: { search } })
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
+  async assignWorkspaceMember(slug: string, email: string, role: number): Promise<{ created: boolean }> {
+    return this.post(`/api/instances/workspaces/${encodeURIComponent(slug)}/members/`, { email, role })
+      .then((r) => r?.data)
+      .catch((e) => {
+        throw e?.response?.data;
+      });
+  }
+
   async getExternalInvites(): Promise<{ enabled: boolean }> {
     return this.get("/api/instances/external-invites/")
       .then((r) => r?.data)

@@ -65,6 +65,10 @@ services:
   plane-mq:
     image: rabbitmq:4.4.0-management-alpine
     restart: always
+    # Celery's control/reply queues are transient non-exclusive; RabbitMQ 4.x rejects them unless permitted.
+    command: >
+      sh -c "echo 'deprecated_features.permit.transient_nonexcl_queues = true' > /etc/rabbitmq/conf.d/20-celery.conf
+      && exec docker-entrypoint.sh rabbitmq-server"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}

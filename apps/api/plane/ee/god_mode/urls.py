@@ -8,6 +8,7 @@ from .views import (
     GodModeSignInEndpoint,
     GodModeWorkspaceArchiveEndpoint,
     GodModeWorkspaceEndpoint,
+    GodModeWorkspaceMemberEndpoint,
 )
 
 urlpatterns = [
@@ -21,6 +22,11 @@ urlpatterns = [
         "instances/workspaces/<str:slug>/archive/",
         GodModeWorkspaceArchiveEndpoint.as_view(),
         name="god-mode-workspace-archive",
+    ),
+    path(
+        "instances/workspaces/<str:slug>/members/",
+        GodModeWorkspaceMemberEndpoint.as_view(),
+        name="god-mode-workspace-members",
     ),
     path("instances/external-invites/", GodModeExternalInvitesEndpoint.as_view(), name="god-mode-external-invites"),
 ]

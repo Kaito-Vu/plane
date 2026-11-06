@@ -51,6 +51,7 @@ interface IssueBlockProps {
   setIsCurrentBlockDragging: React.Dispatch<React.SetStateAction<boolean>>;
   canDrag: boolean;
   isEpic?: boolean;
+  hideExpand?: boolean;
 }
 
 export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
@@ -71,6 +72,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
     setIsCurrentBlockDragging,
     canDrag,
     isEpic = false,
+    hideExpand = false,
   } = props;
   // ref
   const issueRef = useRef<HTMLDivElement | null>(null);
@@ -240,7 +242,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
               )}
               {/* tree toggle: always reserves its slot so rows at one level line up */}
               <div className="grid size-4 flex-shrink-0 place-items-center">
-                {subIssuesCount > 0 && !isEpic && (
+                {subIssuesCount > 0 && !isEpic && !hideExpand && (
                   <button
                     type="button"
                     className="grid size-4 place-items-center rounded-xs text-placeholder hover:text-tertiary"
